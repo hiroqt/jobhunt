@@ -11,7 +11,7 @@ from backend.app.sources.base import (
     SourceHealth,
 )
 from backend.app.processing.url_validator import validate_and_canonicalize_url
-from backend.app.processing.normalizer import normalize_skill_name
+from backend.app.processing.normalizer import normalize_skill_name, extract_skills_from_text
 from backend.app.processing.link_checker import generate_search_fallback_url
 from backend.app.core.logging import logger
 
@@ -87,11 +87,15 @@ class PublicCareersAdapter(JobSourceAdapter):
                             posted_at = now - timedelta(days=2)
 
                         # Filter by relevant keyword if present
-                        if kw_lower not in title.lower() and kw_lower not in desc.lower() and len(results) > 0:
+                        if kw_lower not in title.lower() and kw_lower not in desc.lower():
                             continue
 
                         raw_emp = j.get("jobType")
                         emp_str = raw_emp[0] if isinstance(raw_emp, list) and raw_emp else (str(raw_emp) if raw_emp else "Full-time")
+
+                        discovered_skills = extract_skills_from_text(f"{title} {desc[:200]} {' '.join(query.keywords)}")
+                        if not discovered_skills:
+                            discovered_skills = [normalize_skill_name(k) for k in query.keywords if k] or ["General Engineering"]
 
                         results.append(
                             RawJob(
@@ -108,7 +112,7 @@ class PublicCareersAdapter(JobSourceAdapter):
                                 salary_max=query.salary_max or 95000,
                                 currency="USD",
                                 description=desc[:500] if desc else f"{title} at {company}",
-                                skills=["TypeScript", "React", "Node.js", "Docker"],
+                                skills=discovered_skills,
                                 posted_at=posted_at,
                                 raw_data={"source": "jobicy_public_feed", "id": j.get("id")}
                             )
@@ -122,6 +126,9 @@ class PublicCareersAdapter(JobSourceAdapter):
         if not results:
             q_str = f"{kw} jobs {loc}".strip()
             live_url = f"https://www.google.com/search?q={urllib.parse.quote_plus(q_str)}&tbs=qdr:w"
+            fallback_skills = extract_skills_from_text(f"{kw} {' '.join(query.keywords)}")
+            if not fallback_skills:
+                fallback_skills = [normalize_skill_name(k) for k in query.keywords if k] or ["General Engineering"]
             
             results.append(
                 RawJob(
@@ -138,7 +145,7 @@ class PublicCareersAdapter(JobSourceAdapter):
                     salary_max=query.salary_max or 90000,
                     currency=query.currency or "USD",
                     description=f"Active opportunities for {kw} roles in {loc} on Google Jobs posted within the past week.",
-                    skills=["TypeScript", "Next.js", "Docker"],
+                    skills=fallback_skills,
                     posted_at=now - timedelta(days=1, hours=2),
                     raw_data={"source_origin": "public_ats_connector", "tbs": "qdr:w"}
                 )
@@ -170,7 +177,7 @@ class PublicCareersAdapter(JobSourceAdapter):
             currency=raw_job.currency or "USD",
             raw_description=raw_job.description or f"Role: {raw_job.title} at {raw_job.company}",
             summary=f"Opportunity at {raw_job.company} for {raw_job.title} posted within the past week.",
-            skills=normalized_skills or ["TypeScript", "Next.js", "PostgreSQL"],
+            skills=normalized_skills or [normalize_skill_name(raw_job.title)],
             responsibilities=["Develop product features from PRD to production", "Write tests and documentation", "Participate in architecture discussions"],
             benefits=["Flexible PTO", "Full health coverage", "Hardware budget & home office setup"],
             is_active=True,

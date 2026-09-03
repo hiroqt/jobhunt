@@ -58,10 +58,10 @@ export default function SearchesPage() {
   const [resultModalOpen, setResultModalOpen] = useState(false);
 
   // Form State
-  const [formName, setFormName] = useState("Junior Frontend Remote");
+  const [formName, setFormName] = useState("");
   const [formSources, setFormSources] = useState<string[]>(["linkedin", "indeed", "remoteok"]);
-  const [formKeywords, setFormKeywords] = useState("React, TypeScript, Next.js");
-  const [formLocations, setFormLocations] = useState("Remote, Philippines");
+  const [formKeywords, setFormKeywords] = useState("");
+  const [formLocations, setFormLocations] = useState("Remote");
   const [formRemoteType, setFormRemoteType] = useState("Remote");
   const [formMinSalary, setFormMinSalary] = useState(50000);
   const [formFrequency, setFormFrequency] = useState<"MANUAL" | "HOURLY" | "DAILY" | "WEEKLY">("DAILY");
@@ -411,9 +411,34 @@ export default function SearchesPage() {
               <Input
                 value={formName}
                 onChange={(e) => setFormName(e.target.value)}
-                placeholder="e.g. Junior React Remote"
+                placeholder="e.g. Laravel Backend Remote, Python Engineer, or React Developer"
                 required
               />
+            </div>
+
+            {/* Quick role preset shortcuts */}
+            <div>
+              <span className="text-[11px] text-muted-foreground block mb-1.5 font-medium">Quick Presets:</span>
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  { name: "Laravel Backend", kw: "Laravel, PHP, MySQL", label: "Laravel" },
+                  { name: "Python / Django", kw: "Python, Django, PostgreSQL", label: "Python" },
+                  { name: "Full Stack React", kw: "React, TypeScript, Node.js", label: "React" },
+                  { name: "DevOps & Cloud", kw: "DevOps, Docker, Kubernetes, AWS", label: "DevOps" },
+                ].map((preset) => (
+                  <button
+                    type="button"
+                    key={preset.label}
+                    onClick={() => {
+                      setFormName(`${preset.name} Remote`);
+                      setFormKeywords(preset.kw);
+                    }}
+                    className="px-2 py-0.5 rounded-md border border-border/70 text-[11px] text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+                  >
+                    + {preset.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div>
@@ -445,7 +470,7 @@ export default function SearchesPage() {
                 <Input
                   value={formKeywords}
                   onChange={(e) => setFormKeywords(e.target.value)}
-                  placeholder="React, Next.js, TypeScript"
+                  placeholder="e.g. Laravel, PHP or React, Node.js"
                   required
                 />
               </div>
@@ -454,7 +479,7 @@ export default function SearchesPage() {
                 <Input
                   value={formLocations}
                   onChange={(e) => setFormLocations(e.target.value)}
-                  placeholder="Remote, Philippines"
+                  placeholder="Remote, Worldwide, or city"
                   required
                 />
               </div>
@@ -540,7 +565,14 @@ export default function SearchesPage() {
           </div>
 
           <DialogFooter>
-            <Button onClick={() => (window.location.href = "/jobs")}>
+            <Button
+              onClick={() => {
+                const targetUrl = lastRunResult?.search_id
+                  ? `/jobs?search_id=${lastRunResult.search_id}`
+                  : "/jobs";
+                window.location.href = targetUrl;
+              }}
+            >
               View Discovered Jobs
             </Button>
           </DialogFooter>

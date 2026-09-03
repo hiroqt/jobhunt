@@ -54,6 +54,8 @@ SYNONYM_MAP: Dict[str, str] = {
     "ruby on rails": "Ruby on Rails",
     "php": "PHP",
     "laravel": "Laravel",
+    "larave": "Laravel",
+    "larvel": "Laravel",
     "rest": "REST API",
     "rest api": "REST API",
     "restful": "REST API",
@@ -79,6 +81,7 @@ SYNONYM_MAP: Dict[str, str] = {
     "sqlalchemy": "SQLAlchemy",
     
     # DevOps & Cloud
+    "devops": "DevOps",
     "git": "Git",
     "github": "GitHub",
     "gitlab": "GitLab",
@@ -213,3 +216,35 @@ def normalize_skill_name(raw_name: str) -> str:
 def get_skill_category(skill_name: str) -> str:
     canonical = normalize_skill_name(skill_name)
     return CATEGORY_MAP.get(canonical, "General")
+
+
+def extract_skills_from_text(text: str, extra_keywords: Optional[List[str]] = None) -> List[str]:
+    """
+    Extracts canonical skill names dynamically from job text or user keywords.
+    Matches against known technology taxonomy and preserves specific user keywords.
+    """
+    if not text:
+        text = ""
+    
+    extracted = set()
+    # Replace punctuation like dashes/slashes with spaces to catch compound inputs like 'Larave-php'
+    text_lower = text.lower().replace("-", " ").replace("/", " ")
+
+    # 1. Match known skills from SYNONYM_MAP
+    import re
+    for synonym, canonical in SYNONYM_MAP.items():
+        # Match as whole word/token to prevent false partial matches (e.g. 'go' in 'good')
+        pattern = r"(?:\b|_)" + re.escape(synonym) + r"(?:\b|_)"
+        if re.search(pattern, text_lower):
+            extracted.add(canonical)
+
+    # 2. Add extra keywords directly as skills if provided
+    if extra_keywords:
+        for kw in extra_keywords:
+            cleaned = kw.strip()
+            if cleaned:
+                for sub in cleaned.replace("-", " ").replace("/", " ").split():
+                    canon = normalize_skill_name(sub)
+                    extracted.add(canon)
+
+    return list(extracted)

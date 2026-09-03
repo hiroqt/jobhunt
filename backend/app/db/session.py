@@ -3,13 +3,22 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from backend.app.core.config import settings
 from backend.app.core.logging import logger
 
+from pathlib import Path
+
 # Create engine with appropriate pool arguments based on DB type
 connect_args = {}
-if "sqlite" in settings.DATABASE_URL:
+db_url = settings.DATABASE_URL
+if "sqlite" in db_url:
     connect_args = {"check_same_thread": False}
+    # If using relative SQLite path, resolve to canonical backend/job_hunt.db
+    if "///./" in db_url:
+        # Resolve to backend/job_hunt.db
+        project_root = Path(__file__).resolve().parent.parent.parent.parent
+        canonical_db = project_root / "backend" / "job_hunt.db"
+        db_url = f"sqlite+aiosqlite:///{canonical_db}"
 
 engine = create_async_engine(
-    settings.DATABASE_URL,
+    db_url,
     echo=settings.DEBUG,
     future=True,
     connect_args=connect_args,

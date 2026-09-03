@@ -10,7 +10,7 @@ from backend.app.sources.base import (
     SourceHealth,
 )
 from backend.app.processing.url_validator import validate_and_canonicalize_url
-from backend.app.processing.normalizer import normalize_skill_name
+from backend.app.processing.normalizer import normalize_skill_name, extract_skills_from_text
 from backend.app.processing.link_checker import generate_search_fallback_url
 
 
@@ -44,7 +44,10 @@ class LinkedInAdapter(JobSourceAdapter):
 
     async def search(self, query: JobSearchQuery) -> List[RawJob]:
         results: List[RawJob] = []
-        kw = query.keywords[0] if query.keywords else "Software Engineer"
+        raw_kw = query.keywords[0] if query.keywords else "Software Engineer"
+        # Sanitize query: e.g. Larave-php -> Laravel PHP
+        parsed_skills = extract_skills_from_text(raw_kw)
+        kw = " ".join(parsed_skills) if parsed_skills else raw_kw
         loc = query.locations[0] if query.locations else "Remote"
         
         # 1. Attempt live query to LinkedIn guest API for exact matching listings
@@ -56,7 +59,7 @@ class LinkedInAdapter(JobSourceAdapter):
             "User-Agent": (
                 "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
                 "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/124.0.0.0 Safari/537.36"
+                "Chrome/124.0.0.0 Safari/124.0.0.0"
             ),
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
             "Accept-Language": "en-US,en;q=0.5",
@@ -64,15 +67,16 @@ class LinkedInAdapter(JobSourceAdapter):
 
         try:
             url = (
-                f"https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?"
-                f"keywords={urllib.parse.quote_plus(kw)}&location={urllib.parse.quote_plus(loc)}"
-                f"&f_TPR=r604800&start=0"
+                f"https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search"
+                f"?keywords={urllib.parse.quote_plus(kw)}&location={urllib.parse.quote_plus(loc)}&f_TPR=r604800&start=0"
             )
             async with httpx.AsyncClient(timeout=6.0, follow_redirects=True) as client:
                 resp = await client.get(url, headers=headers)
                 if resp.status_code == 200 and "<div class=\"base-card" in resp.text:
                     cards = resp.text.split("<div class=\"base-card")
                     now = datetime.now(timezone.utc)
+                    kw_tokens = [t.lower() for t in (parsed_skills or [kw])]
+
                     for idx, c in enumerate(cards[1:]):
                         t_match = re.search(r"<h3 class=\"base-search-card__title\">[\s\n]*(.*?)[\s\n]*</h3>", c, re.DOTALL)
                         comp_match = re.search(r"<h4 class=\"base-search-card__subtitle\">[\s\n]*(?:<a[^>]*>)?[\s\n]*(.*?)[\s\n]*(?:</a>)?[\s\n]*</h4>", c, re.DOTALL)
@@ -87,12 +91,25 @@ class LinkedInAdapter(JobSourceAdapter):
                         real_company = unescape(comp_match.group(1).strip())
                         real_loc = unescape(loc_match.group(1).strip()) if loc_match else loc
                         raw_link = link_match.group(1)
+
+                        # Enforce title relevance if query has specific technology/role keywords
+                        # (e.g. if searching for Laravel, don't include completely generic/irrelevant titles if any match exists)
+                        title_lower = real_title.lower()
+                        if kw_tokens and len(results) >= 1:
+                            if not any(token in title_lower for token in kw_tokens) and not any(w in title_lower for w in ["developer", "engineer"]):
+                                continue
+
                         # Clean canonical direct job link: https://www.linkedin.com/jobs/view/<id>
                         ext_id = id_match.group(1) if id_match else None
                         clean_url = f"https://www.linkedin.com/jobs/view/{ext_id}" if ext_id else raw_link.split("?")[0]
 
                         # Calculate fresh timestamp within past few days
                         posted_at = now - timedelta(days=(idx % 4) + 1, hours=(idx * 2) % 24)
+
+                        # Dynamically extract skills from searched keywords, real job title, and query
+                        discovered_skills = extract_skills_from_text(f"{real_title} {' '.join(query.keywords)}")
+                        if not discovered_skills:
+                            discovered_skills = [normalize_skill_name(k) for k in query.keywords if k] or ["General Engineering"]
 
                         results.append(
                             RawJob(
@@ -109,7 +126,7 @@ class LinkedInAdapter(JobSourceAdapter):
                                 salary_max=query.salary_max or 90000 + (idx * 4000),
                                 currency=query.currency or "USD",
                                 description=f"Real live position on LinkedIn for {real_title} at {real_company} in {real_loc}.",
-                                skills=["TypeScript", "React", "Node.js", "REST API"],
+                                skills=discovered_skills,
                                 posted_at=posted_at,
                                 raw_data={"source": "linkedin_live_api", "id": ext_id}
                             )
@@ -127,6 +144,10 @@ class LinkedInAdapter(JobSourceAdapter):
                 f"https://www.linkedin.com/jobs/search/?keywords={urllib.parse.quote_plus(kw)}"
                 f"&location={urllib.parse.quote_plus(loc)}&f_TPR=r604800"
             )
+            fallback_skills = extract_skills_from_text(f"{kw} {' '.join(query.keywords)}")
+            if not fallback_skills:
+                fallback_skills = [normalize_skill_name(k) for k in query.keywords if k] or ["General Engineering"]
+
             results.append(
                 RawJob(
                     external_id=f"li_search_{abs(hash(kw)) % 100000}",
@@ -142,7 +163,7 @@ class LinkedInAdapter(JobSourceAdapter):
                     salary_max=query.salary_max or 90000,
                     currency=query.currency or "USD",
                     description=f"Active live postings on LinkedIn matching {kw} in {loc} posted within the past week.",
-                    skills=["React", "TypeScript", "REST API"],
+                    skills=fallback_skills,
                     posted_at=now - timedelta(days=1, hours=4),
                     raw_data={"source": "linkedin_live_search"}
                 )
@@ -175,7 +196,7 @@ class LinkedInAdapter(JobSourceAdapter):
             currency=raw_job.currency or "USD",
             raw_description=raw_job.description or f"Role: {raw_job.title} at {raw_job.company}",
             summary=f"Join {raw_job.company} as a {raw_job.title}. Focus on modern engineering practices and collaborative development.",
-            skills=normalized_skills or ["React", "TypeScript", "Git"],
+            skills=normalized_skills or [normalize_skill_name(raw_job.title)],
             responsibilities=["Build responsive web components", "Participate in agile code reviews", "Collaborate with backend engineers"],
             benefits=["Health & Dental Insurance", "Remote work allowance", "Mentorship program"],
             is_active=True,

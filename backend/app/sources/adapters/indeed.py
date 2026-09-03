@@ -10,7 +10,7 @@ from backend.app.sources.base import (
     SourceHealth,
 )
 from backend.app.processing.url_validator import validate_and_canonicalize_url
-from backend.app.processing.normalizer import normalize_skill_name
+from backend.app.processing.normalizer import normalize_skill_name, extract_skills_from_text
 from backend.app.processing.link_checker import generate_search_fallback_url
 
 
@@ -77,6 +77,9 @@ class IndeedAdapter(JobSourceAdapter):
             f"https://www.indeed.com/jobs?q={urllib.parse.quote_plus(kw)}"
             f"&l={urllib.parse.quote_plus(loc)}&fromage=7"
         )
+        discovered_skills = extract_skills_from_text(f"{kw} {' '.join(query.keywords)}")
+        if not discovered_skills:
+            discovered_skills = [normalize_skill_name(k) for k in query.keywords if k] or ["General Engineering"]
 
         results.append(
             RawJob(
@@ -93,7 +96,7 @@ class IndeedAdapter(JobSourceAdapter):
                 salary_max=query.salary_max or 85000,
                 currency=query.currency or "USD",
                 description=f"Active job listings for {kw} roles in {loc} posted to Indeed within the past 7 days.",
-                skills=["JavaScript", "TypeScript", "React"],
+                skills=discovered_skills,
                 posted_at=now - timedelta(days=1, hours=2),
                 raw_data={"source_origin": "indeed_search_adapter", "fromage": 7}
             )
@@ -125,7 +128,7 @@ class IndeedAdapter(JobSourceAdapter):
             currency=raw_job.currency or "USD",
             raw_description=raw_job.description or f"Role: {raw_job.title} at {raw_job.company}",
             summary=f"Active opportunity at {raw_job.company} for {raw_job.title} posted within the past week.",
-            skills=normalized_skills or ["JavaScript", "TypeScript", "React"],
+            skills=normalized_skills or [normalize_skill_name(raw_job.title)],
             responsibilities=["Develop web features", "Assist in bug triage and fix implementation", "Write clean documentation"],
             benefits=["Paid time off", "Health benefits", "401(k) / retirement matching"],
             is_active=True,

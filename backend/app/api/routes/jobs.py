@@ -195,7 +195,15 @@ async def list_jobs(
 
     if search:
         s = f"%{search}%"
-        query = query.where(or_(Job.title.ilike(s), Job.company.ilike(s), Job.summary.ilike(s)))
+        query = query.where(
+            or_(
+                Job.title.ilike(s),
+                Job.company.ilike(s),
+                Job.summary.ilike(s),
+                Job.raw_description.ilike(s),
+                Job.location.ilike(s)
+            )
+        )
     if search_id:
         query = query.where(Job.search_id == search_id)
     if recommendation:

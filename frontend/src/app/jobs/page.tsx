@@ -86,9 +86,11 @@ function JobsContent() {
     try {
       const minScore = activeTab === "high_match" ? 80 : undefined;
       const savedOnly = activeTab === "saved" ? true : undefined;
+      const searchIdParam = searchParams.get("search_id") || undefined;
 
       const data = await getJobs({
         search: customSearch !== undefined ? customSearch : search,
+        search_id: searchIdParam,
         recommendation: recommendationFilter || undefined,
         workplace_type: workplaceFilter || undefined,
         source: sourceFilter || undefined,
@@ -112,6 +114,18 @@ function JobsContent() {
   useEffect(() => {
     loadJobs();
   }, [searchParams, recommendationFilter, workplaceFilter, sourceFilter, activeTab]);
+
+  // Debounced search on typing
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      // Only trigger if search differs from initial load or user typed
+      if (search !== (searchParams.get("search") || "")) {
+        loadJobs(search);
+      }
+    }, 400);
+
+    return () => clearTimeout(handler);
+  }, [search]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -358,6 +372,55 @@ function JobsContent() {
             </Button>
           </div>
         </form>
+
+        {/* Active Filter / Search Notification Bar */}
+        {(search || searchParams.get("search_id") || sourceFilter || recommendationFilter || workplaceFilter) && (
+          <div className="flex items-center justify-between text-xs pt-1 border-t border-border/40 text-muted-foreground">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span>Showing filtered results:</span>
+              {search && (
+                <Badge variant="secondary" className="text-[11px] font-normal gap-1">
+                  Query: <strong className="font-semibold text-foreground">{search}</strong>
+                </Badge>
+              )}
+              {searchParams.get("search_id") && (
+                <Badge variant="outline" className="text-[11px] font-normal text-primary border-primary/30">
+                  Targeted Discovery Run
+                </Badge>
+              )}
+              {sourceFilter && (
+                <Badge variant="secondary" className="text-[11px] font-normal">
+                  Source: {sourceFilter}
+                </Badge>
+              )}
+              {recommendationFilter && (
+                <Badge variant="secondary" className="text-[11px] font-normal">
+                  Score: {recommendationFilter}
+                </Badge>
+              )}
+              {workplaceFilter && (
+                <Badge variant="secondary" className="text-[11px] font-normal">
+                  Type: {workplaceFilter}
+                </Badge>
+              )}
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setSearch("");
+                setSourceFilter("");
+                setRecommendationFilter("");
+                setWorkplaceFilter("");
+                window.history.replaceState(null, "", "/jobs");
+                loadJobs("");
+              }}
+              className="h-6 px-2 text-[11px] text-muted-foreground hover:text-foreground"
+            >
+              Reset Filters
+            </Button>
+          </div>
+        )}
       </Card>
 
       {/* Main Grid: Job List (Left) & Selected Job Deep-Dive (Right) */}

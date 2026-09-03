@@ -10,7 +10,7 @@ from backend.app.sources.base import (
     SourceHealth,
 )
 from backend.app.processing.url_validator import validate_and_canonicalize_url
-from backend.app.processing.normalizer import normalize_skill_name
+from backend.app.processing.normalizer import normalize_skill_name, extract_skills_from_text
 from backend.app.processing.link_checker import generate_search_fallback_url
 
 
@@ -76,6 +76,9 @@ class JobStreetAdapter(JobSourceAdapter):
             f"https://www.jobstreet.com.ph/jobs?keywords={urllib.parse.quote_plus(kw)}"
             f"&location={urllib.parse.quote_plus(loc)}&createdAt=7d"
         )
+        discovered_skills = extract_skills_from_text(f"{kw} {' '.join(query.keywords)}")
+        if not discovered_skills:
+            discovered_skills = [normalize_skill_name(k) for k in query.keywords if k] or ["General Engineering"]
 
         results.append(
             RawJob(
@@ -92,7 +95,7 @@ class JobStreetAdapter(JobSourceAdapter):
                 salary_max=query.salary_max or 70000,
                 currency=query.currency or "USD",
                 description=f"Active job listings for {kw} roles in {loc} on JobStreet posted within the past 7 days.",
-                skills=["React", "TypeScript", "REST API"],
+                skills=discovered_skills,
                 posted_at=now - timedelta(days=1, hours=3),
                 raw_data={"source_origin": "jobstreet_regional_adapter", "createdAt": "7d"}
             )
@@ -124,7 +127,7 @@ class JobStreetAdapter(JobSourceAdapter):
             currency=raw_job.currency or "USD",
             raw_description=raw_job.description or f"Role: {raw_job.title} at {raw_job.company}",
             summary=f"Great opportunity at {raw_job.company} for {raw_job.title} posted within the past week.",
-            skills=normalized_skills or ["React", "TypeScript", "REST API"],
+            skills=normalized_skills or [normalize_skill_name(raw_job.title)],
             responsibilities=["Develop web components", "Write automated tests", "Maintain codebase quality"],
             benefits=["HMO on day 1", "Government mandated benefits", "Hybrid/Remote allowance"],
             is_active=True,

@@ -12,7 +12,7 @@ from backend.app.sources.base import (
     SourceHealth,
 )
 from backend.app.processing.url_validator import validate_and_canonicalize_url
-from backend.app.processing.normalizer import normalize_skill_name
+from backend.app.processing.normalizer import normalize_skill_name, extract_skills_from_text
 from backend.app.processing.link_checker import generate_search_fallback_url
 from backend.app.core.logging import logger
 
@@ -175,7 +175,7 @@ class RemoteOKAdapter(JobSourceAdapter):
             currency=raw_job.currency or "USD",
             raw_description=clean_desc or f"Role: {raw_job.title} at {raw_job.company}",
             summary=summary or f"Seeking a {raw_job.title} to build modern scalable applications.",
-            skills=normalized_skills or ["React", "TypeScript", "Node.js"],
+            skills=normalized_skills or [normalize_skill_name(raw_job.title)],
             responsibilities=["Develop customer-facing web applications", "Write maintainable unit tests", "Collaborate with product and design"],
             benefits=["100% Remote flexibility", "Learning & development stipend", "Health insurance"],
             is_active=True,
@@ -200,6 +200,9 @@ class RemoteOKAdapter(JobSourceAdapter):
     def _generate_fallback_jobs(self, query: JobSearchQuery) -> List[RawJob]:
         kw = query.keywords[0] if query.keywords else "Software Engineer"
         now = datetime.now(timezone.utc)
+        fallback_skills = extract_skills_from_text(f"{kw} {' '.join(query.keywords)}")
+        if not fallback_skills:
+            fallback_skills = [normalize_skill_name(k) for k in query.keywords if k] or ["General Engineering"]
 
         return [
             RawJob(
@@ -216,7 +219,7 @@ class RemoteOKAdapter(JobSourceAdapter):
                 salary_max=95000,
                 currency="USD",
                 description=f"Active verified remote openings matching {kw} on RemoteOK posted within the past 7 days.",
-                skills=["React", "TypeScript", "Node.js", "REST API"],
+                skills=fallback_skills,
                 posted_at=now - timedelta(days=2, hours=3)
             )
         ]

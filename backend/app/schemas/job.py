@@ -13,7 +13,9 @@ class JobSkillInfo(BaseModel):
 class JobBase(BaseModel):
     url: Optional[str] = None
     canonical_url: Optional[str] = None
+    external_id: Optional[str] = None
     source: str = "Manual"
+    search_id: Optional[str] = None
     title: str = Field(..., min_length=1, max_length=200)
     company: str = Field(..., min_length=1, max_length=200)
     location: Optional[str] = None
@@ -29,6 +31,15 @@ class JobBase(BaseModel):
     summary: Optional[str] = None
     responsibilities: List[str] = Field(default_factory=list)
     benefits: List[str] = Field(default_factory=list)
+    is_saved: bool = False
+    
+    # Link liveness & verification status
+    is_active: bool = True
+    link_status: str = "ACTIVE" # ACTIVE, EXPIRED, SEARCH_QUERY, DEGRADED
+    link_type: str = "DIRECT" # DIRECT, SEARCH_QUERY, CAREERS_PAGE
+    search_url: Optional[str] = None
+    last_checked_at: Optional[datetime] = None
+    posted_at: Optional[datetime] = None
 
 
 class JobCreate(JobBase):
@@ -50,6 +61,11 @@ class JobUpdate(BaseModel):
     summary: Optional[str] = None
     responsibilities: Optional[List[str]] = None
     benefits: Optional[List[str]] = None
+    is_saved: Optional[bool] = None
+    is_active: Optional[bool] = None
+    link_status: Optional[str] = None
+    link_type: Optional[str] = None
+    search_url: Optional[str] = None
 
 
 class JobExtractRequest(BaseModel):
@@ -70,3 +86,15 @@ class JobResponse(JobBase):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class LinkVerificationResponse(BaseModel):
+    job_id: str
+    url: Optional[str] = None
+    search_url: Optional[str] = None
+    is_active: bool
+    link_status: str
+    link_type: str
+    status_code: Optional[int] = None
+    checked_at: datetime
+    message: str

@@ -31,6 +31,9 @@ class CandidateProfile(Base, UUIDMixin, TimestampMixin):
     skills: Mapped[List["CandidateSkill"]] = relationship("CandidateSkill", back_populates="candidate", cascade="all, delete-orphan")
     applications: Mapped[List["Application"]] = relationship("Application", back_populates="candidate", cascade="all, delete-orphan") # noqa: F821
     resumes: Mapped[List["Resume"]] = relationship("Resume", back_populates="candidate", cascade="all, delete-orphan") # noqa: F821
+    searches: Mapped[List["JobSearch"]] = relationship("JobSearch", back_populates="candidate", cascade="all, delete-orphan") # noqa: F821
+    saved_jobs: Mapped[List["SavedJob"]] = relationship("SavedJob", back_populates="candidate", cascade="all, delete-orphan") # noqa: F821
+    notifications: Mapped[List["Notification"]] = relationship("Notification", back_populates="candidate", cascade="all, delete-orphan", order_by="Notification.created_at.desc()") # noqa: F821
 
 
 class CandidateSkill(Base, UUIDMixin, TimestampMixin):

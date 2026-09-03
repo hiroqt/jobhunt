@@ -14,9 +14,11 @@ import {
   Plus,
   ArrowRight,
   Target,
+  Radar,
+  Compass,
 } from "lucide-react";
-import { getDashboardOverview, getFollowUps, getCandidateProfile } from "@/lib/api";
-import { DashboardOverview, FollowUp, CandidateProfile } from "@/types";
+import { getDashboardOverview, getFollowUps, getCandidateProfile, getSearches } from "@/lib/api";
+import { DashboardOverview, FollowUp, CandidateProfile, JobSearch } from "@/types";
 import { JobCaptureModal } from "@/components/jobs/JobCaptureModal";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,20 +28,23 @@ export default function DashboardPage() {
   const [overview, setOverview] = useState<DashboardOverview | null>(null);
   const [followUps, setFollowUps] = useState<FollowUp[]>([]);
   const [candidate, setCandidate] = useState<CandidateProfile | null>(null);
+  const [searches, setSearches] = useState<JobSearch[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCaptureModalOpen, setIsCaptureModalOpen] = useState(false);
 
   useEffect(() => {
     async function loadData() {
       try {
-        const [dashData, fuData, candData] = await Promise.all([
+        const [dashData, fuData, candData, searchData] = await Promise.all([
           getDashboardOverview(),
           getFollowUps(false),
           getCandidateProfile(),
+          getSearches().catch(() => []),
         ]);
         setOverview(dashData);
         setFollowUps(fuData);
         setCandidate(candData);
+        setSearches(searchData);
       } catch (err) {
         console.error("Error loading dashboard data:", err);
       } finally {
@@ -60,13 +65,19 @@ export default function DashboardPage() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2 max-w-2xl">
             <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
-              Job Application Pipeline
+              Job Hunt Pipeline & Intelligence
             </h1>
             <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-              Track job opportunities, qualify requirements against your skills, and manage upcoming interviews.
+              Automated multi-source job discovery, qualification scoring against your candidate profile, application tracking CRM, and AI interview preparation.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3 shrink-0">
+            <Button asChild variant="outline" size="default" className="text-sm font-medium gap-2">
+              <Link href="/searches">
+                <Radar className="w-4 h-4 text-primary" />
+                <span>Automated Searches</span>
+              </Link>
+            </Button>
             {!hasSkills && (
               <Button asChild variant="outline" size="default" className="text-sm font-medium">
                 <Link href="/profile">
@@ -117,6 +128,30 @@ export default function DashboardPage() {
           <CardContent className="p-5 sm:p-6 space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Saved Searches
+              </span>
+              <div className="p-2 rounded-lg bg-primary/10 text-primary border border-primary/20">
+                <Radar className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="flex items-baseline gap-2 pt-1">
+              <span className="text-3xl sm:text-4xl font-bold text-foreground">
+                {searches.length}
+              </span>
+              <Badge variant="outline" className="text-xs font-mono text-primary border-primary/30">
+                Active
+              </Badge>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Scanning 5 job sources
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border bg-card">
+          <CardContent className="p-5 sm:p-6 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Interviews
               </span>
               <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
@@ -133,30 +168,6 @@ export default function DashboardPage() {
             </div>
             <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
               Multi-round ready
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border bg-card">
-          <CardContent className="p-5 sm:p-6 space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Follow-Ups Due
-              </span>
-              <div className="p-2 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-                <AlertCircle className="w-4 h-4" />
-              </div>
-            </div>
-            <div className="flex items-baseline gap-2 pt-1">
-              <span className="text-3xl sm:text-4xl font-bold text-foreground">
-                {overview?.follow_ups_due ?? 0}
-              </span>
-              <Badge variant="warning" className="text-xs font-mono">
-                Action Req.
-              </Badge>
-            </div>
-            <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">
-              Pending outreach
             </p>
           </CardContent>
         </Card>

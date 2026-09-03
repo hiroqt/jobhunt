@@ -1,5 +1,6 @@
 from typing import List, Optional
-from sqlalchemy import String, Integer, Text, ForeignKey, JSON, Boolean
+from datetime import datetime
+from sqlalchemy import String, Integer, Text, ForeignKey, JSON, Boolean, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from backend.app.models.base import Base, UUIDMixin, TimestampMixin
 
@@ -9,7 +10,9 @@ class Job(Base, UUIDMixin, TimestampMixin):
 
     url: Mapped[Optional[str]] = mapped_column(String(500), index=True, nullable=True)
     canonical_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
-    source: Mapped[str] = mapped_column(String(100), default="Manual") # LinkedIn, JobStreet, Indeed, Greenhouse, Lever, Manual
+    external_id: Mapped[Optional[str]] = mapped_column(String(255), index=True, nullable=True)
+    source: Mapped[str] = mapped_column(String(100), default="Manual") # LinkedIn, JobStreet, Indeed, RemoteOK, Greenhouse, Lever, Manual
+    search_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("job_searches.id", ondelete="SET NULL"), nullable=True)
     
     title: Mapped[str] = mapped_column(String(200), index=True, nullable=False)
     company: Mapped[str] = mapped_column(String(200), index=True, nullable=False)
@@ -37,10 +40,22 @@ class Job(Base, UUIDMixin, TimestampMixin):
     matched_skills: Mapped[Optional[List[str]]] = mapped_column(JSON, default=list)
     missing_critical_skills: Mapped[Optional[List[str]]] = mapped_column(JSON, default=list)
     missing_preferred_skills: Mapped[Optional[List[str]]] = mapped_column(JSON, default=list)
+    
+    is_saved: Mapped[bool] = mapped_column(Boolean, default=False)
+    
+    # Live URL & Status Tracking
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    link_status: Mapped[str] = mapped_column(String(50), default="ACTIVE") # ACTIVE, EXPIRED, SEARCH_QUERY, DEGRADED
+    link_type: Mapped[str] = mapped_column(String(50), default="DIRECT") # DIRECT, SEARCH_QUERY, CAREERS_PAGE
+    search_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    last_checked_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    posted_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
 
     # Relationships
     skills: Mapped[List["JobSkill"]] = relationship("JobSkill", back_populates="job", cascade="all, delete-orphan")
     applications: Mapped[List["Application"]] = relationship("Application", back_populates="job", cascade="all, delete-orphan") # noqa: F821
+    search: Mapped[Optional["JobSearch"]] = relationship("JobSearch", back_populates="jobs") # noqa: F821
+    saved_jobs: Mapped[List["SavedJob"]] = relationship("SavedJob", back_populates="job", cascade="all, delete-orphan") # noqa: F821
 
 
 class JobSkill(Base, UUIDMixin, TimestampMixin):

@@ -7,6 +7,8 @@ from backend.app.models.interview import Interview
 from backend.app.models.follow_up import FollowUp
 from backend.app.models.resume import Resume
 from backend.app.models.feedback import ApplicationFeedback
+from backend.app.models.search import JobSearch, SearchExecution, SavedJob
+from backend.app.models.notification import Notification
 
 __all__ = [
     "Base",
@@ -23,4 +25,8 @@ __all__ = [
     "FollowUp",
     "Resume",
     "ApplicationFeedback",
+    "JobSearch",
+    "SearchExecution",
+    "SavedJob",
+    "Notification",
 ]

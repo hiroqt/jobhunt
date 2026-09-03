@@ -11,6 +11,9 @@ from backend.app.db.seed import seed_initial_data
 import backend.app.models # noqa: F401
 from backend.app.api.routes.candidates import router as candidates_router
 from backend.app.api.routes.jobs import router as jobs_router
+from backend.app.api.routes.searches import router as searches_router
+from backend.app.api.routes.sources import router as sources_router
+from backend.app.api.routes.notifications import router as notifications_router
 from backend.app.api.routes.matching import router as matching_router
 from backend.app.api.routes.applications import router as applications_router
 from backend.app.api.routes.interviews import router as interviews_router
@@ -61,6 +64,9 @@ async def global_exception_handler(request, exc: Exception):
 # Register API Routers
 app.include_router(candidates_router, prefix=settings.API_V1_STR)
 app.include_router(jobs_router, prefix=settings.API_V1_STR)
+app.include_router(searches_router, prefix=settings.API_V1_STR)
+app.include_router(sources_router, prefix=settings.API_V1_STR)
+app.include_router(notifications_router, prefix=settings.API_V1_STR)
 app.include_router(matching_router, prefix=settings.API_V1_STR)
 app.include_router(applications_router, prefix=settings.API_V1_STR)
 app.include_router(interviews_router, prefix=settings.API_V1_STR)

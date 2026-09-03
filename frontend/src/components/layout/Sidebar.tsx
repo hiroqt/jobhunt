@@ -6,6 +6,8 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Compass,
+  Radar,
+  Briefcase,
   KanbanSquare,
   CalendarCheck2,
   GraduationCap,
@@ -13,7 +15,6 @@ import {
   UserCheck,
   Menu,
   X,
-  Briefcase,
   ChevronRight,
 } from "lucide-react";
 import { CandidateProfile, DashboardOverview } from "@/types";
@@ -56,23 +57,27 @@ export const Sidebar: React.FC = () => {
       badge: null,
     },
     {
+      name: "Automated Searches",
+      href: "/searches",
+      icon: Radar,
+      badge: null,
+    },
+    {
       name: "Job Explorer",
       href: "/jobs",
-      icon: Compass,
+      icon: Briefcase,
       badge: null,
     },
     {
       name: "Application Pipeline",
       href: "/applications",
       icon: KanbanSquare,
-      // Only show badge if count is genuinely > 0
       badge: activeAppsCount > 0 ? `${activeAppsCount}` : null,
     },
     {
       name: "Interviews",
       href: "/interviews",
       icon: CalendarCheck2,
-      // Only show badge if count is genuinely > 0
       badge: scheduledInterviewsCount > 0 ? `${scheduledInterviewsCount}` : null,
     },
     {

@@ -47,8 +47,22 @@ async def init_db() -> None:
     import backend.app.models.follow_up # noqa
     import backend.app.models.resume # noqa
     import backend.app.models.feedback # noqa
+    import backend.app.models.search # noqa
+    import backend.app.models.notification # noqa
 
     logger.info("Initializing database tables...")
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        
+        def migrate_sqlite_columns(connection):
+            try:
+                cursor = connection.execute("PRAGMA table_info(jobs)")
+                cols = [row[1] for row in cursor.fetchall()]
+                if "posted_at" not in cols:
+                    connection.execute("ALTER TABLE jobs ADD COLUMN posted_at DATETIME;")
+                    logger.info("Added missing posted_at column to jobs table.")
+            except Exception as ex:
+                logger.debug(f"SQLite column migration note: {ex}")
+
+        await conn.run_sync(migrate_sqlite_columns)
     logger.info("Database tables initialized successfully.")

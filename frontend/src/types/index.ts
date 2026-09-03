@@ -53,7 +53,9 @@ export interface Job {
   id: string;
   url?: string;
   canonical_url?: string;
+  external_id?: string;
   source: string;
+  search_id?: string;
   title: string;
   company: string;
   location?: string;
@@ -75,8 +77,27 @@ export interface Job {
   matched_skills: string[];
   missing_critical_skills: string[];
   missing_preferred_skills: string[];
+  is_saved: boolean;
+  is_active?: boolean;
+  link_status?: "ACTIVE" | "EXPIRED" | "SEARCH_QUERY" | "DEGRADED";
+  link_type?: "DIRECT" | "SEARCH_QUERY" | "CAREERS_PAGE";
+  search_url?: string;
+  last_checked_at?: string;
+  posted_at?: string;
   created_at: string;
   updated_at: string;
+}
+
+export interface LinkVerificationResponse {
+  job_id: string;
+  url?: string;
+  search_url?: string;
+  is_active: boolean;
+  link_status: "ACTIVE" | "EXPIRED" | "SEARCH_QUERY" | "DEGRADED";
+  link_type: "DIRECT" | "SEARCH_QUERY" | "CAREERS_PAGE";
+  status_code?: number;
+  checked_at: string;
+  message: string;
 }
 
 export interface MatchBreakdown {
@@ -270,4 +291,101 @@ export interface DashboardOverview {
   funnel: FunnelStageMetric[];
   top_skill_gaps: SkillGapFrequency[];
   source_breakdown: SourceMetric[];
+}
+
+// Automated Searches & Discovery Types
+export interface SearchExecution {
+  id: string;
+  search_id: string;
+  candidate_id: string;
+  status: "QUEUED" | "RUNNING" | "COMPLETED" | "PARTIAL_SUCCESS" | "FAILED";
+  started_at: string;
+  completed_at?: string;
+  jobs_found: number;
+  jobs_normalized: number;
+  jobs_deduplicated: number;
+  jobs_failed: number;
+  error?: string;
+  logs?: Array<{
+    timestamp: string;
+    level: string;
+    message: string;
+    details?: any;
+  }>;
+}
+
+export interface JobSearch {
+  id: string;
+  candidate_id: string;
+  name: string;
+  sources: string[];
+  keywords: string[];
+  locations: string[];
+  remote_types: string[];
+  employment_types: string[];
+  experience_levels: string[];
+  salary_min?: number;
+  salary_max?: number;
+  currency: string;
+  posted_within: string;
+  industries: string[];
+  companies: string[];
+  excluded_keywords: string[];
+  enabled: boolean;
+  schedule_frequency: "MANUAL" | "HOURLY" | "DAILY" | "WEEKLY";
+  last_run_at?: string;
+  next_run_at?: string;
+  created_at: string;
+  updated_at: string;
+  executions: SearchExecution[];
+}
+
+export interface SearchRunResponse {
+  execution_id: string;
+  search_id: string;
+  status: string;
+  message: string;
+  jobs_discovered: number;
+  jobs_deduplicated: number;
+}
+
+export interface SourceInfo {
+  source_name: string;
+  display_name: string;
+  status: "HEALTHY" | "DEGRADED" | "UNAVAILABLE";
+  latency_ms: number;
+  message?: string;
+  allowed: boolean;
+  requires_auth: boolean;
+  max_requests_per_minute: number;
+  supports_search: boolean;
+  supports_details: boolean;
+  supports_pagination: boolean;
+  description: string;
+}
+
+export interface SavedJob {
+  id: string;
+  candidate_id: string;
+  job_id: string;
+  notes?: string;
+  created_at: string;
+  job?: Job;
+}
+
+export interface Notification {
+  id: string;
+  candidate_id: string;
+  type: "HIGH_MATCH" | "SEARCH_COMPLETED" | "INTERVIEW_REMINDER" | "FOLLOW_UP_DUE" | "SYSTEM";
+  title: string;
+  message: string;
+  data?: Record<string, any>;
+  read: boolean;
+  created_at: string;
+}
+
+export interface NotificationListResponse {
+  notifications: Notification[];
+  unread_count: number;
+  total_count: number;
 }

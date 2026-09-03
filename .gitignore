@@ -11,6 +11,9 @@ pixel-agents
 .agents
 pixel_agents*
 *.agent.log
+# Documentation & Internal Specs
+docs/
+docs
 
 # Operating System Files
 .DS_Store

@@ -56,13 +56,32 @@ async def init_db() -> None:
         
         def migrate_sqlite_columns(connection):
             try:
-                cursor = connection.execute("PRAGMA table_info(jobs)")
+                from sqlalchemy import text
+                cursor = connection.execute(text("PRAGMA table_info(jobs)"))
                 cols = [row[1] for row in cursor.fetchall()]
                 if "posted_at" not in cols:
-                    connection.execute("ALTER TABLE jobs ADD COLUMN posted_at DATETIME;")
+                    connection.execute(text("ALTER TABLE jobs ADD COLUMN posted_at DATETIME;"))
                     logger.info("Added missing posted_at column to jobs table.")
+                if "verification_status" not in cols:
+                    connection.execute(text("ALTER TABLE jobs ADD COLUMN verification_status VARCHAR(50) DEFAULT 'UNVERIFIED';"))
+                    logger.info("Added missing verification_status column to jobs table.")
+                if "verification_confidence" not in cols:
+                    connection.execute(text("ALTER TABLE jobs ADD COLUMN verification_confidence REAL;"))
+                    logger.info("Added missing verification_confidence column to jobs table.")
+                if "verified_at" not in cols:
+                    connection.execute(text("ALTER TABLE jobs ADD COLUMN verified_at DATETIME;"))
+                    logger.info("Added missing verified_at column to jobs table.")
+                if "discovered_at" not in cols:
+                    connection.execute(text("ALTER TABLE jobs ADD COLUMN discovered_at DATETIME;"))
+                    logger.info("Added missing discovered_at column to jobs table.")
+                if "last_seen_at" not in cols:
+                    connection.execute(text("ALTER TABLE jobs ADD COLUMN last_seen_at DATETIME;"))
+                    logger.info("Added missing last_seen_at column to jobs table.")
+                if "raw_data" not in cols:
+                    connection.execute(text("ALTER TABLE jobs ADD COLUMN raw_data JSON;"))
+                    logger.info("Added missing raw_data column to jobs table.")
             except Exception as ex:
-                logger.debug(f"SQLite column migration note: {ex}")
+                logger.warning(f"SQLite column migration error: {ex}")
 
         await conn.run_sync(migrate_sqlite_columns)
     logger.info("Database tables initialized successfully.")

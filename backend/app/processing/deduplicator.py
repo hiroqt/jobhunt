@@ -49,6 +49,10 @@ def calculate_job_similarity(candidate_job: NormalizedJobData, existing_job: Job
     if company_sim < 0.75:
         return 0.0, "Different companies"
 
+    # Distinct source search portals (e.g. Various Verified on Indeed vs Various on JobStreet) are distinct sources
+    if "various" in candidate_job.company.lower() and "various" in existing_job.company.lower() and candidate_job.source != existing_job.source:
+        return 0.0, f"Distinct discovery platforms ({candidate_job.source} vs {existing_job.source})"
+
     # If title is very close and company is identical or very close
     loc_sim = calculate_string_similarity(candidate_job.location or "", existing_job.location or "")
     

@@ -73,46 +73,31 @@ class IndeedAdapter(JobSourceAdapter):
         ]
 
         now = datetime.now(timezone.utc)
+        live_indeed_search = (
+            f"https://www.indeed.com/jobs?q={urllib.parse.quote_plus(kw)}"
+            f"&l={urllib.parse.quote_plus(loc)}&fromage=7"
+        )
 
-        for i in range(min(query.limit, len(companies))):
-            company = companies[i % len(companies)]
-            title = title_variations[i % len(title_variations)]
-            skills = skill_sets[i % len(skill_sets)]
-            
-            # Generate active Indeed query strictly filtered to 1-week span (fromage=7)
-            # Querying the title directly ensures Indeed's search results match the title in Job Explorer
-            live_indeed_url = (
-                f"https://www.indeed.com/jobs?q={urllib.parse.quote_plus(title)}"
-                f"&l={urllib.parse.quote_plus(loc)}&fromage=7"
+        results.append(
+            RawJob(
+                external_id=f"ind_{abs(hash(f'{kw}_{loc}')) % 1000000}",
+                source="indeed",
+                title=kw if "developer" in kw.lower() or "engineer" in kw.lower() else f"{kw} Engineer",
+                company="Various Verified Companies on Indeed",
+                location=loc,
+                url=live_indeed_search,
+                workplace_type=query.remote_types[0] if query.remote_types else "Remote",
+                employment_type=query.employment_types[0] if query.employment_types else "Full-time",
+                experience_level=query.experience_levels[0] if query.experience_levels else "Junior",
+                salary_min=query.salary_min or 55000,
+                salary_max=query.salary_max or 85000,
+                currency=query.currency or "USD",
+                description=f"Active job listings for {kw} roles in {loc} posted to Indeed within the past 7 days.",
+                skills=["JavaScript", "TypeScript", "React"],
+                posted_at=now - timedelta(days=1, hours=2),
+                raw_data={"source_origin": "indeed_search_adapter", "fromage": 7}
             )
-
-            # Strictly 1-week span (1 to 6 days old, within 7 days)
-            days_ago = (i % 5) + 1
-            hours_ago = (i * 4) % 24
-            posted_at = now - timedelta(days=days_ago, hours=hours_ago)
-            
-            job_id = f"ind_{abs(hash(f'ind_{title}_{company}_{i}')) % 1000000}"
-
-            results.append(
-                RawJob(
-                    external_id=job_id,
-                    source="indeed",
-                    title=title,
-                    company=company,
-                    location=loc,
-                    url=live_indeed_url,
-                    workplace_type=query.remote_types[0] if query.remote_types else "Remote",
-                    employment_type=query.employment_types[0] if query.employment_types else "Full-time",
-                    experience_level=query.experience_levels[0] if query.experience_levels else "Junior",
-                    salary_min=query.salary_min or 55000 + (i * 3000),
-                    salary_max=query.salary_max or 80000 + (i * 4000),
-                    currency=query.currency or "USD",
-                    description=f"{company} has an active opening for a {title}. Core skills sought: {', '.join(skills)}.",
-                    skills=skills,
-                    posted_at=posted_at,
-                    raw_data={"source_origin": "indeed_search_adapter", "index": i, "fromage": 7}
-                )
-            )
+        )
 
         return results[:query.limit]
 

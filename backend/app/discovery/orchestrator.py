@@ -17,6 +17,8 @@ from backend.app.processing.deduplicator import check_job_duplicate
 from backend.app.processing.normalizer import get_skill_category
 from backend.app.matching.scorer import calculate_match_scores
 from backend.app.matching.rules import evaluate_decision_rules
+from backend.app.verification.verifier import job_verification_service
+from backend.app.verification.types import VerificationStatus
 from backend.app.core.logging import logger
 
 
@@ -148,8 +150,20 @@ async def execute_search_pipeline(
 
         for raw_job in raw_jobs:
             try:
+                # 1. Verification Stage (Sections 31-35)
+                # Verify discovered identity, source host, and confidence
+                v_res = await job_verification_service.verify_discovered_job(raw_job, perform_network_verification=False)
+                if v_res.status in (VerificationStatus.INVALID, VerificationStatus.REMOVED):
+                    jobs_failed_count += 1
+                    log_step(f"Verification rejected job '{raw_job.title}' at '{raw_job.company}'. Reason: {v_res.reason}", "WARNING")
+                    continue
+
                 # Normalization
                 norm: NormalizedJobData = adapter.normalize(raw_job)
+                norm.verification_status = v_res.status.value
+                norm.verification_confidence = v_res.confidence
+                norm.verified_at = v_res.checked_at
+                norm.canonical_url = v_res.canonical_url or norm.canonical_url
                 
                 # ENFORCE 1-WEEK SPAN: Exclude jobs older than 7 days
                 if norm.posted_at:
@@ -167,7 +181,7 @@ async def execute_search_pipeline(
                     log_step(f"Deduplicated job '{norm.title}' at '{norm.company}' (Confidence: {round(dup_conf*100)}%). Reason: {dup_reason}", "DEBUG")
                     continue
 
-                # Create new Job record
+                # Create new Job record with verification metadata
                 new_job = Job(
                     url=norm.url,
                     canonical_url=norm.canonical_url,
@@ -189,12 +203,18 @@ async def execute_search_pipeline(
                     summary=norm.summary,
                     responsibilities=norm.responsibilities,
                     benefits=norm.benefits,
-                    is_active=norm.is_active,
+                    is_active=norm.is_active and (v_res.status != VerificationStatus.INVALID),
                     link_status=norm.link_status,
                     link_type=norm.link_type,
                     search_url=norm.search_url,
                     last_checked_at=datetime.now(timezone.utc),
                     posted_at=norm.posted_at,
+                    verification_status=norm.verification_status,
+                    verification_confidence=norm.verification_confidence,
+                    verified_at=norm.verified_at,
+                    discovered_at=datetime.now(timezone.utc),
+                    last_seen_at=datetime.now(timezone.utc),
+                    raw_data=raw_job.raw_data or {"source_payload": "raw_discovery"},
                 )
                 db.add(new_job)
                 await db.flush()

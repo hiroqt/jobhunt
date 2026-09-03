@@ -79,6 +79,12 @@ class NormalizedJobData(BaseModel):
     link_type: str = "DIRECT" # DIRECT, SEARCH_QUERY, CAREERS_PAGE
     search_url: Optional[str] = None
     posted_at: Optional[datetime] = None
+    
+    # Verification and Data Integrity tracking
+    verification_status: str = "UNVERIFIED"
+    verification_confidence: Optional[float] = None
+    verified_at: Optional[datetime] = None
+    raw_data: Optional[Dict[str, Any]] = None
 
 
 class JobSourceAdapter(ABC):

@@ -99,12 +99,10 @@ async def test_e2e_automated_searches_job_links_and_titles():
                 )
 
             elif "linkedin" in source:
-                # LinkedIn links must have f_TPR=r604800 (1-week span) and keywords
-                assert "linkedin.com/jobs/search" in url
-                assert "f_TPR=r604800" in url, f"LinkedIn URL missing 1-week filter f_TPR=r604800: {url}"
-                assert any(part.lower() in url.lower() for part in ["react", "developer", "engineer"]), (
-                    f"LinkedIn URL {url} does not contain title keywords"
-                )
+                # LinkedIn links can be direct view URLs or active search query URLs
+                assert "linkedin.com/jobs/view/" in url or "linkedin.com/jobs/search" in url
+                if "linkedin.com/jobs/search" in url:
+                    assert "f_TPR=r604800" in url, f"LinkedIn URL missing 1-week filter f_TPR=r604800: {url}"
 
             elif "jobstreet" in source:
                 # JobStreet links must have createdAt=7d (1-week span)

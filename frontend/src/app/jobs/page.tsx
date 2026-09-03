@@ -425,6 +425,17 @@ function JobsContent() {
                         <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 capitalize font-mono shrink-0">
                           {job.source}
                         </Badge>
+                        {job.verification_status === "VERIFIED" && (
+                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 flex items-center gap-0.5 shrink-0">
+                            <ShieldCheck className="w-2.5 h-2.5" />
+                            {job.verification_confidence ? `${Math.round(job.verification_confidence * 100)}% Verified` : "Verified"}
+                          </Badge>
+                        )}
+                        {job.verification_status === "UNVERIFIED" && (
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 text-amber-600 dark:text-amber-400 border-amber-500/30 shrink-0">
+                            Unverified
+                          </Badge>
+                        )}
                       </div>
                       <p className="text-xs text-muted-foreground font-medium truncate mt-0.5">
                         {job.company}
@@ -589,6 +600,16 @@ function JobsContent() {
                       <Badge variant="success" className="text-[10px] gap-1 py-0 px-1.5">
                         <ShieldCheck className="w-3 h-3" />
                         Live Posting
+                      </Badge>
+                    )}
+                    {selectedJob.verification_status && (
+                      <Badge variant="outline" className={`text-[10px] gap-1 py-0 px-1.5 font-mono ${
+                        selectedJob.verification_status === "VERIFIED"
+                          ? "border-emerald-500/30 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10"
+                          : "border-amber-500/30 text-amber-600 dark:text-amber-400 bg-amber-500/10"
+                      }`}>
+                        {selectedJob.verification_status === "VERIFIED" ? "✓ Verified Data" : "Unverified Listing"}
+                        {selectedJob.verification_confidence ? ` (${Math.round(selectedJob.verification_confidence * 100)}%)` : ""}
                       </Badge>
                     )}
                   </div>

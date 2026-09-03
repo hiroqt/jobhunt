@@ -186,6 +186,7 @@ async def list_jobs(
     source: Optional[str] = None,
     min_score: Optional[int] = None,
     saved_only: Optional[bool] = None,
+    verification_status: Optional[str] = None,
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db)
@@ -211,6 +212,8 @@ async def list_jobs(
         query = query.where(Job.match_score >= min_score)
     if saved_only:
         query = query.where(Job.is_saved == True)
+    if verification_status:
+        query = query.where(Job.verification_status.ilike(verification_status))
 
     query = query.offset(offset).limit(limit)
     result = await db.execute(query)

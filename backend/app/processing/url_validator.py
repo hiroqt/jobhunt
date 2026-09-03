@@ -24,7 +24,7 @@ def validate_and_canonicalize_url(url: str) -> Tuple[bool, str, Optional[str]]:
 
     try:
         parsed = urlparse(url)
-        if not parsed.netloc:
+        if not parsed.netloc or "." not in parsed.netloc or " " in parsed.netloc or "@" in parsed.netloc:
             return False, url, "Invalid domain in URL"
         
         # Clean tracking query parameters

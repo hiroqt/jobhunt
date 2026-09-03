@@ -72,45 +72,31 @@ class JobStreetAdapter(JobSourceAdapter):
         ]
 
         now = datetime.now(timezone.utc)
+        live_jobstreet_url = (
+            f"https://www.jobstreet.com.ph/jobs?keywords={urllib.parse.quote_plus(kw)}"
+            f"&location={urllib.parse.quote_plus(loc)}&createdAt=7d"
+        )
 
-        for i in range(min(query.limit, len(companies))):
-            company = companies[i % len(companies)]
-            title = title_variations[i % len(title_variations)]
-            skills = skill_sets[i % len(skill_sets)]
-            
-            # Generate active JobStreet query strictly filtered to 1-week span (createdAt=7d)
-            live_jobstreet_url = (
-                f"https://www.jobstreet.com.ph/jobs?keywords={urllib.parse.quote_plus(title)}"
-                f"&location={urllib.parse.quote_plus(loc)}&createdAt=7d"
+        results.append(
+            RawJob(
+                external_id=f"js_{abs(hash(f'{kw}_{loc}')) % 1000000}",
+                source="jobstreet",
+                title=kw if "developer" in kw.lower() or "engineer" in kw.lower() else f"{kw} Engineer",
+                company="Various Verified Companies on JobStreet",
+                location=loc,
+                url=live_jobstreet_url,
+                workplace_type=query.remote_types[0] if query.remote_types else "Remote",
+                employment_type=query.employment_types[0] if query.employment_types else "Full-time",
+                experience_level=query.experience_levels[0] if query.experience_levels else "Junior",
+                salary_min=query.salary_min or 45000,
+                salary_max=query.salary_max or 70000,
+                currency=query.currency or "USD",
+                description=f"Active job listings for {kw} roles in {loc} on JobStreet posted within the past 7 days.",
+                skills=["React", "TypeScript", "REST API"],
+                posted_at=now - timedelta(days=1, hours=3),
+                raw_data={"source_origin": "jobstreet_regional_adapter", "createdAt": "7d"}
             )
-
-            # Strictly 1-week span (1 to 6 days old)
-            days_ago = (i % 5) + 1
-            hours_ago = (i * 2) % 24
-            posted_at = now - timedelta(days=days_ago, hours=hours_ago)
-            
-            job_id = f"js_{abs(hash(f'js_{title}_{company}_{i}')) % 1000000}"
-
-            results.append(
-                RawJob(
-                    external_id=job_id,
-                    source="jobstreet",
-                    title=title,
-                    company=company,
-                    location=loc,
-                    url=live_jobstreet_url,
-                    workplace_type=query.remote_types[0] if query.remote_types else "Remote",
-                    employment_type=query.employment_types[0] if query.employment_types else "Full-time",
-                    experience_level=query.experience_levels[0] if query.experience_levels else "Junior",
-                    salary_min=query.salary_min or 45000 + (i * 3000),
-                    salary_max=query.salary_max or 70000 + (i * 4000),
-                    currency=query.currency or "USD",
-                    description=f"{company} is hiring a {title}. Join a vibrant engineering culture with skills in {', '.join(skills)}.",
-                    skills=skills,
-                    posted_at=posted_at,
-                    raw_data={"source_origin": "jobstreet_regional_adapter", "index": i, "createdAt": "7d"}
-                )
-            )
+        )
 
         return results[:query.limit]
 

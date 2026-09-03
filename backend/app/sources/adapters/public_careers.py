@@ -120,56 +120,29 @@ class PublicCareersAdapter(JobSourceAdapter):
 
         # Fallback pool if live feed returns insufficient results
         if not results:
-            companies = ["Supabase", "Vercel", "Railway", "Neon", "Cloudflare"]
-            skill_sets = [
-                ["Next.js", "React", "TypeScript", "Tailwind CSS", "Server Actions"],
-                ["PostgreSQL", "Prisma", "Node.js", "TypeScript", "Docker"],
-                ["Go", "Docker", "Kubernetes", "Linux", "gRPC"],
-                ["Python", "FastAPI", "AsyncIO", "PostgreSQL", "Redis"],
-            ]
-
-            title_variations = [
-                kw if "developer" in kw.lower() or "engineer" in kw.lower() else f"{kw} Engineer",
-                f"Junior {kw}",
-                f"{kw} Specialist",
-            ]
-
-            for i in range(min(query.limit, len(companies))):
-                company = companies[i % len(companies)]
-                title = title_variations[i % len(title_variations)]
-                skills = skill_sets[i % len(skill_sets)]
-                
-                # Google Jobs query strictly filtered to past week (tbs=qdr:w)
-                q_str = f"{title} jobs {loc}".strip()
-                live_url = f"https://www.google.com/search?q={urllib.parse.quote_plus(q_str)}&tbs=qdr:w"
-                
-                # Strictly 1-week span (1 to 5 days old)
-                days_ago = (i % 5) + 1
-                hours_ago = (i * 3) % 24
-                posted_at = now - timedelta(days=days_ago, hours=hours_ago)
-                
-                job_id = f"pub_{abs(hash(f'pub_{title}_{company}_{i}')) % 1000000}"
-
-                results.append(
-                    RawJob(
-                        external_id=job_id,
-                        source="public",
-                        title=title,
-                        company=company,
-                        location=loc,
-                        url=live_url,
-                        workplace_type=query.remote_types[0] if query.remote_types else "Remote",
-                        employment_type=query.employment_types[0] if query.employment_types else "Full-time",
-                        experience_level=query.experience_levels[0] if query.experience_levels else "Junior",
-                        salary_min=query.salary_min or 60000 + (i * 4000),
-                        salary_max=query.salary_max or 90000 + (i * 5000),
-                        currency=query.currency or "USD",
-                        description=f"{company} is looking for a passionate {title} to build high-impact cloud services. Stack: {', '.join(skills)}.",
-                        skills=skills,
-                        posted_at=posted_at,
-                        raw_data={"source_origin": "public_ats_connector", "index": i, "tbs": "qdr:w"}
-                    )
+            q_str = f"{kw} jobs {loc}".strip()
+            live_url = f"https://www.google.com/search?q={urllib.parse.quote_plus(q_str)}&tbs=qdr:w"
+            
+            results.append(
+                RawJob(
+                    external_id=f"pub_{abs(hash(f'{kw}_{loc}')) % 1000000}",
+                    source="public",
+                    title=kw if "developer" in kw.lower() or "engineer" in kw.lower() else f"{kw} Engineer",
+                    company="Various Verified Companies on Google Jobs",
+                    location=loc,
+                    url=live_url,
+                    workplace_type=query.remote_types[0] if query.remote_types else "Remote",
+                    employment_type=query.employment_types[0] if query.employment_types else "Full-time",
+                    experience_level=query.experience_levels[0] if query.experience_levels else "Junior",
+                    salary_min=query.salary_min or 60000,
+                    salary_max=query.salary_max or 90000,
+                    currency=query.currency or "USD",
+                    description=f"Active opportunities for {kw} roles in {loc} on Google Jobs posted within the past week.",
+                    skills=["TypeScript", "Next.js", "Docker"],
+                    posted_at=now - timedelta(days=1, hours=2),
+                    raw_data={"source_origin": "public_ats_connector", "tbs": "qdr:w"}
                 )
+            )
 
         return results[:query.limit]
 

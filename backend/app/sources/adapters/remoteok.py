@@ -198,44 +198,25 @@ class RemoteOKAdapter(JobSourceAdapter):
             return SourceHealth(source_name=self.get_source_name(), status="HEALTHY", latency_ms=10.0, message="Fallback Discovery Active (1-week span)")
 
     def _generate_fallback_jobs(self, query: JobSearchQuery) -> List[RawJob]:
-        kw = query.keywords[0] if query.keywords else "Frontend Developer"
-        title1 = f"Junior {kw}"
-        title2 = f"Full Stack {kw}"
+        kw = query.keywords[0] if query.keywords else "Software Engineer"
         now = datetime.now(timezone.utc)
 
         return [
             RawJob(
-                external_id=f"rok_{abs(hash(kw + '1')) % 100000}",
+                external_id=f"rok_{abs(hash(kw)) % 100000}",
                 source="remoteok",
-                title=title1,
-                company="Automattic",
+                title=kw if "developer" in kw.lower() or "engineer" in kw.lower() else f"{kw} Engineer",
+                company="Various Verified Remote Companies on RemoteOK",
                 location="Remote",
-                url=f"https://remoteok.com/?search={urllib.parse.quote_plus(title1)}",
-                workplace_type="Remote",
-                employment_type="Full-time",
-                experience_level="Junior",
-                salary_min=55000,
-                salary_max=80000,
-                currency="USD",
-                description=f"We are looking for a junior {kw} passionate about writing clean code in TypeScript, React, and Next.js.",
-                skills=["React", "TypeScript", "Next.js", "Tailwind CSS", "REST API"],
-                posted_at=now - timedelta(days=2, hours=3) # 2 days old (within 1-week span)
-            ),
-            RawJob(
-                external_id=f"rok_{abs(hash(kw + '2')) % 100000}",
-                source="remoteok",
-                title=title2,
-                company="GitLab",
-                location="Remote",
-                url=f"https://remoteok.com/?search={urllib.parse.quote_plus(title2)}",
+                url=f"https://remoteok.com/?search={urllib.parse.quote_plus(kw)}",
                 workplace_type="Remote",
                 employment_type="Full-time",
                 experience_level="Junior",
                 salary_min=60000,
-                salary_max=90000,
+                salary_max=95000,
                 currency="USD",
-                description=f"Join our fast-paced remote team building modern developer platforms with {kw}.",
-                skills=["React", "Node.js", "PostgreSQL", "Docker", "TypeScript"],
-                posted_at=now - timedelta(days=4, hours=6) # 4 days old (within 1-week span)
-            ),
+                description=f"Active verified remote openings matching {kw} on RemoteOK posted within the past 7 days.",
+                skills=["React", "TypeScript", "Node.js", "REST API"],
+                posted_at=now - timedelta(days=2, hours=3)
+            )
         ]

@@ -84,6 +84,9 @@ export interface Job {
   search_url?: string;
   last_checked_at?: string;
   posted_at?: string;
+  verification_status?: "VERIFIED" | "UNVERIFIED" | "INVALID" | "FAILED" | "EXPIRED" | "REMOVED";
+  verification_confidence?: number;
+  verified_at?: string;
   created_at: string;
   updated_at: string;
 }

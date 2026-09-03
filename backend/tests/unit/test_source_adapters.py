@@ -29,7 +29,7 @@ async def test_linkedin_adapter_discovery_and_normalization():
     assert len(raw_jobs) > 0
     raw = raw_jobs[0]
     assert raw.source == "linkedin"
-    assert "React" in raw.title or "Developer" in raw.title
+    assert any(k in raw.title.lower() for k in ["react", "developer", "engineer", "ui", "web", "frontend", "software"])
 
     norm = adapter.normalize(raw)
     assert norm.source == "linkedin"

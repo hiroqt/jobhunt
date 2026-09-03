@@ -40,6 +40,13 @@ class JobBase(BaseModel):
     search_url: Optional[str] = None
     last_checked_at: Optional[datetime] = None
     posted_at: Optional[datetime] = None
+    
+    # Verification and Data Integrity fields
+    verification_status: str = "UNVERIFIED" # VERIFIED, UNVERIFIED, INVALID, FAILED, EXPIRED, REMOVED
+    verification_confidence: Optional[float] = None
+    verified_at: Optional[datetime] = None
+    discovered_at: Optional[datetime] = None
+    last_seen_at: Optional[datetime] = None
 
 
 class JobCreate(JobBase):
@@ -66,6 +73,9 @@ class JobUpdate(BaseModel):
     link_status: Optional[str] = None
     link_type: Optional[str] = None
     search_url: Optional[str] = None
+    verification_status: Optional[str] = None
+    verification_confidence: Optional[float] = None
+    verified_at: Optional[datetime] = None
 
 
 class JobExtractRequest(BaseModel):

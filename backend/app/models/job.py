@@ -1,6 +1,6 @@
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from datetime import datetime
-from sqlalchemy import String, Integer, Text, ForeignKey, JSON, Boolean, DateTime
+from sqlalchemy import String, Integer, Text, ForeignKey, JSON, Boolean, DateTime, Float
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from backend.app.models.base import Base, UUIDMixin, TimestampMixin
 
@@ -50,6 +50,14 @@ class Job(Base, UUIDMixin, TimestampMixin):
     search_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     last_checked_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     posted_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
+
+    # Job Verification & Integrity Tracking (job_verification_implementation)
+    verification_status: Mapped[str] = mapped_column(String(50), default="UNVERIFIED", index=True) # VERIFIED, UNVERIFIED, INVALID, FAILED, EXPIRED, REMOVED
+    verification_confidence: Mapped[Optional[float]] = mapped_column(nullable=True) # 0.0 to 1.0
+    verified_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    discovered_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_seen_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    raw_data: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON, nullable=True)
 
     # Relationships
     skills: Mapped[List["JobSkill"]] = relationship("JobSkill", back_populates="job", cascade="all, delete-orphan")

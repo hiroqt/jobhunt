@@ -6,6 +6,7 @@ import { Plus, Search, Command } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { JobCaptureModal } from "@/components/jobs/JobCaptureModal";
+import { ThemeToggle } from "@/components/layout/ThemeToggle";
 
 interface HeaderProps {
   onRefresh?: () => void;
@@ -66,7 +67,8 @@ export const Header: React.FC<HeaderProps> = ({ onRefresh }) => {
         </form>
 
         {/* Action Controls */}
-        <div className="flex items-center gap-3 ml-4 shrink-0">
+        <div className="flex items-center gap-2.5 ml-4 shrink-0">
+          <ThemeToggle />
           <Button
             onClick={() => setIsCaptureModalOpen(true)}
             variant="default"

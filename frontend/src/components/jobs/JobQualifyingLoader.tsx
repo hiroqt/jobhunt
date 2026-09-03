@@ -73,14 +73,14 @@ export const JobQualifyingLoader: React.FC<JobQualifyingLoaderProps> = ({
       <div className="relative flex items-center justify-center">
         <div className="absolute w-20 h-20 bg-emerald-500/15 rounded-full blur-xl animate-pulse" />
         <div className="relative w-11 h-11 rounded-full border border-border/80 flex items-center justify-center bg-card/90 shadow-lg">
-          <Loader2 className="w-5 h-5 text-emerald-400 animate-spin" />
+          <Loader2 className="w-5 h-5 text-emerald-500 animate-spin" />
         </div>
       </div>
 
       {/* Fading Sequential Text */}
       <div className="min-h-[44px] flex items-center justify-center px-4">
         <p
-          className={`text-lg sm:text-xl font-medium text-zinc-100 tracking-tight transition-all duration-400 ease-out transform ${
+          className={`text-lg sm:text-xl font-medium text-foreground tracking-tight transition-all duration-400 ease-out transform ${
             fadeState === "in"
               ? "opacity-100 translate-y-0 scale-100"
               : "opacity-0 -translate-y-1.5 scale-95"
@@ -90,7 +90,7 @@ export const JobQualifyingLoader: React.FC<JobQualifyingLoaderProps> = ({
         </p>
       </div>
 
-      {/* Clean Subtitle Info - No Eyebrows */}
+      {/* Clean Subtitle Info */}
       <p className="text-xs text-muted-foreground font-mono">
         {domain ? `${domain} • ` : rawText ? "Raw Text • " : ""}
         {providerName} AI Engine

@@ -55,11 +55,11 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-200">
-      {/* Welcome Hero: Clean typography, no gradient, no eyebrow */}
+      {/* Welcome Hero */}
       <div className="rounded-xl border border-border bg-card p-6 sm:p-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2 max-w-2xl">
-            <h1 className="text-2xl sm:text-3xl font-bold text-zinc-100 tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
               Job Application Pipeline
             </h1>
             <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
@@ -100,7 +100,7 @@ export default function DashboardPage() {
               </div>
             </div>
             <div className="flex items-baseline gap-2 pt-1">
-              <span className="text-3xl sm:text-4xl font-bold text-zinc-100">
+              <span className="text-3xl sm:text-4xl font-bold text-foreground">
                 {overview?.active_applications ?? 0}
               </span>
               <span className="text-sm text-muted-foreground font-mono">
@@ -119,19 +119,19 @@ export default function DashboardPage() {
               <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Interviews
               </span>
-              <div className="p-2 rounded-lg bg-emerald-950/60 text-emerald-400 border border-emerald-800/60">
+              <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                 <CalendarCheck2 className="w-4 h-4" />
               </div>
             </div>
             <div className="flex items-baseline gap-2 pt-1">
-              <span className="text-3xl sm:text-4xl font-bold text-zinc-100">
+              <span className="text-3xl sm:text-4xl font-bold text-foreground">
                 {overview?.interviews_scheduled ?? 0}
               </span>
               <Badge variant="success" className="text-xs font-mono">
                 Scheduled
               </Badge>
             </div>
-            <p className="text-xs text-emerald-400 font-medium">
+            <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
               Multi-round ready
             </p>
           </CardContent>
@@ -143,19 +143,19 @@ export default function DashboardPage() {
               <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Follow-Ups Due
               </span>
-              <div className="p-2 rounded-lg bg-amber-950/60 text-amber-400 border border-amber-800/60">
+              <div className="p-2 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
                 <AlertCircle className="w-4 h-4" />
               </div>
             </div>
             <div className="flex items-baseline gap-2 pt-1">
-              <span className="text-3xl sm:text-4xl font-bold text-zinc-100">
+              <span className="text-3xl sm:text-4xl font-bold text-foreground">
                 {overview?.follow_ups_due ?? 0}
               </span>
               <Badge variant="warning" className="text-xs font-mono">
                 Action Req.
               </Badge>
             </div>
-            <p className="text-xs text-amber-400 font-medium">
+            <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">
               Pending outreach
             </p>
           </CardContent>
@@ -172,7 +172,7 @@ export default function DashboardPage() {
               </div>
             </div>
             <div className="flex items-baseline gap-2 pt-1">
-              <span className="text-3xl sm:text-4xl font-bold text-zinc-100">
+              <span className="text-3xl sm:text-4xl font-bold text-foreground">
                 {overview?.offers_received ?? 0}
               </span>
               <span className="text-sm text-muted-foreground font-mono">
@@ -197,14 +197,14 @@ export default function DashboardPage() {
             <CardHeader className="flex flex-row items-center justify-between p-6 pb-4">
               <div>
                 <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-zinc-100" />
+                  <TrendingUp className="w-5 h-5 text-foreground" />
                   Application Conversion Funnel
                 </CardTitle>
                 <CardDescription className="text-sm text-muted-foreground mt-0.5">
                   Retention through application milestones
                 </CardDescription>
               </div>
-              <Button asChild variant="ghost" size="sm" className="text-zinc-100 gap-1 text-sm font-medium">
+              <Button asChild variant="ghost" size="sm" className="text-foreground hover:bg-accent gap-1 text-sm font-medium">
                 <Link href="/applications">
                   <span>View Pipeline</span>
                   <ArrowUpRight className="w-4 h-4" />
@@ -220,7 +220,7 @@ export default function DashboardPage() {
                     <div key={item.stage} className="space-y-1.5">
                       <div className="flex justify-between text-sm font-medium">
                         <span className="text-foreground">{item.stage}</span>
-                        <span className="font-mono text-zinc-100 font-semibold">
+                        <span className="font-mono text-foreground font-semibold">
                           {item.count}{" "}
                           <span className="text-muted-foreground text-xs font-normal">
                             ({item.conversion_rate_pct}%)
@@ -249,14 +249,14 @@ export default function DashboardPage() {
             <CardHeader className="flex flex-row items-center justify-between p-6 pb-4">
               <div>
                 <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                  <Target className="w-5 h-5 text-zinc-100" />
+                  <Target className="w-5 h-5 text-foreground" />
                   Skill Gap Intelligence
                 </CardTitle>
                 <CardDescription className="text-sm text-muted-foreground mt-0.5">
                   Frequent requirements missing from your target applications
                 </CardDescription>
               </div>
-              <Button asChild variant="ghost" size="sm" className="text-zinc-100 gap-1 text-sm font-medium">
+              <Button asChild variant="ghost" size="sm" className="text-foreground hover:bg-accent gap-1 text-sm font-medium">
                 <Link href="/analytics">
                   <span>Analytics</span>
                   <ArrowUpRight className="w-4 h-4" />
@@ -273,7 +273,7 @@ export default function DashboardPage() {
                   >
                     <div className="space-y-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-semibold text-zinc-100">
+                        <span className="text-sm font-semibold text-foreground">
                           {gap.skill_name}
                         </span>
                         <Badge variant="outline" className="text-xs font-mono">
@@ -291,7 +291,7 @@ export default function DashboardPage() {
                 ))
               ) : (
                 <div className="p-6 rounded-lg bg-muted/20 border border-border text-center text-sm text-muted-foreground">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-400 mx-auto mb-2" />
+                  <CheckCircle2 className="w-5 h-5 text-emerald-500 mx-auto mb-2" />
                   Your skill profile aligns with all currently tracked job postings!
                 </div>
               )}
@@ -305,7 +305,7 @@ export default function DashboardPage() {
           <Card className="border-border bg-card">
             <CardHeader className="flex flex-row items-center justify-between p-6 pb-4">
               <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-amber-400" />
+                <AlertCircle className="w-4 h-4 text-amber-500" />
                 Follow-ups Queue
               </CardTitle>
               <Badge variant="warning" className="font-mono text-xs">
@@ -322,7 +322,7 @@ export default function DashboardPage() {
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <p className="text-sm font-semibold text-zinc-100">
+                        <p className="text-sm font-semibold text-foreground">
                           {fu.job_title || "Application"}
                         </p>
                         {fu.company_name && (
@@ -340,7 +340,7 @@ export default function DashboardPage() {
                         {fu.notes}
                       </p>
                     )}
-                    <Button asChild variant="ghost" size="sm" className="h-7 px-0 text-xs text-foreground font-semibold gap-1.5">
+                    <Button asChild variant="ghost" size="sm" className="h-7 px-0 text-xs text-foreground font-semibold gap-1.5 hover:bg-transparent hover:underline">
                       <Link href="/applications">
                         <Send className="w-3.5 h-3.5" />
                         <span>Open Follow-Up & Email Draft</span>
@@ -359,7 +359,7 @@ export default function DashboardPage() {
           {/* AI Prep Studio Card */}
           <Card className="border-border bg-card">
             <CardContent className="p-6 space-y-3">
-              <h3 className="text-base font-semibold text-zinc-100">
+              <h3 className="text-base font-semibold text-foreground">
                 Interview Prep Studio
               </h3>
               <p className="text-sm text-muted-foreground leading-relaxed">

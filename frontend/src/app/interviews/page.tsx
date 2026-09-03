@@ -4,17 +4,19 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   CalendarCheck2,
-  Plus,
-  Building2,
   Clock,
   Video,
   User,
+  ExternalLink,
+  Plus,
   CheckCircle2,
   XCircle,
-  ExternalLink,
 } from "lucide-react";
-import { getInterviews, getApplications, createInterview, updateInterview } from "@/lib/api";
+import { getInterviews, updateInterview, createInterview, getApplications } from "@/lib/api";
 import { Interview, Application } from "@/types";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -22,17 +24,16 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 
 export default function InterviewsPage() {
   const [interviews, setInterviews] = useState<Interview[]>([]);
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
+
+  // Form State
   const [selectedAppId, setSelectedAppId] = useState("");
   const [roundName, setRoundName] = useState("Technical Interview");
   const [scheduledAt, setScheduledAt] = useState("");
@@ -41,15 +42,16 @@ export default function InterviewsPage() {
   const [prepNotes, setPrepNotes] = useState("");
 
   const loadData = async () => {
+    setLoading(true);
     try {
       const [ivs, apps] = await Promise.all([getInterviews(), getApplications()]);
       setInterviews(ivs);
       setApplications(apps);
-      if (apps.length > 0 && !selectedAppId) {
+      if (apps.length > 0) {
         setSelectedAppId(apps[0].id);
       }
     } catch (err) {
-      console.error("Error loading interviews:", err);
+      console.error("Error fetching interview data:", err);
     } finally {
       setLoading(false);
     }
@@ -59,12 +61,26 @@ export default function InterviewsPage() {
     loadData();
   }, []);
 
+  const handleUpdateOutcome = async (
+    interviewId: string,
+    outcome: "PASSED" | "FAILED" | "PENDING"
+  ) => {
+    try {
+      const updated = await updateInterview(interviewId, { outcome });
+      setInterviews((prev) =>
+        prev.map((iv) => (iv.id === interviewId ? { ...iv, outcome: updated.outcome } : iv))
+      );
+    } catch (err) {
+      console.error("Error updating interview outcome:", err);
+    }
+  };
+
   const handleCreateInterview = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedAppId) return;
 
     try {
-      await createInterview({
+      const newIv = await createInterview({
         application_id: selectedAppId,
         round_name: roundName,
         scheduled_at: scheduledAt ? new Date(scheduledAt).toISOString() : undefined,
@@ -72,19 +88,14 @@ export default function InterviewsPage() {
         meeting_link: meetingLink || undefined,
         prep_notes: prepNotes || undefined,
       });
+      setInterviews((prev) => [newIv, ...prev]);
       setShowAddModal(false);
-      loadData();
-    } catch (err: any) {
-      alert(err.message || "Failed to schedule interview");
-    }
-  };
-
-  const handleUpdateOutcome = async (ivId: string, outcome: "PASSED" | "FAILED" | "PENDING") => {
-    try {
-      await updateInterview(ivId, { outcome });
-      loadData();
+      // Reset
+      setMeetingLink("");
+      setInterviewers("");
+      setPrepNotes("");
     } catch (err) {
-      console.error("Error updating interview outcome:", err);
+      console.error("Error scheduling interview:", err);
     }
   };
 
@@ -93,7 +104,7 @@ export default function InterviewsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-zinc-100 tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
             Interviews
           </h1>
           <p className="text-sm sm:text-base text-muted-foreground mt-1">
@@ -119,7 +130,7 @@ export default function InterviewsPage() {
         ) : interviews.length === 0 ? (
           <Card className="border-border bg-card p-12 text-center space-y-3">
             <CalendarCheck2 className="w-10 h-10 text-muted-foreground mx-auto" />
-            <h3 className="text-base font-semibold text-zinc-100">No interview rounds logged yet</h3>
+            <h3 className="text-base font-semibold text-foreground">No interview rounds logged yet</h3>
             <p className="text-sm text-muted-foreground max-w-sm mx-auto">
               When a company schedules a screening or technical assessment, log it here to prepare answer points.
             </p>
@@ -136,13 +147,13 @@ export default function InterviewsPage() {
           interviews.map((iv) => (
             <Card
               key={iv.id}
-              className="border-border bg-card hover:border-zinc-700 transition-colors shadow"
+              className="border-border bg-card hover:border-primary/30 transition-colors shadow-sm"
             >
               <CardContent className="p-6 space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-4">
                   <div>
                     <div className="flex items-center gap-3 flex-wrap">
-                      <h3 className="text-lg font-semibold text-zinc-100">{iv.round_name}</h3>
+                      <h3 className="text-lg font-semibold text-foreground">{iv.round_name}</h3>
                       <Badge
                         variant={
                           iv.outcome === "PASSED"
@@ -172,18 +183,18 @@ export default function InterviewsPage() {
                       onClick={() => handleUpdateOutcome(iv.id, "PASSED")}
                       variant="outline"
                       size="sm"
-                      className="h-8 text-xs font-semibold gap-1 text-emerald-300 border-emerald-800 hover:bg-emerald-950/40"
+                      className="h-8 text-xs font-semibold gap-1 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800 hover:bg-emerald-500/10"
                     >
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                       <span>Passed</span>
                     </Button>
                     <Button
                       onClick={() => handleUpdateOutcome(iv.id, "FAILED")}
                       variant="outline"
                       size="sm"
-                      className="h-8 text-xs font-semibold gap-1 text-rose-300 border-rose-800 hover:bg-rose-950/40"
+                      className="h-8 text-xs font-semibold gap-1 text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-800 hover:bg-rose-500/10"
                     >
-                      <XCircle className="w-3.5 h-3.5 text-rose-400" />
+                      <XCircle className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
                       <span>Failed</span>
                     </Button>
                   </div>
@@ -236,7 +247,7 @@ export default function InterviewsPage() {
       <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
         <DialogContent className="max-w-lg p-6 space-y-4 border-border bg-card shadow-xl">
           <DialogHeader>
-            <DialogTitle className="text-xl font-semibold text-zinc-100">
+            <DialogTitle className="text-xl font-semibold text-foreground">
               Schedule Interview Round
             </DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground">
@@ -292,7 +303,7 @@ export default function InterviewsPage() {
                 type="datetime-local"
                 value={scheduledAt}
                 onChange={(e) => setScheduledAt(e.target.value)}
-                className="h-10 text-sm"
+                className="h-10 text-sm bg-background border-border"
               />
             </div>
 
@@ -306,7 +317,7 @@ export default function InterviewsPage() {
                 placeholder="e.g. Dave Miller (Engineering Lead)"
                 value={interviewers}
                 onChange={(e) => setInterviewers(e.target.value)}
-                className="h-10 text-sm"
+                className="h-10 text-sm bg-background border-border"
               />
             </div>
 
@@ -320,7 +331,7 @@ export default function InterviewsPage() {
                 placeholder="https://meet.google.com/..."
                 value={meetingLink}
                 onChange={(e) => setMeetingLink(e.target.value)}
-                className="h-10 text-sm"
+                className="h-10 text-sm bg-background border-border"
               />
             </div>
 
@@ -334,7 +345,7 @@ export default function InterviewsPage() {
                 placeholder="Key architecture concepts or questions to review beforehand..."
                 value={prepNotes}
                 onChange={(e) => setPrepNotes(e.target.value)}
-                className="text-sm"
+                className="text-sm bg-background border-border"
               />
             </div>
 

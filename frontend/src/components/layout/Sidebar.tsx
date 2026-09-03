@@ -20,6 +20,7 @@ import { CandidateProfile, DashboardOverview } from "@/types";
 import { getCandidateProfile, getDashboardOverview } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { cn } from "@/lib/utils";
 
 export const Sidebar: React.FC = () => {
@@ -99,9 +100,9 @@ export const Sidebar: React.FC = () => {
       {/* Brand Header */}
       <div className="p-6 border-b border-border flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3">
-          <Briefcase className="w-5 h-5 text-zinc-100 shrink-0" />
+          <Briefcase className="w-5 h-5 text-foreground shrink-0" />
           <div>
-            <h1 className="font-semibold text-base tracking-tight text-zinc-100">
+            <h1 className="font-semibold text-base tracking-tight text-foreground">
               Job Hunt Pipeline
             </h1>
             <p className="text-xs text-muted-foreground">
@@ -139,7 +140,7 @@ export const Sidebar: React.FC = () => {
               className={cn(
                 "flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors",
                 isActive
-                  ? "bg-secondary text-zinc-100 font-semibold shadow-sm"
+                  ? "bg-secondary text-foreground font-semibold shadow-sm"
                   : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
               )}
             >
@@ -147,7 +148,7 @@ export const Sidebar: React.FC = () => {
                 <Icon
                   className={cn(
                     "w-4 h-4 transition-colors",
-                    isActive ? "text-zinc-100" : "text-muted-foreground"
+                    isActive ? "text-foreground" : "text-muted-foreground"
                   )}
                   aria-hidden="true"
                 />
@@ -167,7 +168,7 @@ export const Sidebar: React.FC = () => {
       </nav>
 
       {/* Bottom Profile / Quick Status Footer */}
-      <div className="p-4 border-t border-border bg-card">
+      <div className="p-4 border-t border-border bg-card space-y-3">
         <Link
           href="/profile"
           aria-label="View Candidate Profile"
@@ -185,6 +186,10 @@ export const Sidebar: React.FC = () => {
           </div>
           <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors shrink-0" />
         </Link>
+        <div className="flex items-center justify-between px-1 text-xs text-muted-foreground">
+          <span>Theme Mode</span>
+          <ThemeToggle />
+        </div>
       </div>
     </div>
   );
@@ -219,7 +224,7 @@ export const Sidebar: React.FC = () => {
           className="fixed inset-0 z-50 md:hidden flex"
         >
           <div
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm"
             onClick={() => setMobileOpen(false)}
             aria-hidden="true"
           />

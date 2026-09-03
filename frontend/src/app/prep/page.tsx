@@ -2,48 +2,46 @@
 
 import React, { useEffect, useState } from "react";
 import {
+  Brain,
   GraduationCap,
-  Loader2,
   ChevronDown,
   ChevronUp,
-  Brain,
-  Copy,
-  Check,
   Target,
   FileQuestion,
+  Loader2,
+  Copy,
+  Check,
 } from "lucide-react";
-import { getJobs, getApplications, generateInterviewPrep } from "@/lib/api";
-import { Job, Application, InterviewPrepResponse } from "@/types";
-import { Card, CardContent } from "@/components/ui/card";
+import { getJobs, generateInterviewPrep } from "@/lib/api";
+import { Job, InterviewPrepResponse } from "@/types";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AiPrepLoader } from "@/components/prep/AiPrepLoader";
 
 export default function PrepPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
-  const [applications, setApplications] = useState<Application[]>([]);
   const [selectedJobId, setSelectedJobId] = useState<string>("");
-  const [selectedProvider, setSelectedProvider] = useState("openrouter");
-  const [loading, setLoading] = useState(false);
+  const [selectedProvider, setSelectedProvider] = useState<string>("openrouter");
   const [prepData, setPrepData] = useState<InterviewPrepResponse | null>(null);
-  const [expandedTech, setExpandedTech] = useState<Record<number, boolean>>({});
-  const [expandedBehav, setExpandedBehav] = useState<Record<number, boolean>>({});
+  const [loading, setLoading] = useState(false);
+  const [expandedTech, setExpandedTech] = useState<Record<number, boolean>>({ 0: true });
+  const [expandedBehav, setExpandedBehav] = useState<Record<number, boolean>>({ 0: true });
   const [copiedIndex, setCopiedIndex] = useState<string | null>(null);
 
   useEffect(() => {
-    async function loadData() {
+    async function loadJobs() {
       try {
-        const [jobsData, appsData] = await Promise.all([getJobs(), getApplications()]);
-        setJobs(jobsData);
-        setApplications(appsData);
-        if (jobsData.length > 0) {
-          setSelectedJobId(jobsData[0].id);
+        const data = await getJobs();
+        setJobs(data);
+        if (data.length > 0) {
+          setSelectedJobId(data[0].id);
         }
       } catch (err) {
         console.error("Error loading jobs for prep:", err);
       }
     }
-    loadData();
+    loadJobs();
   }, []);
 
   const handleGeneratePrep = async () => {
@@ -56,8 +54,6 @@ export default function PrepPage() {
         provider: selectedProvider,
       });
       setPrepData(data);
-      setExpandedTech({ 0: true });
-      setExpandedBehav({ 0: true });
     } catch (err: any) {
       alert(err.message || "Failed to generate interview prep kit");
     } finally {
@@ -65,24 +61,23 @@ export default function PrepPage() {
     }
   };
 
-  const copyToClipboard = (text: string, identifier: string) => {
+  const copyToClipboard = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
-    setCopiedIndex(identifier);
+    setCopiedIndex(id);
     setTimeout(() => setCopiedIndex(null), 2000);
   };
 
   const selectedJobObj = jobs.find((j) => j.id === selectedJobId);
-
   const techQuestions = prepData?.top_technical_questions || [];
   const behavQuestions = prepData?.top_behavioral_questions || [];
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
-      {/* Page Header: Clean typography, no gradient, no eyebrow */}
+      {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-zinc-100 tracking-tight flex items-center gap-3">
-            <GraduationCap className="w-7 h-7 text-zinc-100" />
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight flex items-center gap-3">
+            <GraduationCap className="w-7 h-7 text-foreground" />
             AI Prep Studio
           </h1>
           <p className="text-sm sm:text-base text-muted-foreground mt-1">
@@ -92,7 +87,7 @@ export default function PrepPage() {
       </div>
 
       {/* Selector & Generator Card */}
-      <Card className="border-border bg-card p-6 shadow">
+      <Card className="border-border bg-card p-6 shadow-sm">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
           <div className="md:col-span-6 space-y-1.5">
             <label htmlFor="select-role-prep" className="block text-sm font-semibold text-foreground">
@@ -167,9 +162,9 @@ export default function PrepPage() {
       ) : prepData ? (
         <div className="space-y-6">
           {/* Header Banner */}
-          <div className="p-6 bg-card border border-border rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow">
+          <div className="p-6 bg-card border border-border rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
             <div>
-              <h2 className="text-xl font-bold text-zinc-100">
+              <h2 className="text-xl font-bold text-foreground">
                 {selectedJobObj?.title} @ {selectedJobObj?.company}
               </h2>
               <p className="text-sm text-muted-foreground mt-0.5">
@@ -190,8 +185,8 @@ export default function PrepPage() {
             {/* Column 1: Technical Questions */}
             <div className="space-y-4">
               <div className="flex items-center gap-2 border-b border-border pb-2">
-                <Brain className="w-5 h-5 text-zinc-100" />
-                <h3 className="text-base font-bold text-zinc-100">
+                <Brain className="w-5 h-5 text-foreground" />
+                <h3 className="text-base font-bold text-foreground">
                   Role Technical Questions
                 </h3>
               </div>
@@ -204,7 +199,7 @@ export default function PrepPage() {
                   return (
                     <Card
                       key={idx}
-                      className="border-border bg-card overflow-hidden shadow-sm"
+                      className="border-border bg-card overflow-hidden shadow-xs"
                     >
                       <div
                         onClick={() =>
@@ -230,7 +225,7 @@ export default function PrepPage() {
                               </Badge>
                             )}
                           </div>
-                          <h4 className="text-sm font-semibold text-zinc-100 leading-snug">
+                          <h4 className="text-sm font-semibold text-foreground leading-snug">
                             {tq.question}
                           </h4>
                         </div>
@@ -251,7 +246,7 @@ export default function PrepPage() {
                               <ul className="text-sm text-muted-foreground space-y-1">
                                 {tq.suggested_answer_points.map((pt, i) => (
                                   <li key={i} className="flex items-start gap-2">
-                                    <span className="text-zinc-400 mt-0.5">•</span>
+                                    <span className="text-muted-foreground mt-0.5">•</span>
                                     <span>{pt}</span>
                                   </li>
                                 ))}
@@ -268,7 +263,7 @@ export default function PrepPage() {
                             >
                               {copiedIndex === `tech-${idx}` ? (
                                 <>
-                                  <Check className="w-3.5 h-3.5 text-emerald-400" />
+                                  <Check className="w-3.5 h-3.5 text-emerald-500" />
                                   <span>Copied</span>
                                 </>
                               ) : (
@@ -290,8 +285,8 @@ export default function PrepPage() {
             {/* Column 2: Behavioral STAR Questions */}
             <div className="space-y-4">
               <div className="flex items-center gap-2 border-b border-border pb-2">
-                <Target className="w-5 h-5 text-zinc-100" />
-                <h3 className="text-base font-bold text-zinc-100">
+                <Target className="w-5 h-5 text-foreground" />
+                <h3 className="text-base font-bold text-foreground">
                   Behavioral STAR Scenarios
                 </h3>
               </div>
@@ -307,7 +302,7 @@ export default function PrepPage() {
                   return (
                     <Card
                       key={idx}
-                      className="border-border bg-card overflow-hidden shadow-sm"
+                      className="border-border bg-card overflow-hidden shadow-xs"
                     >
                       <div
                         onClick={() =>
@@ -333,7 +328,7 @@ export default function PrepPage() {
                               </Badge>
                             )}
                           </div>
-                          <h4 className="text-sm font-semibold text-zinc-100 leading-snug">
+                          <h4 className="text-sm font-semibold text-foreground leading-snug">
                             {bq.question}
                           </h4>
                         </div>
@@ -353,7 +348,7 @@ export default function PrepPage() {
                               </span>
                               <div className="grid grid-cols-1 gap-2">
                                 <div className="p-2.5 bg-background rounded-md border border-border">
-                                  <span className="text-xs font-bold text-emerald-400 block mb-0.5">
+                                  <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 block mb-0.5">
                                     [S] Situation
                                   </span>
                                   <p className="text-xs text-muted-foreground leading-relaxed">
@@ -361,7 +356,7 @@ export default function PrepPage() {
                                   </p>
                                 </div>
                                 <div className="p-2.5 bg-background rounded-md border border-border">
-                                  <span className="text-xs font-bold text-sky-400 block mb-0.5">
+                                  <span className="text-xs font-bold text-sky-600 dark:text-sky-400 block mb-0.5">
                                     [T] Task
                                   </span>
                                   <p className="text-xs text-muted-foreground leading-relaxed">
@@ -369,7 +364,7 @@ export default function PrepPage() {
                                   </p>
                                 </div>
                                 <div className="p-2.5 bg-background rounded-md border border-border">
-                                  <span className="text-xs font-bold text-amber-400 block mb-0.5">
+                                  <span className="text-xs font-bold text-amber-600 dark:text-amber-400 block mb-0.5">
                                     [A] Action
                                   </span>
                                   <p className="text-xs text-muted-foreground leading-relaxed">
@@ -377,7 +372,7 @@ export default function PrepPage() {
                                   </p>
                                 </div>
                                 <div className="p-2.5 bg-background rounded-md border border-border">
-                                  <span className="text-xs font-bold text-purple-400 block mb-0.5">
+                                  <span className="text-xs font-bold text-purple-600 dark:text-purple-400 block mb-0.5">
                                     [R] Result
                                   </span>
                                   <p className="text-xs text-muted-foreground leading-relaxed">
@@ -397,7 +392,7 @@ export default function PrepPage() {
                             >
                               {copiedIndex === `behav-${idx}` ? (
                                 <>
-                                  <Check className="w-3.5 h-3.5 text-emerald-400" />
+                                  <Check className="w-3.5 h-3.5 text-emerald-500" />
                                   <span>Copied</span>
                                 </>
                               ) : (
@@ -419,9 +414,9 @@ export default function PrepPage() {
 
           {/* Questions to Ask Interviewer */}
           {prepData.questions_to_ask_interviewer && prepData.questions_to_ask_interviewer.length > 0 && (
-            <Card className="border-border bg-card p-6 shadow">
-              <h3 className="text-base font-bold text-zinc-100 flex items-center gap-2 mb-4">
-                <FileQuestion className="w-5 h-5 text-zinc-100" />
+            <Card className="border-border bg-card p-6 shadow-sm">
+              <h3 className="text-base font-bold text-foreground flex items-center gap-2 mb-4">
+                <FileQuestion className="w-5 h-5 text-foreground" />
                 High-Signal Questions for the Interviewer
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -440,7 +435,7 @@ export default function PrepPage() {
       ) : (
         <Card className="border-border bg-card p-12 text-center space-y-3">
           <GraduationCap className="w-10 h-10 text-muted-foreground mx-auto" />
-          <h3 className="text-base font-semibold text-zinc-100">Select an opportunity to begin prep</h3>
+          <h3 className="text-base font-semibold text-foreground">Select an opportunity to begin prep</h3>
           <p className="text-sm text-muted-foreground max-w-sm mx-auto">
             Choose any tracked job posting above and click "Generate Prep Kit" to create technical and behavioral question frameworks.
           </p>

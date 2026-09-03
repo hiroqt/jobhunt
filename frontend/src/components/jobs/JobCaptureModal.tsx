@@ -4,17 +4,15 @@ import React, { useState } from "react";
 import {
   Link as LinkIcon,
   FileText,
-  Loader2,
   CheckCircle2,
   AlertTriangle,
+  RotateCcw,
+  Loader2,
   BookmarkPlus,
   Check,
-  RotateCcw,
 } from "lucide-react";
 import { extractAndAnalyzeJob, createApplication } from "@/lib/api";
-import { JobQualifyingLoader } from "./JobQualifyingLoader";
-import { MatchScoreBadge } from "./MatchScoreBadge";
-import { Job, Application } from "@/types";
+import { Job, ApplicationStage } from "@/types";
 import {
   Dialog,
   DialogContent,
@@ -23,53 +21,53 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { MatchScoreBadge } from "@/components/jobs/MatchScoreBadge";
+import { JobQualifyingLoader } from "@/components/jobs/JobQualifyingLoader";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 interface JobCaptureModalProps {
   isOpen: boolean;
   onClose: () => void;
   onJobCreated?: (job: Job) => void;
-  onApplicationCreated?: (app: Application) => void;
 }
 
 export const JobCaptureModal: React.FC<JobCaptureModalProps> = ({
   isOpen,
   onClose,
   onJobCreated,
-  onApplicationCreated,
 }) => {
   const [tab, setTab] = useState<"url" | "text">("url");
   const [url, setUrl] = useState("");
   const [rawText, setRawText] = useState("");
   const [selectedProvider, setSelectedProvider] = useState("openrouter");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [extractedJob, setExtractedJob] = useState<Job | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [addedToPipeline, setAddedToPipeline] = useState(false);
-  const [savingStatus, setSavingStatus] = useState<"SAVED" | "APPLIED" | null>(null);
-  const [savedStage, setSavedStage] = useState<"SAVED" | "APPLIED" | null>(null);
+  const [savingStatus, setSavingStatus] = useState<ApplicationStage | null>(null);
+  const [savedStage, setSavedStage] = useState<ApplicationStage | null>(null);
 
   const handleAnalyze = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
     setLoading(true);
+    setError(null);
     setExtractedJob(null);
     setAddedToPipeline(false);
-    setSavingStatus(null);
-    setSavedStage(null);
 
     try {
-      const job = await extractAndAnalyzeJob(
-        tab === "url" ? url : undefined,
-        tab === "text" ? rawText : undefined,
-        selectedProvider
-      );
-      setExtractedJob(job);
-      if (onJobCreated) onJobCreated(job);
+      const targetUrl = tab === "url" ? url : undefined;
+      const targetText = tab === "text" ? rawText : undefined;
+
+      if (tab === "url" && !url) throw new Error("Please enter a valid job URL");
+      if (tab === "text" && !rawText) throw new Error("Please paste the job description text");
+
+      const res = await extractAndAnalyzeJob(targetUrl, targetText, selectedProvider);
+      setExtractedJob(res);
+      if (onJobCreated) onJobCreated(res);
     } catch (err: any) {
       setError(err.message || "Failed to analyze job posting");
     } finally {
@@ -77,22 +75,19 @@ export const JobCaptureModal: React.FC<JobCaptureModalProps> = ({
     }
   };
 
-  const handleAddToPipeline = async (status: "SAVED" | "APPLIED" = "SAVED") => {
+  const handleAddToPipeline = async (status: ApplicationStage) => {
     if (!extractedJob) return;
     setSavingStatus(status);
-    setError(null);
     try {
-      const app = await createApplication({
+      await createApplication({
         job_id: extractedJob.id,
-        status: status,
-        notes: `Qualified via Job Explorer with ${extractedJob.match_score || 0}% match score.`,
+        status,
+        notes: `Application captured via AI Modal. Match score: ${extractedJob.match_score}%.`,
       });
       setAddedToPipeline(true);
       setSavedStage(status);
-      if (onJobCreated) onJobCreated(extractedJob);
-      if (onApplicationCreated) onApplicationCreated(app);
     } catch (err: any) {
-      setError(err.message || "Failed to add to application pipeline");
+      alert(err.message || "Failed to add application to pipeline");
     } finally {
       setSavingStatus(null);
     }
@@ -101,11 +96,9 @@ export const JobCaptureModal: React.FC<JobCaptureModalProps> = ({
   const resetAndClose = () => {
     setUrl("");
     setRawText("");
-    setError(null);
     setExtractedJob(null);
+    setError(null);
     setAddedToPipeline(false);
-    setSavingStatus(null);
-    setSavedStage(null);
     onClose();
   };
 
@@ -114,7 +107,7 @@ export const JobCaptureModal: React.FC<JobCaptureModalProps> = ({
       <DialogContent className="max-w-2xl w-full p-0 gap-0 border-border bg-card shadow-2xl overflow-hidden rounded-2xl">
         {/* Header */}
         <DialogHeader className="p-6 border-b border-border bg-card">
-          <DialogTitle className="text-xl font-bold text-zinc-100">
+          <DialogTitle className="text-xl font-bold text-foreground">
             {loading ? "Qualifying Job Posting" : "Capture & Qualify Job Posting"}
           </DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground mt-1">
@@ -161,7 +154,7 @@ export const JobCaptureModal: React.FC<JobCaptureModalProps> = ({
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
                     placeholder="https://www.linkedin.com/jobs/view/..."
-                    className="h-10 text-sm"
+                    className="h-10 text-sm bg-background border-border"
                   />
                   <p className="text-xs text-muted-foreground">
                     Tracking parameters will automatically be stripped.
@@ -179,7 +172,7 @@ export const JobCaptureModal: React.FC<JobCaptureModalProps> = ({
                     value={rawText}
                     onChange={(e) => setRawText(e.target.value)}
                     placeholder="Paste the full job posting text including responsibilities and qualifications..."
-                    className="text-sm font-mono"
+                    className="text-sm font-mono bg-background border-border"
                   />
                 </TabsContent>
               </Tabs>
@@ -187,7 +180,7 @@ export const JobCaptureModal: React.FC<JobCaptureModalProps> = ({
               {/* AI Model Engine Selector */}
               <div className="bg-muted/40 border border-border rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <p className="text-sm font-semibold text-zinc-100">AI Provider</p>
+                  <p className="text-sm font-semibold text-foreground">AI Provider</p>
                   <p className="text-xs text-muted-foreground">
                     Select model engine for qualification scoring
                   </p>
@@ -245,10 +238,10 @@ export const JobCaptureModal: React.FC<JobCaptureModalProps> = ({
               <div className="bg-muted/30 border border-border rounded-xl p-5 space-y-3">
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
-                    <h3 className="text-xl font-bold text-zinc-100 tracking-tight">
+                    <h3 className="text-xl font-bold text-foreground tracking-tight">
                       {extractedJob.title}
                     </h3>
-                    <p className="text-sm text-zinc-300 font-medium mt-1">
+                    <p className="text-sm text-muted-foreground font-medium mt-1">
                       {extractedJob.company} • {extractedJob.location || "Remote"} • {extractedJob.workplace_type}
                     </p>
                   </div>
@@ -267,10 +260,10 @@ export const JobCaptureModal: React.FC<JobCaptureModalProps> = ({
 
               {/* Matched vs Missing Skills breakdown - Equal Height Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-stretch">
-                <div className="bg-emerald-950/20 border border-emerald-800/40 rounded-xl p-4 flex flex-col justify-between space-y-3">
+                <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4 flex flex-col justify-between space-y-3">
                   <div className="space-y-2">
-                    <h4 className="text-sm font-semibold text-emerald-300 flex items-center gap-1.5">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <h4 className="text-sm font-semibold text-emerald-700 dark:text-emerald-300 flex items-center gap-1.5">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
                       Matching Skills ({extractedJob.matched_skills.length})
                     </h4>
                     <div className="flex flex-wrap gap-1.5">
@@ -293,10 +286,10 @@ export const JobCaptureModal: React.FC<JobCaptureModalProps> = ({
                   </div>
                 </div>
 
-                <div className="bg-rose-950/20 border border-rose-800/40 rounded-xl p-4 flex flex-col justify-between space-y-3">
+                <div className="bg-rose-500/10 border border-rose-500/20 rounded-xl p-4 flex flex-col justify-between space-y-3">
                   <div className="space-y-2">
-                    <h4 className="text-sm font-semibold text-rose-300 flex items-center gap-1.5">
-                      <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+                    <h4 className="text-sm font-semibold text-rose-700 dark:text-rose-300 flex items-center gap-1.5">
+                      <AlertTriangle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
                       Missing Critical Skills ({extractedJob.missing_critical_skills.length})
                     </h4>
                     <div className="flex flex-wrap gap-1.5">
@@ -311,7 +304,7 @@ export const JobCaptureModal: React.FC<JobCaptureModalProps> = ({
                           </Badge>
                         ))
                       ) : (
-                        <span className="text-xs text-emerald-400 font-semibold">
+                        <span className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold">
                           ✓ All critical skills satisfied!
                         </span>
                       )}
@@ -327,7 +320,7 @@ export const JobCaptureModal: React.FC<JobCaptureModalProps> = ({
                     <Button
                       onClick={() => handleAddToPipeline("APPLIED")}
                       disabled={savingStatus !== null}
-                      variant="success"
+                      variant="default"
                       className="flex-1 sm:flex-none font-semibold gap-2 text-sm h-10 px-5"
                     >
                       {savingStatus === "APPLIED" ? (
@@ -362,7 +355,7 @@ export const JobCaptureModal: React.FC<JobCaptureModalProps> = ({
                     </Button>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-2 text-emerald-400 text-sm font-semibold bg-emerald-950/30 border border-emerald-800/60 px-4 py-2 rounded-lg flex-1">
+                  <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 text-sm font-semibold bg-emerald-500/10 border border-emerald-500/20 px-4 py-2 rounded-lg flex-1">
                     <CheckCircle2 className="w-4 h-4" />
                     <span>
                       {savedStage === "SAVED"

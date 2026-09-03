@@ -2,23 +2,16 @@
 
 import React, { useState, useEffect } from "react";
 import {
-  Building,
-  MapPin,
-  Calendar,
-  Send,
-  History,
-  CheckCircle2,
-  Clock,
-  Loader2,
-  AlertTriangle,
   FileText,
-  User,
+  History,
+  Send,
+  Loader2,
   Copy,
   Check,
+  Clock,
 } from "lucide-react";
-import { Application, ApplicationStage } from "@/types";
 import { updateApplicationStatus, updateApplication, generateFollowUpEmail } from "@/lib/api";
-import { MatchScoreBadge } from "@/components/jobs/MatchScoreBadge";
+import { Application, ApplicationStage } from "@/types";
 import {
   Dialog,
   DialogContent,
@@ -30,25 +23,21 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { MatchScoreBadge } from "@/components/jobs/MatchScoreBadge";
 
 interface ApplicationModalProps {
   application: Application | null;
   isOpen: boolean;
   onClose: () => void;
-  onUpdated: (updatedApp: Application) => void;
+  onUpdated?: (updated: Application) => void;
 }
 
 const STAGES: { value: ApplicationStage; label: string }[] = [
-  { value: "SAVED", label: "Saved / Wishlist" },
-  { value: "QUALIFIED", label: "Qualified" },
+  { value: "SAVED", label: "Saved & Wishlist" },
   { value: "APPLIED", label: "Applied" },
-  { value: "APPLICATION_VIEWED", label: "Viewed" },
-  { value: "HR_SCREENING", label: "HR / Recruiter Screen" },
-  { value: "TECHNICAL_INTERVIEW", label: "Technical Interview" },
-  { value: "FINAL_INTERVIEW", label: "Final Round" },
+  { value: "HR_SCREENING", label: "Screening" },
+  { value: "TECHNICAL_INTERVIEW", label: "Interview" },
   { value: "OFFER", label: "Offer Extended" },
   { value: "REJECTED", label: "Rejected" },
   { value: "WITHDRAWN", label: "Withdrawn" },
@@ -61,36 +50,37 @@ export const ApplicationModal: React.FC<ApplicationModalProps> = ({
   onUpdated,
 }) => {
   const [activeTab, setActiveTab] = useState<"overview" | "timeline" | "email">("overview");
-  const [status, setStatus] = useState<ApplicationStage>(application?.status || "SAVED");
-  const [transitionNotes, setTransitionNotes] = useState("");
-  const [recruiterName, setRecruiterName] = useState(application?.recruiter_name || "");
-  const [recruiterEmail, setRecruiterEmail] = useState(application?.recruiter_email || "");
-  const [notes, setNotes] = useState(application?.notes || "");
+  const [status, setStatus] = useState<ApplicationStage>("APPLIED");
+  const [notes, setNotes] = useState("");
+  const [recruiterName, setRecruiterName] = useState("");
+  const [recruiterEmail, setRecruiterEmail] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Email generator state
   const [emailLoading, setEmailLoading] = useState(false);
-  const [copied, setCopied] = useState(false);
   const [generatedEmail, setGeneratedEmail] = useState<{ subject: string; body: string } | null>(null);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (application) {
       setStatus(application.status);
+      setNotes(application.notes || "");
       setRecruiterName(application.recruiter_name || "");
       setRecruiterEmail(application.recruiter_email || "");
-      setNotes(application.notes || "");
+      setGeneratedEmail(null);
     }
   }, [application]);
 
   if (!application) return null;
 
   const handleStatusChange = async (newStatus: ApplicationStage) => {
-    setStatus(newStatus);
     setLoading(true);
     try {
-      const updated = await updateApplicationStatus(application.id, newStatus, transitionNotes || undefined);
-      onUpdated(updated);
-      setTransitionNotes("");
-    } catch (err: any) {
-      alert(err.message || "Failed to update status");
+      const updated = await updateApplicationStatus(application.id, newStatus);
+      setStatus(newStatus);
+      if (onUpdated) onUpdated(updated);
+    } catch (err) {
+      console.error("Error updating status:", err);
     } finally {
       setLoading(false);
     }
@@ -100,30 +90,28 @@ export const ApplicationModal: React.FC<ApplicationModalProps> = ({
     setLoading(true);
     try {
       const updated = await updateApplication(application.id, {
+        notes,
         recruiter_name: recruiterName,
         recruiter_email: recruiterEmail,
-        notes: notes,
       });
-      onUpdated(updated);
-    } catch (err: any) {
-      alert(err.message || "Failed to save changes");
+      if (onUpdated) onUpdated(updated);
+    } catch (err) {
+      console.error("Error saving notes:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGenerateEmail = async (emailType: string = "STATUS_CHECK") => {
+  const handleGenerateEmail = async (type: "STATUS_CHECK" | "POST_INTERVIEW_THANK_YOU" | "OFFER_ACCEPT") => {
     setEmailLoading(true);
     try {
       const res = await generateFollowUpEmail({
         application_id: application.id,
-        email_type: emailType,
-        interviewer_name: recruiterName || undefined,
-        topics_discussed: notes || undefined,
+        email_type: type,
       });
-      setGeneratedEmail({ subject: res.subject, body: res.body });
-    } catch (err: any) {
-      alert(err.message || "Failed to generate email");
+      setGeneratedEmail(res);
+    } catch (err) {
+      console.error("Error generating follow-up email:", err);
     } finally {
       setEmailLoading(false);
     }
@@ -131,7 +119,7 @@ export const ApplicationModal: React.FC<ApplicationModalProps> = ({
 
   const copyEmail = () => {
     if (!generatedEmail) return;
-    navigator.clipboard.writeText(`${generatedEmail.subject}\n\n${generatedEmail.body}`);
+    navigator.clipboard.writeText(`Subject: ${generatedEmail.subject}\n\n${generatedEmail.body}`);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -144,7 +132,7 @@ export const ApplicationModal: React.FC<ApplicationModalProps> = ({
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
             <div>
               <div className="flex items-center gap-3">
-                <DialogTitle className="text-xl font-semibold text-zinc-100">
+                <DialogTitle className="text-xl font-semibold text-foreground">
                   {application.job?.title || "Application"}
                 </DialogTitle>
                 {application.job && (
@@ -155,7 +143,7 @@ export const ApplicationModal: React.FC<ApplicationModalProps> = ({
                   />
                 )}
               </div>
-              <DialogDescription className="text-sm text-zinc-300 font-medium mt-1">
+              <DialogDescription className="text-sm text-muted-foreground font-medium mt-1">
                 {application.job?.company} • {application.job?.location || "Remote"} ({application.job?.workplace_type || "Full-time"})
               </DialogDescription>
             </div>
@@ -215,7 +203,7 @@ export const ApplicationModal: React.FC<ApplicationModalProps> = ({
                     value={recruiterName}
                     onChange={(e) => setRecruiterName(e.target.value)}
                     placeholder="e.g. Sarah Jenkins (Hiring Manager)"
-                    className="h-10 text-sm"
+                    className="h-10 text-sm bg-background border-border"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -228,7 +216,7 @@ export const ApplicationModal: React.FC<ApplicationModalProps> = ({
                     value={recruiterEmail}
                     onChange={(e) => setRecruiterEmail(e.target.value)}
                     placeholder="sarah@company.com"
-                    className="h-10 text-sm"
+                    className="h-10 text-sm bg-background border-border"
                   />
                 </div>
               </div>
@@ -243,7 +231,7 @@ export const ApplicationModal: React.FC<ApplicationModalProps> = ({
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Record custom details, conversation talking points, and specific salary figures..."
-                  className="text-sm font-normal"
+                  className="text-sm font-normal bg-background border-border"
                 />
               </div>
 
@@ -267,9 +255,9 @@ export const ApplicationModal: React.FC<ApplicationModalProps> = ({
               <div className="border-l-2 border-border ml-3 pl-4 space-y-4">
                 {application.timeline.map((entry, idx) => (
                   <div key={entry.id || idx} className="relative">
-                    <div className="w-2.5 h-2.5 rounded-full bg-zinc-400 absolute -left-[21px] top-1" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-primary/60 absolute -left-[21px] top-1" />
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-zinc-100">
+                      <span className="text-sm font-semibold text-foreground">
                         {entry.new_status}
                       </span>
                       {entry.previous_status && (
@@ -300,7 +288,7 @@ export const ApplicationModal: React.FC<ApplicationModalProps> = ({
                   variant="outline"
                   className="h-11 justify-start gap-2 text-sm font-medium"
                 >
-                  <Clock className="w-4 h-4 text-amber-400" />
+                  <Clock className="w-4 h-4 text-amber-500" />
                   Day 5 Status Check Email
                 </Button>
                 <Button
@@ -309,7 +297,7 @@ export const ApplicationModal: React.FC<ApplicationModalProps> = ({
                   variant="outline"
                   className="h-11 justify-start gap-2 text-sm font-medium"
                 >
-                  <Send className="w-4 h-4 text-zinc-100" />
+                  <Send className="w-4 h-4 text-foreground" />
                   Post-Interview Thank You
                 </Button>
               </div>
@@ -328,7 +316,7 @@ export const ApplicationModal: React.FC<ApplicationModalProps> = ({
                       <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">
                         Subject Line:
                       </span>
-                      <p className="text-sm font-semibold text-zinc-100 mt-0.5">
+                      <p className="text-sm font-semibold text-foreground mt-0.5">
                         {generatedEmail.subject}
                       </p>
                     </div>
@@ -342,7 +330,7 @@ export const ApplicationModal: React.FC<ApplicationModalProps> = ({
                     </div>
                     <Button
                       onClick={copyEmail}
-                      variant="success"
+                      variant="default"
                       size="sm"
                       className="gap-1.5 font-semibold text-xs"
                     >

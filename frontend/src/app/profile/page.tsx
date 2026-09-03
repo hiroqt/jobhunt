@@ -3,23 +3,23 @@
 import React, { useEffect, useState, useRef } from "react";
 import {
   UserCheck,
+  Building,
+  Layers,
+  Save,
   Plus,
   Trash2,
-  Save,
-  Building,
-  CheckCircle2,
-  Layers,
   UploadCloud,
   FileText,
+  CheckCircle2,
   Loader2,
   FileCheck,
 } from "lucide-react";
 import {
   getCandidateProfile,
   updateCandidateProfile,
-  getSkillTaxonomy,
   addCandidateSkill,
   removeCandidateSkill,
+  getSkillTaxonomy,
   uploadResume,
 } from "@/lib/api";
 import { CandidateProfile, CandidateSkill, SkillTaxonomyItem } from "@/types";
@@ -30,8 +30,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
-import { ResumeParsingLoader } from "@/components/profile/ResumeParsingLoader";
-
 export default function ProfilePage() {
   const [profile, setProfile] = useState<CandidateProfile | null>(null);
   const [taxonomy, setTaxonomy] = useState<SkillTaxonomyItem[]>([]);
@@ -39,55 +37,55 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
 
-  // Resume Upload State
-  const [resumeFile, setResumeFile] = useState<File | null>(null);
-  const [pastedResumeText, setPastedResumeText] = useState("");
-  const [uploadMode, setUploadMode] = useState<"file" | "paste">("file");
-  const [resumeProvider, setResumeProvider] = useState("openrouter");
-  const [isParsingResume, setIsParsingResume] = useState(false);
-  const [resumeParseSuccess, setResumeParseSuccess] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Form State
+  // Profile fields state
   const [fullName, setFullName] = useState("");
   const [headline, setHeadline] = useState("");
   const [summary, setSummary] = useState("");
+  const [yearsExp, setYearsExp] = useState<number>(0);
   const [targetRoles, setTargetRoles] = useState("");
-  const [minSalary, setMinSalary] = useState(0);
-  const [targetSalary, setTargetSalary] = useState(0);
-  const [yearsExp, setYearsExp] = useState(0);
+  const [minSalary, setMinSalary] = useState<number>(0);
+  const [targetSalary, setTargetSalary] = useState<number>(0);
   const [education, setEducation] = useState("");
   const [githubUrl, setGithubUrl] = useState("");
   const [linkedinUrl, setLinkedinUrl] = useState("");
 
-  // Add Skill state
+  // Skill add state
   const [skillInputName, setSkillInputName] = useState("");
   const [skillCategory, setSkillCategory] = useState("Frontend");
   const [proficiency, setProficiency] = useState("Intermediate");
-  const [skillYears, setSkillYears] = useState(1);
+  const [skillYears, setSkillYears] = useState<number>(1);
 
-  const populateFormFields = (profData: CandidateProfile) => {
-    setProfile(profData);
-    setFullName(profData.full_name || "");
-    setHeadline(profData.headline || "");
-    setSummary(profData.summary || "");
-    setTargetRoles((profData.target_roles || []).join(", "));
-    setMinSalary(profData.min_salary || 0);
-    setTargetSalary(profData.target_salary || 0);
-    setYearsExp(profData.years_of_experience || 0);
-    setEducation(profData.education_level || "");
-    setGithubUrl(profData.github_url || "");
-    setLinkedinUrl(profData.linkedin_url || "");
-  };
+  // Resume Upload State
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const [pastedResumeText, setPastedResumeText] = useState("");
+  const [resumeProvider, setResumeProvider] = useState("openrouter");
+  const [isParsingResume, setIsParsingResume] = useState(false);
+  const [resumeParseSuccess, setResumeParseSuccess] = useState<string | null>(null);
+  const [uploadMode, setUploadMode] = useState<"file" | "paste">("file");
 
-  const loadProfile = async () => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const loadData = async () => {
+    setLoading(true);
     try {
       const [profData, taxData] = await Promise.all([
         getCandidateProfile(),
         getSkillTaxonomy(),
       ]);
-      populateFormFields(profData);
+      setProfile(profData);
       setTaxonomy(taxData);
+
+      // Hydrate state
+      setFullName(profData.full_name || "");
+      setHeadline(profData.headline || "");
+      setSummary(profData.summary || "");
+      setYearsExp(profData.years_of_experience || 0);
+      setTargetRoles(profData.target_roles?.join(", ") || "");
+      setMinSalary(profData.min_salary || 0);
+      setTargetSalary(profData.target_salary || 0);
+      setEducation(profData.education_level || "");
+      setGithubUrl(profData.github_url || "");
+      setLinkedinUrl(profData.linkedin_url || "");
     } catch (err) {
       console.error("Error loading candidate profile:", err);
     } finally {
@@ -96,66 +94,36 @@ export default function ProfilePage() {
   };
 
   useEffect(() => {
-    loadProfile();
+    loadData();
   }, []);
-
-  const handleResumeUpload = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (uploadMode === "file" && !resumeFile) {
-      alert("Please choose a PDF or TXT resume file.");
-      return;
-    }
-    if (uploadMode === "paste" && !pastedResumeText.trim()) {
-      alert("Please paste your resume content.");
-      return;
-    }
-
-    setIsParsingResume(true);
-    setResumeParseSuccess(null);
-
-    try {
-      const updatedProfile = await uploadResume(
-        uploadMode === "file" ? resumeFile : null,
-        uploadMode === "paste" ? pastedResumeText : undefined,
-        resumeProvider
-      );
-      populateFormFields(updatedProfile);
-      setResumeParseSuccess(
-        `Resume parsed successfully. Profile and ${updatedProfile.skills.length} skills auto-populated.`
-      );
-      setResumeFile(null);
-      setPastedResumeText("");
-      setTimeout(() => setResumeParseSuccess(null), 6000);
-    } catch (err: any) {
-      alert(err.message || "Failed to parse resume");
-    } finally {
-      setIsParsingResume(false);
-    }
-  };
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     setSavedSuccess(false);
-
     try {
+      const rolesArray = targetRoles
+        .split(",")
+        .map((r) => r.trim())
+        .filter((r) => r.length > 0);
+
       const updated = await updateCandidateProfile({
         full_name: fullName,
-        headline: headline,
-        summary: summary,
-        target_roles: targetRoles.split(",").map((r) => r.trim()).filter(Boolean),
-        min_salary: Number(minSalary),
-        target_salary: Number(targetSalary),
+        headline,
+        summary,
         years_of_experience: Number(yearsExp),
+        target_roles: rolesArray,
+        min_salary: Number(minSalary) || undefined,
+        target_salary: Number(targetSalary) || undefined,
         education_level: education,
         github_url: githubUrl,
         linkedin_url: linkedinUrl,
       });
-      populateFormFields(updated);
+      setProfile(updated);
       setSavedSuccess(true);
-      setTimeout(() => setSavedSuccess(false), 3000);
-    } catch (err: any) {
-      alert(err.message || "Failed to update profile");
+      setTimeout(() => setSavedSuccess(false), 4000);
+    } catch (err) {
+      console.error("Error saving profile:", err);
     } finally {
       setSaving(false);
     }
@@ -166,45 +134,69 @@ export default function ProfilePage() {
     if (!skillInputName.trim()) return;
 
     try {
-      await addCandidateSkill({
+      const newSkill = await addCandidateSkill({
         skill_name: skillInputName.trim(),
         skill_category: skillCategory,
-        proficiency,
+        proficiency: proficiency,
         years: Number(skillYears),
-        is_top: false,
       });
+
+      if (profile) {
+        setProfile({
+          ...profile,
+          skills: [...profile.skills, newSkill],
+        });
+      }
       setSkillInputName("");
-      loadProfile();
     } catch (err: any) {
-      alert(err.message || "Skill already exists or could not be added");
+      alert(err.message || "Failed to add skill");
     }
   };
 
-  const handleRemoveSkill = async (candSkillId: string) => {
+  const handleRemoveSkill = async (skillId: string) => {
     try {
-      await removeCandidateSkill(candSkillId);
-      setProfile((prev) =>
-        prev ? { ...prev, skills: prev.skills.filter((s) => s.id !== candSkillId) } : null
-      );
-    } catch (err: any) {
-      alert(err.message || "Failed to remove skill");
+      await removeCandidateSkill(skillId);
+      if (profile) {
+        setProfile({
+          ...profile,
+          skills: profile.skills.filter((s) => s.id !== skillId),
+        });
+      }
+    } catch (err) {
+      console.error("Error removing skill:", err);
     }
   };
 
-  // If currently parsing resume, blank the whole page content and display the custom parsing loader animation
-  if (isParsingResume) {
-    return (
-      <ResumeParsingLoader
-        fileName={uploadMode === "file" ? resumeFile?.name : "Pasted Resume Document"}
-        fileSize={uploadMode === "file" && resumeFile ? resumeFile.size : undefined}
-        uploadMode={uploadMode}
-        rawText={uploadMode === "paste" ? pastedResumeText : undefined}
-        provider={resumeProvider}
-      />
-    );
-  }
+  const handleResumeUpload = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsParsingResume(true);
+    setResumeParseSuccess(null);
 
-  // Group candidate skills by category
+    try {
+      const file = uploadMode === "file" ? resumeFile : null;
+      const text = uploadMode === "paste" ? pastedResumeText.trim() : undefined;
+
+      if (!file && !text) {
+        alert("Please provide a resume file or paste text first.");
+        setIsParsingResume(false);
+        return;
+      }
+
+      const res = await uploadResume(file, text, resumeProvider);
+      setResumeParseSuccess(
+        `Successfully extracted profile for ${res.full_name || "Candidate"} and populated ${res.skills?.length || 0} verified skills!`
+      );
+
+      // Reload full state
+      loadData();
+    } catch (err: any) {
+      alert(err.message || "Error parsing resume with AI");
+    } finally {
+      setIsParsingResume(false);
+    }
+  };
+
+  // Group verified skills by category
   const skillsByCategory: Record<string, CandidateSkill[]> = {};
   if (profile?.skills) {
     profile.skills.forEach((cs) => {
@@ -216,11 +208,11 @@ export default function ProfilePage() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-200">
-      {/* Header: Clean typography, no gradient, no eyebrow */}
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-zinc-100 tracking-tight flex items-center gap-3">
-            <UserCheck className="w-7 h-7 text-zinc-100" />
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight flex items-center gap-3">
+            <UserCheck className="w-7 h-7 text-foreground" />
             Candidate Profile & Skill Matrix
           </h1>
           <p className="text-sm sm:text-base text-muted-foreground mt-1">
@@ -234,12 +226,12 @@ export default function ProfilePage() {
         )}
       </div>
 
-      {/* Resume Parser Card: Solid dark styling */}
-      <Card className="border-border bg-card shadow-lg">
+      {/* Resume Parser Card */}
+      <Card className="border-border bg-card shadow-sm">
         <CardContent className="p-6 space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
             <div className="space-y-1">
-              <h2 className="text-lg font-bold text-zinc-100">
+              <h2 className="text-lg font-bold text-foreground">
                 Resume Auto-Complete
               </h2>
               <p className="text-sm text-muted-foreground max-w-xl">
@@ -288,7 +280,7 @@ export default function ProfilePage() {
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") fileInputRef.current?.click();
                     }}
-                    className="border border-dashed border-border hover:border-zinc-500 bg-background/50 rounded-xl p-6 text-center cursor-pointer transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="border border-dashed border-border hover:border-primary/40 bg-background/50 rounded-xl p-6 text-center cursor-pointer transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <input
                       ref={fileInputRef}
@@ -304,7 +296,7 @@ export default function ProfilePage() {
                     />
                     {resumeFile ? (
                       <div className="flex items-center justify-center gap-2 text-foreground font-semibold text-sm">
-                        <FileCheck className="w-5 h-5 text-emerald-400" />
+                        <FileCheck className="w-5 h-5 text-emerald-500" />
                         <span>{resumeFile.name}</span>
                         <span className="text-muted-foreground font-mono text-xs">
                           ({(resumeFile.size / 1024).toFixed(1)} KB)
@@ -313,7 +305,7 @@ export default function ProfilePage() {
                     ) : (
                       <div className="space-y-1.5">
                         <UploadCloud className="w-7 h-7 text-muted-foreground mx-auto" />
-                        <p className="text-sm font-semibold text-zinc-100">
+                        <p className="text-sm font-semibold text-foreground">
                           Click to select PDF or TXT Resume
                         </p>
                         <p className="text-xs text-muted-foreground">
@@ -380,10 +372,10 @@ export default function ProfilePage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left 7 Cols: Master Details Form */}
-        <Card className="lg:col-span-7 border-border bg-card shadow">
+        <Card className="lg:col-span-7 border-border bg-card shadow-sm">
           <CardHeader className="p-6 pb-4 flex flex-row items-center justify-between">
             <CardTitle className="text-lg font-bold flex items-center gap-2">
-              <Building className="w-4 h-4 text-zinc-100" />
+              <Building className="w-4 h-4 text-foreground" />
               Master Career Information
             </CardTitle>
             <span className="text-xs text-muted-foreground font-mono">
@@ -558,7 +550,7 @@ export default function ProfilePage() {
           <Card className="border-border bg-card">
             <CardHeader className="p-6 pb-4">
               <CardTitle className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
-                <Plus className="w-4 h-4 text-emerald-400" />
+                <Plus className="w-4 h-4 text-emerald-500" />
                 Add Skill to Inventory
               </CardTitle>
             </CardHeader>
@@ -656,7 +648,7 @@ export default function ProfilePage() {
           <Card className="border-border bg-card">
             <CardHeader className="p-6 pb-4">
               <CardTitle className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
-                <Layers className="w-4 h-4 text-zinc-100" />
+                <Layers className="w-4 h-4 text-foreground" />
                 Verified Skill Inventory ({profile?.skills.length || 0})
               </CardTitle>
             </CardHeader>
@@ -672,7 +664,7 @@ export default function ProfilePage() {
                         {items.map((cs) => (
                           <div
                             key={cs.id}
-                            className="bg-muted/40 border border-border hover:border-zinc-600 rounded-lg px-3 py-1.5 text-sm flex items-center gap-2 group transition-all"
+                            className="bg-muted/40 border border-border hover:border-primary/40 rounded-lg px-3 py-1.5 text-sm flex items-center gap-2 group transition-all"
                           >
                             <span className="font-medium text-foreground">
                               {cs.skill_name}
@@ -682,7 +674,7 @@ export default function ProfilePage() {
                             </Badge>
                             <button
                               onClick={() => handleRemoveSkill(cs.id)}
-                              className="text-muted-foreground hover:text-rose-400 transition-colors"
+                              className="text-muted-foreground hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
                               aria-label={`Remove skill ${cs.skill_name}`}
                               title="Remove skill"
                             >
@@ -696,7 +688,7 @@ export default function ProfilePage() {
                 </div>
               ) : (
                 <div className="p-8 bg-muted/20 border border-dashed border-border rounded-xl text-center space-y-2 text-sm text-muted-foreground">
-                  <p className="font-semibold text-zinc-100">No skills recorded yet</p>
+                  <p className="font-semibold text-foreground">No skills recorded yet</p>
                   <p className="text-xs text-muted-foreground">
                     Upload your resume above to automatically discover and verify your skills.
                   </p>

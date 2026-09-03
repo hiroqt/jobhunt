@@ -72,14 +72,14 @@ export const ResumeParsingLoader: React.FC<ResumeParsingLoaderProps> = ({
       <div className="relative flex items-center justify-center">
         <div className="absolute w-24 h-24 bg-emerald-500/15 rounded-full blur-2xl animate-pulse" />
         <div className="relative w-12 h-12 rounded-full border border-border/80 flex items-center justify-center bg-card/90 shadow-xl">
-          <Loader2 className="w-6 h-6 text-emerald-400 animate-spin" />
+          <Loader2 className="w-6 h-6 text-emerald-500 animate-spin" />
         </div>
       </div>
 
       {/* Fading Sequential Text */}
       <div className="min-h-[48px] flex items-center justify-center px-4 max-w-lg">
         <p
-          className={`text-xl sm:text-2xl font-medium text-zinc-100 tracking-tight transition-all duration-400 ease-out transform ${
+          className={`text-xl sm:text-2xl font-medium text-foreground tracking-tight transition-all duration-400 ease-out transform ${
             fadeState === "in"
               ? "opacity-100 translate-y-0 scale-100"
               : "opacity-0 -translate-y-1.5 scale-95"

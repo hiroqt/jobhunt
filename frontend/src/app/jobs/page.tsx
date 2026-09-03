@@ -112,7 +112,7 @@ function JobsContent() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-zinc-100 tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
             Job Explorer
           </h1>
           <p className="text-sm sm:text-base text-muted-foreground mt-1">
@@ -142,7 +142,7 @@ function JobsContent() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search title, company, or tech keywords..."
-              className="pl-10 h-10 text-sm"
+              className="pl-10 h-10 text-sm bg-background border-border"
             />
           </div>
 
@@ -189,7 +189,7 @@ function JobsContent() {
           ) : jobs.length === 0 ? (
             <Card className="border-border bg-card text-center p-8 space-y-3">
               <Compass className="w-8 h-8 text-muted-foreground mx-auto" />
-              <h3 className="text-base font-semibold text-zinc-100">No jobs saved yet</h3>
+              <h3 className="text-base font-semibold text-foreground">No jobs saved yet</h3>
               <p className="text-sm text-muted-foreground max-w-xs mx-auto">
                 Paste any job posting URL to extract requirements and see your automated match score.
               </p>
@@ -219,13 +219,13 @@ function JobsContent() {
                   className={cn(
                     "p-4 rounded-xl border transition-colors cursor-pointer select-none outline-none focus-visible:ring-2 focus-visible:ring-ring",
                     isSelected
-                      ? "bg-secondary border-zinc-600 shadow"
+                      ? "bg-secondary border-primary/30 shadow-sm"
                       : "bg-card border-border hover:bg-accent/40"
                   )}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <h3 className="text-base font-semibold text-zinc-100 line-clamp-1">
+                      <h3 className="text-base font-semibold text-foreground line-clamp-1">
                         {job.title}
                       </h3>
                       <p className="text-sm text-muted-foreground font-medium">
@@ -246,7 +246,7 @@ function JobsContent() {
                     {job.salary_min && (
                       <>
                         <span>•</span>
-                        <span className="text-emerald-400 font-semibold">
+                        <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
                           ${job.salary_min.toLocaleString()}
                         </span>
                       </>
@@ -261,11 +261,11 @@ function JobsContent() {
         {/* Right: Selected Job Deep-Dive (7 Cols) */}
         <div className="lg:col-span-7">
           {selectedJob ? (
-            <Card className="border-border bg-card p-6 space-y-6 sticky top-20 shadow-xl">
+            <Card className="border-border bg-card p-6 space-y-6 sticky top-20 shadow-lg">
               {/* Job Header */}
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 border-b border-border pb-5">
                 <div>
-                  <h2 className="text-xl font-bold text-zinc-100">
+                  <h2 className="text-xl font-bold text-foreground">
                     {selectedJob.title}
                   </h2>
                   <div className="flex flex-wrap items-center gap-2.5 text-sm text-muted-foreground mt-1.5">
@@ -281,7 +281,7 @@ function JobsContent() {
                     {selectedJob.salary_min && (
                       <>
                         <span>•</span>
-                        <span className="text-emerald-400 font-mono font-bold">
+                        <span className="text-emerald-600 dark:text-emerald-400 font-mono font-bold">
                           ${selectedJob.salary_min.toLocaleString()} - ${selectedJob.salary_max?.toLocaleString()}
                         </span>
                       </>
@@ -298,7 +298,7 @@ function JobsContent() {
                     variant="ghost"
                     size="icon"
                     onClick={() => handleDelete(selectedJob.id)}
-                    className="text-muted-foreground hover:text-rose-400 hover:bg-rose-950/40 rounded-lg"
+                    className="text-muted-foreground hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-500/10 rounded-lg"
                     aria-label="Delete job"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -308,7 +308,7 @@ function JobsContent() {
 
               {/* Match Summary Assessment */}
               <div className="bg-muted/40 border border-border rounded-lg p-4 space-y-1.5">
-                <h4 className="text-sm font-semibold text-zinc-100">
+                <h4 className="text-sm font-semibold text-foreground">
                   Match Assessment
                 </h4>
                 <p className="text-sm text-muted-foreground leading-relaxed">
@@ -318,9 +318,9 @@ function JobsContent() {
 
               {/* Skills Breakdown Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="bg-emerald-950/30 border border-emerald-800/60 rounded-lg p-4 space-y-2">
-                  <h4 className="text-sm font-semibold text-emerald-300 flex items-center gap-1.5">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-4 space-y-2">
+                  <h4 className="text-sm font-semibold text-emerald-700 dark:text-emerald-300 flex items-center gap-1.5">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                     Matching Skills ({selectedJob.matched_skills.length})
                   </h4>
                   <div className="flex flex-wrap gap-1.5">
@@ -342,9 +342,9 @@ function JobsContent() {
                   </div>
                 </div>
 
-                <div className="bg-rose-950/30 border border-rose-800/60 rounded-lg p-4 space-y-2">
-                  <h4 className="text-sm font-semibold text-rose-300 flex items-center gap-1.5">
-                    <AlertTriangle className="w-4 h-4 text-rose-400" />
+                <div className="bg-rose-500/10 border border-rose-500/20 rounded-lg p-4 space-y-2">
+                  <h4 className="text-sm font-semibold text-rose-700 dark:text-rose-300 flex items-center gap-1.5">
+                    <AlertTriangle className="w-4 h-4 text-rose-600 dark:text-rose-400" />
                     Missing Critical Skills ({selectedJob.missing_critical_skills.length})
                   </h4>
                   <div className="flex flex-wrap gap-1.5">
@@ -359,7 +359,7 @@ function JobsContent() {
                         </Badge>
                       ))
                     ) : (
-                      <span className="text-sm text-emerald-400 font-semibold">
+                      <span className="text-sm text-emerald-600 dark:text-emerald-400 font-semibold">
                         ✓ All mandatory requirements met!
                       </span>
                     )}
@@ -370,13 +370,13 @@ function JobsContent() {
               {/* Key Responsibilities */}
               {selectedJob.responsibilities && selectedJob.responsibilities.length > 0 && (
                 <div className="space-y-2">
-                  <h4 className="text-sm font-semibold text-zinc-100 uppercase tracking-wider">
+                  <h4 className="text-sm font-semibold text-foreground uppercase tracking-wider">
                     Core Responsibilities
                   </h4>
                   <ul className="space-y-1.5 text-sm text-muted-foreground">
                     {selectedJob.responsibilities.map((r, i) => (
                       <li key={i} className="flex items-start gap-2">
-                        <span className="text-zinc-400 mt-0.5">•</span>
+                        <span className="text-muted-foreground mt-0.5">•</span>
                         <span>{r}</span>
                       </li>
                     ))}
@@ -391,7 +391,7 @@ function JobsContent() {
                     <Button
                       onClick={() => handleAddToPipeline(selectedJob, "APPLIED")}
                       disabled={savingJobs[selectedJob.id] !== null && savingJobs[selectedJob.id] !== undefined}
-                      variant="success"
+                      variant="default"
                       className="w-full sm:flex-1 h-10 font-semibold gap-2 text-sm"
                     >
                       {savingJobs[selectedJob.id] === "APPLIED" ? (

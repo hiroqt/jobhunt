@@ -44,10 +44,10 @@ export default function AnalyticsPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-200">
-      {/* Header: Clean typography, no gradient, no eyebrow */}
+      {/* Header */}
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-zinc-100 tracking-tight flex items-center gap-3">
-          <LineChart className="w-7 h-7 text-zinc-100" />
+        <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight flex items-center gap-3">
+          <LineChart className="w-7 h-7 text-foreground" />
           Career Analytics
         </h1>
         <p className="text-sm sm:text-base text-muted-foreground mt-1">
@@ -62,7 +62,7 @@ export default function AnalyticsPage() {
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               Total Applications
             </span>
-            <div className="text-3xl sm:text-4xl font-bold text-zinc-100 pt-1">
+            <div className="text-3xl sm:text-4xl font-bold text-foreground pt-1">
               {totalApps}
             </div>
             <p className="text-xs text-muted-foreground font-mono">
@@ -76,7 +76,7 @@ export default function AnalyticsPage() {
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               Response Rate
             </span>
-            <div className="text-3xl sm:text-4xl font-bold text-zinc-100 pt-1">
+            <div className="text-3xl sm:text-4xl font-bold text-foreground pt-1">
               {responseRate}%
             </div>
             <p className="text-xs text-muted-foreground">App to recruiter contact</p>
@@ -88,7 +88,7 @@ export default function AnalyticsPage() {
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               Interview Conversion
             </span>
-            <div className="text-3xl sm:text-4xl font-bold text-zinc-100 pt-1">
+            <div className="text-3xl sm:text-4xl font-bold text-foreground pt-1">
               {conversionRate}%
             </div>
             <p className="text-xs text-muted-foreground">Interview to offer progress</p>
@@ -100,7 +100,7 @@ export default function AnalyticsPage() {
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               Average Match Fit
             </span>
-            <div className="text-3xl sm:text-4xl font-bold text-zinc-100 pt-1">
+            <div className="text-3xl sm:text-4xl font-bold text-foreground pt-1">
               {avgMatch}%
             </div>
             <p className="text-xs text-muted-foreground">Across saved opportunities</p>
@@ -114,7 +114,7 @@ export default function AnalyticsPage() {
         <Card className="border-border bg-card">
           <CardHeader className="p-6 pb-4">
             <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-zinc-100" />
+              <TrendingUp className="w-5 h-5 text-foreground" />
               Application Progression Funnel
             </CardTitle>
             <CardDescription className="text-sm text-muted-foreground">
@@ -129,7 +129,7 @@ export default function AnalyticsPage() {
                   <div key={item.stage} className="space-y-1.5">
                     <div className="flex justify-between text-sm font-medium">
                       <span className="text-foreground">{item.stage}</span>
-                      <span className="font-mono text-zinc-100 font-semibold">
+                      <span className="font-mono text-foreground font-semibold">
                         {item.count}{" "}
                         <span className="text-muted-foreground text-xs font-normal">
                           ({item.conversion_rate_pct}%)
@@ -157,7 +157,7 @@ export default function AnalyticsPage() {
         <Card className="border-border bg-card">
           <CardHeader className="p-6 pb-4">
             <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-zinc-100" />
+              <BarChart3 className="w-5 h-5 text-foreground" />
               Source & Channel Yield
             </CardTitle>
             <CardDescription className="text-sm text-muted-foreground">
@@ -172,7 +172,7 @@ export default function AnalyticsPage() {
                   className="bg-muted/40 border border-border p-4 rounded-lg flex items-center justify-between gap-3"
                 >
                   <div>
-                    <span className="text-sm font-semibold text-zinc-100">{src.source}</span>
+                    <span className="text-sm font-semibold text-foreground">{src.source}</span>
                     <p className="text-xs text-muted-foreground font-mono">
                       {src.applications_count} applied • {src.interviews_count} interviews
                     </p>
@@ -195,7 +195,7 @@ export default function AnalyticsPage() {
       <Card className="border-border bg-card">
         <CardHeader className="p-6 pb-4">
           <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-            <Target className="w-5 h-5 text-zinc-100" />
+            <Target className="w-5 h-5 text-foreground" />
             Skill Gap Root Cause Analysis
           </CardTitle>
           <CardDescription className="text-sm text-muted-foreground">
@@ -212,7 +212,7 @@ export default function AnalyticsPage() {
                   className="bg-muted/30 border border-border p-4 rounded-lg space-y-2.5"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold text-zinc-100">{gap.skill_name}</span>
+                    <span className="text-sm font-semibold text-foreground">{gap.skill_name}</span>
                     <Badge variant="destructive" className="font-mono text-xs">
                       {gap.missing_count} Jobs
                     </Badge>
@@ -228,8 +228,8 @@ export default function AnalyticsPage() {
             </div>
           ) : (
             <div className="p-8 bg-muted/20 border border-border rounded-lg text-center text-sm text-muted-foreground space-y-2">
-              <CheckCircle2 className="w-6 h-6 text-emerald-400 mx-auto" />
-              <p className="font-semibold text-zinc-100">Zero Skill Deficits Detected</p>
+              <CheckCircle2 className="w-6 h-6 text-emerald-500 mx-auto" />
+              <p className="font-semibold text-foreground">Zero Skill Deficits Detected</p>
               <p className="text-xs text-muted-foreground">
                 All critical skills demanded across your saved jobs exist in your verified profile!
               </p>

@@ -2,11 +2,10 @@
 
 import React, { useEffect, useState } from "react";
 import {
-  KanbanSquare,
+  LayoutGrid,
+  List,
   Plus,
   Clock,
-  List,
-  LayoutGrid,
 } from "lucide-react";
 import { getApplications, updateApplicationStatus } from "@/lib/api";
 import { Application, ApplicationStage } from "@/types";
@@ -18,31 +17,25 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
-interface KanbanColumnConfig {
-  id: ApplicationStage;
-  title: string;
-}
-
-const COLUMNS: KanbanColumnConfig[] = [
-  { id: "SAVED", title: "Saved / Wishlist" },
+const COLUMNS: { id: ApplicationStage; title: string }[] = [
+  { id: "SAVED", title: "Saved & Wishlist" },
   { id: "APPLIED", title: "Applied" },
-  { id: "HR_SCREENING", title: "HR Screening" },
-  { id: "TECHNICAL_INTERVIEW", title: "Technical Round" },
-  { id: "FINAL_INTERVIEW", title: "Final Interview" },
+  { id: "HR_SCREENING", title: "Screening" },
+  { id: "TECHNICAL_INTERVIEW", title: "Interview" },
   { id: "OFFER", title: "Offer Extended" },
 ];
 
 export default function ApplicationsPage() {
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState<"kanban" | "table">("kanban");
   const [selectedApp, setSelectedApp] = useState<Application | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCaptureModalOpen, setIsCaptureModalOpen] = useState(false);
-  const [draggedAppId, setDraggedAppId] = useState<string | null>(null);
   const [showArchived, setShowArchived] = useState(false);
-  const [viewMode, setViewMode] = useState<"kanban" | "table">("kanban");
 
   const loadApps = async () => {
+    setLoading(true);
     try {
       const data = await getApplications();
       setApplications(data);
@@ -58,31 +51,33 @@ export default function ApplicationsPage() {
   }, []);
 
   const handleDragStart = (e: React.DragEvent, appId: string) => {
-    setDraggedAppId(appId);
-    e.dataTransfer.setData("text/plain", appId);
+    e.dataTransfer.setData("application/json", JSON.stringify({ appId }));
   };
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
   };
 
-  const handleDrop = async (e: React.DragEvent, targetStage: ApplicationStage) => {
+  const handleDrop = async (e: React.DragEvent, targetStatus: ApplicationStage) => {
     e.preventDefault();
-    const appId = e.dataTransfer.getData("text/plain") || draggedAppId;
-    if (!appId) return;
-
-    setApplications((prev) =>
-      prev.map((app) => (app.id === appId ? { ...app, status: targetStage } : app))
-    );
-
     try {
-      await updateApplicationStatus(appId, targetStage, `Moved to ${targetStage} via Kanban drag`);
-      loadApps();
+      const data = e.dataTransfer.getData("application/json");
+      if (!data) return;
+      const { appId } = JSON.parse(data);
+
+      const targetApp = applications.find((a) => a.id === appId);
+      if (!targetApp || targetApp.status === targetStatus) return;
+
+      // Optimistic update
+      setApplications((prev) =>
+        prev.map((app) => (app.id === appId ? { ...app, status: targetStatus } : app))
+      );
+
+      // Persist to backend
+      await updateApplicationStatus(appId, targetStatus);
     } catch (err) {
-      console.error("Error updating application status:", err);
+      console.error("Error moving application:", err);
       loadApps();
-    } finally {
-      setDraggedAppId(null);
     }
   };
 
@@ -102,7 +97,7 @@ export default function ApplicationsPage() {
       {/* Header & Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-zinc-100 tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
             Application Pipeline
           </h1>
           <p className="text-sm sm:text-base text-muted-foreground mt-1">
@@ -139,7 +134,7 @@ export default function ApplicationsPage() {
             onClick={() => setShowArchived(!showArchived)}
             className={cn(
               "text-sm font-medium h-10 px-4",
-              showArchived && "bg-rose-950/40 border-rose-800 text-rose-300"
+              showArchived && "bg-rose-500/10 border-rose-500/20 text-rose-700 dark:text-rose-300"
             )}
           >
             {showArchived ? "Hide Closed" : "Show Closed"}
@@ -168,11 +163,11 @@ export default function ApplicationsPage() {
                 key={col.id}
                 onDragOver={handleDragOver}
                 onDrop={(e) => handleDrop(e, col.id)}
-                className="w-80 shrink-0 bg-card border border-border rounded-xl flex flex-col max-h-[80vh] overflow-hidden shadow"
+                className="w-80 shrink-0 bg-card border border-border rounded-xl flex flex-col max-h-[80vh] overflow-hidden shadow-sm"
               >
                 {/* Column Header */}
                 <div className="p-4 border-b border-border bg-muted/40 flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-zinc-100">{col.title}</h3>
+                  <h3 className="text-sm font-semibold text-foreground">{col.title}</h3>
                   <Badge variant="outline" className="font-mono text-xs">
                     {colApps.length}
                   </Badge>
@@ -192,11 +187,11 @@ export default function ApplicationsPage() {
                         onKeyDown={(e) => {
                           if (e.key === "Enter" || e.key === " ") openAppDetail(app);
                         }}
-                        className="bg-background hover:bg-accent/40 border border-border p-4 rounded-lg cursor-grab active:cursor-grabbing transition-colors shadow-sm group relative space-y-3 outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        className="bg-background hover:bg-accent/40 border border-border p-4 rounded-lg cursor-grab active:cursor-grabbing transition-colors shadow-xs group relative space-y-3 outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div>
-                            <h4 className="text-sm font-semibold text-zinc-100 line-clamp-1">
+                            <h4 className="text-sm font-semibold text-foreground line-clamp-1">
                               {app.job?.title || "Software Engineer"}
                             </h4>
                             <p className="text-xs text-muted-foreground font-medium mt-0.5">
@@ -237,10 +232,10 @@ export default function ApplicationsPage() {
             <div
               onDragOver={handleDragOver}
               onDrop={(e) => handleDrop(e, "REJECTED")}
-              className="w-80 shrink-0 bg-card border border-rose-900/40 rounded-xl flex flex-col max-h-[80vh] overflow-hidden shadow"
+              className="w-80 shrink-0 bg-card border border-rose-500/20 rounded-xl flex flex-col max-h-[80vh] overflow-hidden shadow-sm"
             >
-              <div className="p-4 border-b border-border bg-rose-950/20 flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-rose-300">Rejected / Closed</h3>
+              <div className="p-4 border-b border-border bg-rose-500/10 flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-rose-700 dark:text-rose-300">Rejected / Closed</h3>
                 <Badge variant="destructive" className="font-mono text-xs">
                   {applications.filter((a) => a.status === "REJECTED" || a.status === "WITHDRAWN").length}
                 </Badge>
@@ -252,9 +247,9 @@ export default function ApplicationsPage() {
                     <div
                       key={app.id}
                       onClick={() => openAppDetail(app)}
-                      className="bg-background border border-border p-4 rounded-lg cursor-pointer hover:border-rose-800 space-y-2"
+                      className="bg-background border border-border p-4 rounded-lg cursor-pointer hover:border-rose-500/50 space-y-2"
                     >
-                      <h4 className="text-sm font-semibold text-zinc-100">{app.job?.title}</h4>
+                      <h4 className="text-sm font-semibold text-foreground">{app.job?.title}</h4>
                       <p className="text-xs text-muted-foreground">{app.job?.company}</p>
                       <Badge variant="destructive" className="text-xs font-mono">
                         {app.status}
@@ -288,7 +283,7 @@ export default function ApplicationsPage() {
                     className="hover:bg-accent/40 cursor-pointer transition-colors"
                   >
                     <td className="px-6 py-4">
-                      <div className="font-semibold text-zinc-100 text-sm">{app.job?.title || "Role"}</div>
+                      <div className="font-semibold text-foreground text-sm">{app.job?.title || "Role"}</div>
                       <div className="text-xs text-muted-foreground">{app.job?.company}</div>
                     </td>
                     <td className="px-6 py-4">

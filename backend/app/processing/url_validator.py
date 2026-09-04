@@ -6,7 +6,9 @@ from typing import Tuple, Optional
 TRACKING_PARAMS = {
     "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content",
     "refid", "trackingid", "trk", "midtoken", "trkemail", "position", "pagenum",
-    "f_tpr", "sc", "from", "vjs", "tk", "fbclid", "gclid", "source"
+    "f_tpr", "sc", "from", "vjs", "tk", "fbclid", "gclid", "source",
+    "mibextid", "ref", "__cft__", "__cft__[0]", "__tn__", "rdid", "sfnsn", "paipv",
+    "notif_t", "notif_id", "locale", "checkpoint_src"
 }
 
 
@@ -32,11 +34,16 @@ def validate_and_canonicalize_url(url: str) -> Tuple[bool, str, Optional[str]]:
         cleaned_params = {k: v for k, v in query_params.items() if k.lower() not in TRACKING_PARAMS}
         new_query = urlencode(cleaned_params, doseq=True)
         
+        # Normalize netloc for known social and mobile subdomains
+        netloc = parsed.netloc.lower()
+        if netloc in ("m.facebook.com", "web.facebook.com", "mobile.facebook.com", "facebook.com"):
+            netloc = "www.facebook.com"
+        
         # Reconstruct canonical URL (strip trailing slash from path if present)
         clean_path = parsed.path.rstrip("/") if parsed.path != "/" else "/"
         canonical_url = urlunparse((
             parsed.scheme.lower(),
-            parsed.netloc.lower(),
+            netloc,
             clean_path,
             parsed.params,
             new_query,

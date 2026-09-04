@@ -10,6 +10,9 @@ import {
   Loader2,
   BookmarkPlus,
   Check,
+  Info,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { extractAndAnalyzeJob, createApplication } from "@/lib/api";
 import { Job, ApplicationStage } from "@/types";
@@ -43,6 +46,7 @@ export const JobCaptureModal: React.FC<JobCaptureModalProps> = ({
   const [tab, setTab] = useState<"url" | "text">("url");
   const [url, setUrl] = useState("");
   const [rawText, setRawText] = useState("");
+  const [showOptionalText, setShowOptionalText] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState("openrouter");
   const [loading, setLoading] = useState(false);
   const [extractedJob, setExtractedJob] = useState<Job | null>(null);
@@ -50,6 +54,8 @@ export const JobCaptureModal: React.FC<JobCaptureModalProps> = ({
   const [addedToPipeline, setAddedToPipeline] = useState(false);
   const [savingStatus, setSavingStatus] = useState<ApplicationStage | null>(null);
   const [savedStage, setSavedStage] = useState<ApplicationStage | null>(null);
+
+  const isFacebookUrl = Boolean(url && /(?:facebook\.com|fb\.watch|fb\.me)/i.test(url));
 
   const handleAnalyze = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,17 +65,26 @@ export const JobCaptureModal: React.FC<JobCaptureModalProps> = ({
     setAddedToPipeline(false);
 
     try {
-      const targetUrl = tab === "url" ? url : undefined;
-      const targetText = tab === "text" ? rawText : undefined;
+      const cleanUrl = url.trim() || undefined;
+      const cleanText = rawText.trim() || undefined;
 
-      if (tab === "url" && !url) throw new Error("Please enter a valid job URL");
-      if (tab === "text" && !rawText) throw new Error("Please paste the job description text");
+      if (tab === "url" && !cleanUrl) throw new Error("Please enter a valid job URL");
+      if (tab === "text" && !cleanText && !cleanUrl) throw new Error("Please paste the job description text");
 
-      const res = await extractAndAnalyzeJob(targetUrl, targetText, selectedProvider);
+      const res = await extractAndAnalyzeJob(cleanUrl, cleanText, selectedProvider);
       setExtractedJob(res);
       if (onJobCreated) onJobCreated(res);
     } catch (err: any) {
-      setError(err.message || "Failed to analyze job posting");
+      const msg = err.message || "Failed to analyze job posting";
+      setError(msg);
+      // If error indicates login wall or Facebook auth, expand the text input automatically
+      if (
+        msg.toLowerCase().includes("facebook") ||
+        msg.toLowerCase().includes("login wall") ||
+        msg.toLowerCase().includes("paste the job description")
+      ) {
+        setShowOptionalText(true);
+      }
     } finally {
       setLoading(false);
     }
@@ -96,6 +111,7 @@ export const JobCaptureModal: React.FC<JobCaptureModalProps> = ({
   const resetAndClose = () => {
     setUrl("");
     setRawText("");
+    setShowOptionalText(false);
     setExtractedJob(null);
     setError(null);
     setAddedToPipeline(false);
@@ -121,8 +137,8 @@ export const JobCaptureModal: React.FC<JobCaptureModalProps> = ({
         <div className="p-6">
           {loading ? (
             <JobQualifyingLoader
-              url={tab === "url" ? url : undefined}
-              rawText={tab === "text" ? rawText : undefined}
+              url={url.trim() || undefined}
+              rawText={rawText.trim() || undefined}
               provider={selectedProvider}
             />
           ) : !extractedJob ? (
@@ -143,37 +159,127 @@ export const JobCaptureModal: React.FC<JobCaptureModalProps> = ({
                   </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="url" className="space-y-2 mt-4">
-                  <label htmlFor="job-url-input" className="block text-sm font-medium text-foreground">
-                    Job Posting URL
-                  </label>
-                  <Input
-                    id="job-url-input"
-                    type="url"
-                    required
-                    value={url}
-                    onChange={(e) => setUrl(e.target.value)}
-                    placeholder="https://www.linkedin.com/jobs/view/..."
-                    className="h-10 text-sm bg-background border-border"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Tracking parameters will automatically be stripped.
-                  </p>
+                {/* URL TAB */}
+                <TabsContent value="url" className="space-y-3 mt-4">
+                  <div>
+                    <label htmlFor="job-url-input" className="block text-sm font-medium text-foreground">
+                      Job Posting URL
+                    </label>
+                    <Input
+                      id="job-url-input"
+                      type="url"
+                      required
+                      value={url}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setUrl(val);
+                        if (/(?:facebook\.com|fb\.watch|fb\.me)/i.test(val)) {
+                          setShowOptionalText(true);
+                        }
+                      }}
+                      placeholder="https://www.linkedin.com/jobs/view/... or https://www.facebook.com/..."
+                      className="h-10 text-sm bg-background border-border mt-1"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Tracking parameters (fbclid, mibextid, utm) are automatically stripped.
+                    </p>
+                  </div>
+
+                  {/* Facebook assistance badge */}
+                  {isFacebookUrl && (
+                    <div className="rounded-xl border border-blue-500/20 bg-blue-500/10 p-3 text-xs text-blue-300 space-y-1">
+                      <div className="flex items-center gap-1.5 font-semibold text-blue-400">
+                        <Info className="w-3.5 h-3.5" />
+                        <span>Facebook Link Detected</span>
+                      </div>
+                      <p>
+                        Public Facebook posts are fetched automatically. For posts in private groups or requiring login, paste the post text below so AI can score qualifications while linking to your Facebook post.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Optional Textarea on URL tab */}
+                  {(isFacebookUrl || showOptionalText || rawText) ? (
+                    <div className="space-y-1.5 pt-1">
+                      <div className="flex items-center justify-between">
+                        <label htmlFor="job-url-raw-input" className="text-xs font-semibold text-foreground flex items-center gap-1">
+                          <span>Job Description & Requirements</span>
+                          <span className="text-muted-foreground font-normal">
+                            {isFacebookUrl ? "(Recommended for Facebook)" : "(Optional fallback)"}
+                          </span>
+                        </label>
+                        {!isFacebookUrl && !rawText && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 text-xs text-muted-foreground hover:text-foreground"
+                            onClick={() => setShowOptionalText(false)}
+                          >
+                            Hide
+                          </Button>
+                        )}
+                      </div>
+                      <Textarea
+                        id="job-url-raw-input"
+                        rows={4}
+                        value={rawText}
+                        onChange={(e) => setRawText(e.target.value)}
+                        placeholder="Paste the post text or job responsibilities and qualifications here..."
+                        className="text-xs font-mono bg-background border-border"
+                      />
+                    </div>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs text-muted-foreground hover:text-foreground h-7 p-0 flex items-center gap-1"
+                      onClick={() => setShowOptionalText(true)}
+                    >
+                      <ChevronDown className="w-3.5 h-3.5" />
+                      Add job description text manually (for login-walled or private posts)
+                    </Button>
+                  )}
                 </TabsContent>
 
-                <TabsContent value="text" className="space-y-2 mt-4">
-                  <label htmlFor="job-raw-input" className="block text-sm font-medium text-foreground">
-                    Job Description & Requirements Text
-                  </label>
-                  <Textarea
-                    id="job-raw-input"
-                    required
-                    rows={5}
-                    value={rawText}
-                    onChange={(e) => setRawText(e.target.value)}
-                    placeholder="Paste the full job posting text including responsibilities and qualifications..."
-                    className="text-sm font-mono bg-background border-border"
-                  />
+                {/* TEXT TAB */}
+                <TabsContent value="text" className="space-y-3 mt-4">
+                  <div>
+                    <label htmlFor="job-raw-input" className="block text-sm font-medium text-foreground">
+                      Job Description & Requirements Text
+                    </label>
+                    <Textarea
+                      id="job-raw-input"
+                      required
+                      rows={5}
+                      value={rawText}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setRawText(val);
+                        // If user accidentally pasted a standalone URL into the text tab
+                        if (val.trim().startsWith("http") && !val.includes("\n") && !url) {
+                          setUrl(val.trim());
+                        }
+                      }}
+                      placeholder="Paste the full job posting text including responsibilities and qualifications..."
+                      className="text-sm font-mono bg-background border-border mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="job-text-url-input" className="block text-xs font-medium text-muted-foreground">
+                      Source / Job URL (Optional — links to original posting)
+                    </label>
+                    <Input
+                      id="job-text-url-input"
+                      type="url"
+                      value={url}
+                      onChange={(e) => setUrl(e.target.value)}
+                      placeholder="e.g. https://www.facebook.com/... or https://company.com/jobs/..."
+                      className="h-9 text-xs bg-background border-border mt-1"
+                    />
+                  </div>
                 </TabsContent>
               </Tabs>
 

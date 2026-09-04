@@ -25,3 +25,14 @@ def test_url_validation_invalid_strings():
     is_valid, _, err = validate_and_canonicalize_url("")
     assert is_valid is False
     assert err is not None
+
+
+def test_facebook_url_canonicalization():
+    raw_fb = "https://m.facebook.com/share/p/1B6yFkw91z/?mibextid=wwXIfr&fbclid=IwAR2xyz&ref=share"
+    is_valid, clean_url, err = validate_and_canonicalize_url(raw_fb)
+    assert is_valid is True
+    assert err is None
+    assert "mibextid" not in clean_url
+    assert "fbclid" not in clean_url
+    assert "ref" not in clean_url
+    assert clean_url == "https://www.facebook.com/share/p/1B6yFkw91z"

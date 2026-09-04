@@ -14,7 +14,7 @@ from backend.app.schemas.job import JobResponse, JobCreate, JobUpdate, JobExtrac
 from backend.app.api.dependencies import get_current_candidate
 from backend.app.processing.url_validator import validate_and_canonicalize_url
 from backend.app.processing.content_fetcher import fetch_web_content
-from backend.app.processing.content_extractor import extract_readable_job_text
+from backend.app.processing.content_extractor import extract_readable_job_text, is_auth_wall_text
 from backend.app.processing.link_checker import verify_job_url_liveness, generate_search_fallback_url
 from backend.app.ai.factory import get_ai_provider
 from backend.app.matching.scorer import calculate_match_scores
@@ -30,7 +30,7 @@ async def extract_and_analyze_job(
     db: AsyncSession = Depends(get_db),
     candidate: CandidateProfile = Depends(get_current_candidate)
 ):
-    raw_text = request.raw_text or ""
+    raw_text = (request.raw_text or "").strip()
     canonical_url = None
 
     if request.url:
@@ -46,15 +46,34 @@ async def extract_and_analyze_job(
             await db.delete(existing_job)
             await db.commit()
 
-        # Fetch web content if raw_text not explicitly given
+        # Fetch web content ONLY if raw_text not explicitly given
         if not raw_text:
             success, html, fetch_err = await fetch_web_content(canonical_url)
+            is_fb = any(h in canonical_url.lower() for h in ("facebook.com", "fb.com", "fb.watch", "fb.me"))
+            
             if not success or not html:
+                if is_fb:
+                    raise HTTPException(
+                        status_code=422,
+                        detail="Facebook requires authentication to view this post. Please paste the job description text into the modal while keeping the Facebook URL."
+                    )
                 raise HTTPException(
                     status_code=422,
                     detail=fetch_err or "Could not retrieve job posting HTML. Please paste the job description text manually."
                 )
-            raw_text = extract_readable_job_text(html)
+            
+            extracted = extract_readable_job_text(html)
+            if is_auth_wall_text(extracted) or len(extracted.strip()) < 25:
+                if is_fb:
+                    raise HTTPException(
+                        status_code=422,
+                        detail="This Facebook post is protected behind a login wall. Please copy the text of the job post from Facebook and paste it in the text area."
+                    )
+                raise HTTPException(
+                    status_code=422,
+                    detail="This page is protected behind a login wall or bot challenge. Please paste the job description text manually."
+                )
+            raw_text = extracted
 
     if not raw_text.strip():
         raise HTTPException(status_code=400, detail="Please provide a valid Job URL or paste the job description text.")

@@ -54,14 +54,28 @@ def generate_search_fallback_url(
         )
 
     elif "jobstreet" in src:
+        loc_l = clean_loc.lower()
+        if "singapore" in loc_l or loc_l.endswith("sg"):
+            domain = "www.jobstreet.com.sg"
+        elif "malaysia" in loc_l or "kuala lumpur" in loc_l or loc_l.endswith("my"):
+            domain = "www.jobstreet.com.my"
+        elif "indonesia" in loc_l or "jakarta" in loc_l or loc_l.endswith("id"):
+            domain = "www.jobstreet.co.id"
+        else:
+            domain = "www.jobstreet.com.ph"
+
         # createdAt=7d filters JobStreet to postings created within the last 7 days
         return (
-            f"https://www.jobstreet.com.ph/jobs?keywords={urllib.parse.quote_plus(clean_title)}"
+            f"https://{domain}/jobs?keywords={urllib.parse.quote_plus(clean_title)}"
             f"&location={urllib.parse.quote_plus(clean_loc)}&createdAt=7d"
         )
 
     elif "remoteok" in src:
         return f"https://remoteok.com/?search={urllib.parse.quote_plus(clean_title)}"
+
+    elif "facebook" in src:
+        q = f"{clean_title} {clean_company} jobs {clean_loc}".strip()
+        return f"https://www.google.com/search?q={urllib.parse.quote_plus(q)}+site%3Afacebook.com&tbs=qdr:w"
 
     else:
         # tbs=qdr:w filters Google Search / Google Jobs to within the past week
@@ -103,6 +117,10 @@ async def verify_job_url_liveness(
         "/jobs/search",
         "indeed.com/jobs",
         "jobstreet.com.ph/jobs",
+        "jobstreet.com.sg/jobs",
+        "jobstreet.com.my/jobs",
+        "jobstreet.co.id/jobs",
+        "jobstreet.com/jobs",
         "remoteok.com/?search",
         "google.com/search"
     ])
@@ -121,15 +139,26 @@ async def verify_job_url_liveness(
             "message": f"Active live search query matching '{title}' (1-week span)"
         }
 
-    headers = {
-        "User-Agent": (
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) "
-            "Chrome/124.0.0.0 Safari/537.36"
-        ),
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.5",
-    }
+    is_facebook = any(h in lower_url for h in ("facebook.com", "fb.com", "fb.watch", "fb.me"))
+    if is_facebook:
+        headers = {
+            "User-Agent": "facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.9",
+        }
+    else:
+        headers = {
+            "User-Agent": (
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/128.0.0.0 Safari/537.36"
+            ),
+            "sec-ch-ua": '"Chromium";v="128", "Not;A=Brand";v="24", "Google Chrome";v="128"',
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": '"macOS"',
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.5",
+        }
 
     try:
         async with httpx.AsyncClient(

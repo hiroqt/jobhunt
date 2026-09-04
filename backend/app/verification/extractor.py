@@ -12,7 +12,11 @@ ALLOWED_DOMAINS = {
     "linkedin.com",
     "indeed.com",
     "jobstreet.com.ph",
+    "jobstreet.com.sg",
+    "jobstreet.com.my",
+    "jobstreet.co.id",
     "jobstreet.com",
+    "seek.com.au",
     "remoteok.com",
     "remoteok.io",
     "jobicy.com",
@@ -20,6 +24,8 @@ ALLOWED_DOMAINS = {
     "lever.co",
     "workable.com",
     "ashbyhq.com",
+    "facebook.com",
+    "fb.com",
 }
 
 
@@ -90,15 +96,27 @@ async def extract_authoritative_source_data(url: str, timeout: float = 6.0) -> A
             raw_payload={"error": "Invalid or disallowed host"}
         )
 
-    headers = {
-        "User-Agent": (
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) "
-            "Chrome/124.0.0.0 Safari/537.36"
-        ),
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.5",
-    }
+    lower_url = url.lower()
+    is_facebook = any(h in lower_url for h in ("facebook.com", "fb.com", "fb.watch", "fb.me"))
+    if is_facebook:
+        headers = {
+            "User-Agent": "facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.9",
+        }
+    else:
+        headers = {
+            "User-Agent": (
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/128.0.0.0 Safari/537.36"
+            ),
+            "sec-ch-ua": '"Chromium";v="128", "Not;A=Brand";v="24", "Google Chrome";v="128"',
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": '"macOS"',
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.5",
+        }
 
     try:
         async with httpx.AsyncClient(timeout=timeout, follow_redirects=True, verify=False) as client:

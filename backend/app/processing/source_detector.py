@@ -33,6 +33,8 @@ def detect_job_source(url: str) -> str:
             return "Glassdoor"
         elif "wellfound.com" in domain or "angel.co" in domain:
             return "Wellfound"
+        elif any(f in domain for f in ("facebook.com", "fb.com", "fb.watch", "fb.me")):
+            return "Facebook"
         elif "ziprecruiter.com" in domain:
             return "ZipRecruiter"
         else:

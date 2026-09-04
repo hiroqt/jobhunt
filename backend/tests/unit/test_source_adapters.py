@@ -64,13 +64,21 @@ async def test_jobstreet_adapter_discovery_and_normalization():
     adapter = JobStreetAdapter()
     assert adapter.get_source_name() == "jobstreet"
     
-    query = JobSearchQuery(keywords=["Full Stack Engineer"], locations=["Philippines"], limit=2)
+    query = JobSearchQuery(keywords=["Laravel Developer"], locations=["Philippines"], limit=5)
     raw_jobs = await adapter.search(query)
-    assert len(raw_jobs) > 0
+    assert len(raw_jobs) == 5
 
-    norm = adapter.normalize(raw_jobs[0])
-    assert norm.source == "jobstreet"
-    assert norm.location is not None
+    # Verify uniqueness of external IDs
+    ext_ids = [j.external_id for j in raw_jobs]
+    assert len(set(ext_ids)) == len(raw_jobs)
+
+    # Verify normalization and 1-week span URL
+    for j in raw_jobs:
+        norm = adapter.normalize(j)
+        assert norm.source == "jobstreet"
+        assert norm.location == "Philippines"
+        assert "createdAt=7d" in norm.url or "/job/" in norm.url
+        assert norm.company != ""
 
     health = await adapter.health_check()
     assert health.status == "HEALTHY"

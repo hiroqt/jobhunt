@@ -1,5 +1,6 @@
 import React from "react";
 import Image from "next/image";
+import logoImg from "./job_hunt.png";
 
 interface AppLogoProps {
   className?: string;
@@ -33,12 +34,13 @@ export const AppLogo: React.FC<AppLogoProps> = ({
     <div className={`inline-flex items-center gap-2.5 ${className}`}>
       <div className={`relative flex items-center justify-center shrink-0 ${iconSize}`}>
         <Image
-          src="/job_hunt.png"
+          src={logoImg}
           alt="sakto ka logo"
           width={px}
           height={px}
           className="w-full h-full object-contain rounded-lg drop-shadow-xs"
           priority
+          unoptimized
         />
       </div>
 

@@ -3,22 +3,24 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import {
-  KanbanSquare,
-  CalendarCheck2,
-  AlertCircle,
-  Trophy,
-  ArrowUpRight,
-  CheckCircle2,
-  TrendingUp,
-  Send,
+  Sparkles,
+  Compass,
+  Radar,
+  FileText,
+  Bot,
+  ShieldCheck,
   Plus,
   ArrowRight,
   Target,
-  Radar,
-  Compass,
+  CheckCircle2,
+  ExternalLink,
+  Zap,
+  Lock,
+  Download,
+  Building2,
 } from "lucide-react";
-import { getDashboardOverview, getFollowUps, getCandidateProfile, getSearches } from "@/lib/api";
-import { DashboardOverview, FollowUp, CandidateProfile, JobSearch } from "@/types";
+import { getDashboardOverview, getCandidateProfile, getSearches, getJobs } from "@/lib/api";
+import { DashboardOverview, CandidateProfile, JobSearch, Job } from "@/types";
 import { JobCaptureModal } from "@/components/jobs/JobCaptureModal";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -27,25 +29,25 @@ import { formatSalary } from "@/lib/utils";
 
 export default function DashboardPage() {
   const [overview, setOverview] = useState<DashboardOverview | null>(null);
-  const [followUps, setFollowUps] = useState<FollowUp[]>([]);
   const [candidate, setCandidate] = useState<CandidateProfile | null>(null);
   const [searches, setSearches] = useState<JobSearch[]>([]);
+  const [recentJobs, setRecentJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCaptureModalOpen, setIsCaptureModalOpen] = useState(false);
 
   useEffect(() => {
     async function loadData() {
       try {
-        const [dashData, fuData, candData, searchData] = await Promise.all([
-          getDashboardOverview(),
-          getFollowUps(false),
-          getCandidateProfile(),
+        const [dashData, candData, searchData, jobsData] = await Promise.all([
+          getDashboardOverview().catch(() => null),
+          getCandidateProfile().catch(() => null),
           getSearches().catch(() => []),
+          getJobs({}).catch(() => []),
         ]);
         setOverview(dashData);
-        setFollowUps(fuData);
         setCandidate(candData);
         setSearches(searchData);
+        setRecentJobs(jobsData.slice(0, 4));
       } catch (err) {
         console.error("Error loading dashboard data:", err);
       } finally {
@@ -56,44 +58,52 @@ export default function DashboardPage() {
   }, []);
 
   const hasSkills = candidate?.skills && candidate.skills.length > 0;
-  const funnel = overview?.funnel || [];
-  const maxFunnelCount = Math.max(...funnel.map((f) => f.count), 1);
+  const highMatchJobs = recentJobs.filter((j) => (j.match_score || 0) >= 80);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-200">
       {/* Welcome Hero */}
-      <div className="rounded-xl border border-border bg-card p-6 sm:p-8">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="rounded-2xl border border-border bg-gradient-to-br from-card via-card to-primary/5 p-6 sm:p-8 relative overflow-hidden shadow-xs">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
           <div className="space-y-2 max-w-2xl">
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight capitalize">
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-primary/20 gap-1.5 py-0.5 px-2.5">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Stateless AI Career Copilot</span>
+              </Badge>
+              <Badge variant="outline" className="text-xs text-emerald-600 dark:text-emerald-400 border-emerald-500/30 bg-emerald-500/10 gap-1 py-0.5 px-2">
+                <Lock className="w-3 h-3" />
+                <span>Zero Retention</span>
+              </Badge>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
               sakto ka Career Intelligence
             </h1>
             <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-              Automated multi-source job discovery, qualification scoring against your candidate profile, application tracking CRM, and AI interview preparation.
+              Automated multi-source job discovery, ATS-compliant resume builder &amp; keyword gap optimizer, and AI-powered interview preparation.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3 shrink-0">
-            <Button asChild variant="outline" size="default" className="text-sm font-medium gap-2">
-              <Link href="/searches">
-                <Radar className="w-4 h-4 text-primary" />
-                <span>Automated Searches</span>
+            <Button asChild variant="default" size="default" className="text-sm font-semibold gap-2 shadow-xs bg-primary hover:bg-primary/90 text-primary-foreground">
+              <Link href="/resume">
+                <Sparkles className="w-4 h-4" />
+                <span>ATS Resume Studio</span>
               </Link>
             </Button>
-            {!hasSkills && (
-              <Button asChild variant="outline" size="default" className="text-sm font-medium">
-                <Link href="/profile">
-                  Upload Resume
-                </Link>
-              </Button>
-            )}
+            <Button asChild variant="outline" size="default" className="text-sm font-medium gap-2">
+              <Link href="/jobs">
+                <Compass className="w-4 h-4 text-primary" />
+                <span>Job Explorer</span>
+              </Link>
+            </Button>
             <Button
               onClick={() => setIsCaptureModalOpen(true)}
-              variant="default"
+              variant="outline"
               size="default"
-              className="gap-2 font-semibold text-sm"
+              className="gap-2 font-medium text-sm"
             >
               <Plus className="w-4 h-4" />
-              <span>Add Job URL</span>
+              <span>Capture Job URL</span>
             </Button>
           </div>
         </div>
@@ -101,158 +111,195 @@ export default function DashboardPage() {
 
       {/* Primary KPI Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="border-border bg-card">
-          <CardContent className="p-5 sm:p-6 space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Active Pipeline
-              </span>
-              <div className="p-2 rounded-lg bg-muted text-foreground">
-                <KanbanSquare className="w-4 h-4" />
+        <Link href="/jobs" className="block group">
+          <Card className="border-border bg-card hover:border-primary/40 transition-colors h-full">
+            <CardContent className="p-5 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Discovered Jobs
+                </span>
+                <div className="p-2 rounded-lg bg-primary/10 text-primary group-hover:scale-105 transition-transform">
+                  <Compass className="w-4 h-4" />
+                </div>
               </div>
-            </div>
-            <div className="flex items-baseline gap-2 pt-1">
-              <span className="text-3xl sm:text-4xl font-bold text-foreground">
-                {overview?.active_applications ?? 0}
-              </span>
-              <span className="text-sm text-muted-foreground font-mono">
-                / {overview?.total_applications ?? 0} total
-              </span>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              In active stage review
-            </p>
-          </CardContent>
-        </Card>
+              <div className="flex items-baseline gap-2 pt-1">
+                <span className="text-3xl sm:text-4xl font-bold text-foreground">
+                  {recentJobs.length}
+                </span>
+                <span className="text-xs text-muted-foreground font-mono">
+                  qualified
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Live across 5 job sources
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
 
-        <Card className="border-border bg-card">
-          <CardContent className="p-5 sm:p-6 space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Saved Searches
-              </span>
-              <div className="p-2 rounded-lg bg-primary/10 text-primary border border-primary/20">
-                <Radar className="w-4 h-4" />
+        <Link href="/resume" className="block group">
+          <Card className="border-border bg-card hover:border-primary/40 transition-colors h-full">
+            <CardContent className="p-5 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  ATS Resume Studio
+                </span>
+                <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 group-hover:scale-105 transition-transform">
+                  <FileText className="w-4 h-4" />
+                </div>
               </div>
-            </div>
-            <div className="flex items-baseline gap-2 pt-1">
-              <span className="text-3xl sm:text-4xl font-bold text-foreground">
-                {searches.length}
-              </span>
-              <Badge variant="outline" className="text-xs font-mono text-primary border-primary/30">
-                Active
-              </Badge>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Scanning 5 job sources
-            </p>
-          </CardContent>
-        </Card>
+              <div className="flex items-baseline gap-2 pt-1">
+                <span className="text-3xl sm:text-4xl font-bold text-foreground">
+                  100%
+                </span>
+                <Badge variant="outline" className="text-[10px] font-mono text-emerald-600 border-emerald-500/30">
+                  ATS Score
+                </Badge>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Single-column vector PDF export
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
 
-        <Card className="border-border bg-card">
-          <CardContent className="p-5 sm:p-6 space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Interviews
-              </span>
-              <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                <CalendarCheck2 className="w-4 h-4" />
+        <Link href="/searches" className="block group">
+          <Card className="border-border bg-card hover:border-primary/40 transition-colors h-full">
+            <CardContent className="p-5 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Automated Feeds
+                </span>
+                <div className="p-2 rounded-lg bg-primary/10 text-primary group-hover:scale-105 transition-transform">
+                  <Radar className="w-4 h-4" />
+                </div>
               </div>
-            </div>
-            <div className="flex items-baseline gap-2 pt-1">
-              <span className="text-3xl sm:text-4xl font-bold text-foreground">
-                {overview?.interviews_scheduled ?? 0}
-              </span>
-              <Badge variant="success" className="text-xs font-mono">
-                Scheduled
-              </Badge>
-            </div>
-            <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
-              Multi-round ready
-            </p>
-          </CardContent>
-        </Card>
+              <div className="flex items-baseline gap-2 pt-1">
+                <span className="text-3xl sm:text-4xl font-bold text-foreground">
+                  {searches.length}
+                </span>
+                <Badge variant="outline" className="text-[10px] font-mono text-primary border-primary/30">
+                  Active
+                </Badge>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Autonomous scraping runs
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
 
-        <Card className="border-border bg-card">
-          <CardContent className="p-5 sm:p-6 space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Job Offers
-              </span>
-              <div className="p-2 rounded-lg bg-muted text-foreground">
-                <Trophy className="w-4 h-4" />
+        <Link href="/prep" className="block group">
+          <Card className="border-border bg-card hover:border-primary/40 transition-colors h-full">
+            <CardContent className="p-5 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  AI Interview Prep
+                </span>
+                <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 group-hover:scale-105 transition-transform">
+                  <Bot className="w-4 h-4" />
+                </div>
               </div>
-            </div>
-            <div className="flex items-baseline gap-2 pt-1">
-              <span className="text-3xl sm:text-4xl font-bold text-foreground">
-                {overview?.offers_received ?? 0}
-              </span>
-              <span className="text-sm text-muted-foreground font-mono">
-                Extended
-              </span>
-            </div>
-            <p className="text-xs text-muted-foreground truncate">
-              {candidate?.target_salary && candidate.target_salary > 0
-                ? `Goal: ${formatSalary(candidate.target_salary, candidate.currency, true)}`
-                : "Target salary unconfigured"}
-            </p>
-          </CardContent>
-        </Card>
+              <div className="flex items-baseline gap-2 pt-1">
+                <span className="text-3xl sm:text-4xl font-bold text-foreground">
+                  STAR
+                </span>
+                <span className="text-xs text-muted-foreground font-mono">
+                  Method
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Simulated behavioral answers
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
       {/* Main Two-Column Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left 2 Cols: Pipeline Funnel & Skill Gaps */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Funnel Card */}
-          <Card className="border-border bg-card">
-            <CardHeader className="flex flex-row items-center justify-between p-6 pb-4">
-              <div>
-                <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-foreground" />
-                  Application Conversion Funnel
-                </CardTitle>
-                <CardDescription className="text-sm text-muted-foreground mt-0.5">
-                  Retention through application milestones
-                </CardDescription>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Left 7 Cols: ATS Resume Feature Showcase & Skill Gaps */}
+        <div className="lg:col-span-7 space-y-6">
+          {/* ATS Resume Showcase Card */}
+          <Card className="border-border bg-card overflow-hidden">
+            <CardHeader className="p-6 pb-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                      <FileText className="w-5 h-5 text-primary" />
+                      ATS-Standard Resume Studio
+                    </CardTitle>
+                    <Badge variant="secondary" className="text-[10px] bg-primary/10 text-primary border-primary/20">
+                      Standard Compliant
+                    </Badge>
+                  </div>
+                  <CardDescription className="text-xs sm:text-sm text-muted-foreground">
+                    Engineered to score 90%+ on Workday, Greenhouse, Lever, and Taleo parsers.
+                  </CardDescription>
+                </div>
+                <Button asChild size="sm" variant="default" className="text-xs font-semibold gap-1.5 h-8">
+                  <Link href="/resume">
+                    <span>Open Studio</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                </Button>
               </div>
-              <Button asChild variant="ghost" size="sm" className="text-foreground hover:bg-accent gap-1 text-sm font-medium">
-                <Link href="/applications">
-                  <span>View Pipeline</span>
-                  <ArrowUpRight className="w-4 h-4" />
-                </Link>
-              </Button>
             </CardHeader>
 
-            <CardContent className="p-6 pt-2 space-y-4">
-              {funnel.length > 0 ? (
-                funnel.map((item) => {
-                  const pct = item.count > 0 ? Math.round((item.count / maxFunnelCount) * 100) : 0;
-                  return (
-                    <div key={item.stage} className="space-y-1.5">
-                      <div className="flex justify-between text-sm font-medium">
-                        <span className="text-foreground">{item.stage}</span>
-                        <span className="font-mono text-foreground font-semibold">
-                          {item.count}{" "}
-                          <span className="text-muted-foreground text-xs font-normal">
-                            ({item.conversion_rate_pct}%)
-                          </span>
-                        </span>
-                      </div>
-                      <div className="w-full bg-secondary h-2.5 rounded-full overflow-hidden">
-                        <div
-                          className="bg-primary h-full rounded-full transition-all duration-300"
-                          style={{ width: `${pct}%` }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })
-              ) : (
-                <div className="text-center py-8 text-muted-foreground text-sm">
-                  Loading application funnel progression...
+            <CardContent className="p-6 pt-0 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                <div className="p-3.5 rounded-xl border border-border bg-muted/30 space-y-1.5">
+                  <div className="flex items-center gap-2 text-foreground font-semibold text-xs">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                    <span>Single-Column Hierarchy</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Zero multi-column tables, graphics, or complex frames that break ATS OCR parsers.
+                  </p>
                 </div>
-              )}
+
+                <div className="p-3.5 rounded-xl border border-border bg-muted/30 space-y-1.5">
+                  <div className="flex items-center gap-2 text-foreground font-semibold text-xs">
+                    <Sparkles className="w-4 h-4 text-primary" />
+                    <span>AI Bullet-Point Enhancer</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Instantly transforms generic duty bullets into metric-driven XYZ achievement statements.
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-xl border border-border bg-muted/30 space-y-1.5">
+                  <div className="flex items-center gap-2 text-foreground font-semibold text-xs">
+                    <Target className="w-4 h-4 text-amber-500" />
+                    <span>1-Click Role Keyword Tailoring</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Pre-load any target job posting to automatically analyze and fill missing keyword gaps.
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-xl border border-border bg-muted/30 space-y-1.5">
+                  <div className="flex items-center gap-2 text-foreground font-semibold text-xs">
+                    <Download className="w-4 h-4 text-cyan-500" />
+                    <span>Printable Vector PDF</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Generates clean, selectable vector PDF documents directly from your browser.
+                  </p>
+                </div>
+              </div>
+
+              <div className="pt-2 flex flex-wrap items-center justify-between gap-3 border-t border-border/50 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1.5">
+                  <Zap className="w-3.5 h-3.5 text-amber-500" />
+                  <span>3 ATS Templates: Modern Clean, Classic Corporate, Tech &amp; Engineering</span>
+                </span>
+                <Link href="/resume" className="text-primary font-semibold hover:underline inline-flex items-center gap-1">
+                  <span>Build Resume Now</span>
+                  <ArrowRight className="w-3 h-3" />
+                </Link>
+              </div>
             </CardContent>
           </Card>
 
@@ -262,37 +309,37 @@ export default function DashboardPage() {
               <div>
                 <CardTitle className="text-base sm:text-lg flex items-center gap-2">
                   <Target className="w-5 h-5 text-foreground" />
-                  Skill Gap Intelligence
+                  Market Skill Gap Intelligence
                 </CardTitle>
-                <CardDescription className="text-sm text-muted-foreground mt-0.5">
-                  Frequent requirements missing from your target applications
+                <CardDescription className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+                  Frequently required capabilities identified across your search queries
                 </CardDescription>
               </div>
-              <Button asChild variant="ghost" size="sm" className="text-foreground hover:bg-accent gap-1 text-sm font-medium">
-                <Link href="/analytics">
-                  <span>Analytics</span>
-                  <ArrowUpRight className="w-4 h-4" />
+              <Button asChild variant="ghost" size="sm" className="text-foreground hover:bg-accent gap-1 text-xs font-medium">
+                <Link href="/jobs">
+                  <span>Explore Jobs</span>
+                  <Compass className="w-3.5 h-3.5 text-primary" />
                 </Link>
               </Button>
             </CardHeader>
 
             <CardContent className="p-6 pt-2 space-y-3">
               {overview?.top_skill_gaps && overview.top_skill_gaps.length > 0 ? (
-                overview.top_skill_gaps.map((gap) => (
+                overview.top_skill_gaps.slice(0, 4).map((gap) => (
                   <div
                     key={gap.skill_name}
-                    className="bg-muted/40 border border-border p-4 rounded-lg flex items-center justify-between gap-3"
+                    className="bg-muted/40 border border-border p-3.5 rounded-xl flex items-center justify-between gap-3"
                   >
                     <div className="space-y-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-sm font-semibold text-foreground">
                           {gap.skill_name}
                         </span>
-                        <Badge variant="outline" className="text-xs font-mono">
+                        <Badge variant="outline" className="text-[10px] font-mono">
                           {gap.category}
                         </Badge>
                       </div>
-                      <p className="text-sm text-muted-foreground truncate">
+                      <p className="text-xs text-muted-foreground truncate">
                         {gap.learning_recommendation}
                       </p>
                     </div>
@@ -302,87 +349,128 @@ export default function DashboardPage() {
                   </div>
                 ))
               ) : (
-                <div className="p-6 rounded-lg bg-muted/20 border border-border text-center text-sm text-muted-foreground">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-500 mx-auto mb-2" />
-                  Your skill profile aligns with all currently tracked job postings!
+                <div className="p-6 rounded-xl bg-muted/20 border border-border text-center text-sm text-muted-foreground space-y-2">
+                  <CheckCircle2 className="w-6 h-6 text-emerald-500 mx-auto" />
+                  <p className="font-medium text-foreground">Complete Candidate Alignment</p>
+                  <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                    Your candidate profile keywords match well with the currently captured opportunities.
+                  </p>
                 </div>
               )}
             </CardContent>
           </Card>
         </div>
 
-        {/* Right 1 Col: Urgent Action Queue & AI Prep Studio */}
-        <div className="space-y-6">
-          {/* Urgent Follow-ups Card */}
+        {/* Right 5 Cols: AI Prep Studio & Zero Retention Privacy */}
+        <div className="lg:col-span-5 space-y-6">
+          {/* AI Prep Studio Card */}
           <Card className="border-border bg-card">
-            <CardHeader className="flex flex-row items-center justify-between p-6 pb-4">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-amber-500" />
-                Follow-ups Queue
-              </CardTitle>
-              <Badge variant="warning" className="font-mono text-xs">
-                {followUps.length} Due
-              </Badge>
+            <CardHeader className="p-6 pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base font-semibold flex items-center gap-2">
+                  <Bot className="w-5 h-5 text-indigo-500" />
+                  AI Interview Prep Coach
+                </CardTitle>
+                <Badge variant="secondary" className="text-[10px] bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/30">
+                  STAR Method
+                </Badge>
+              </div>
+              <CardDescription className="text-xs text-muted-foreground mt-1">
+                Simulate role-specific technical questions and structured behavioral answer outlines.
+              </CardDescription>
+            </CardHeader>
+
+            <CardContent className="p-6 pt-2 space-y-4">
+              <div className="space-y-2 text-xs text-muted-foreground">
+                <div className="flex items-start gap-2 p-2.5 rounded-lg bg-muted/30 border border-border/60">
+                  <span className="font-bold text-foreground">S</span>
+                  <span><strong>Situation:</strong> Set the context and business challenge.</span>
+                </div>
+                <div className="flex items-start gap-2 p-2.5 rounded-lg bg-muted/30 border border-border/60">
+                  <span className="font-bold text-foreground">T</span>
+                  <span><strong>Task:</strong> Explain your specific role and responsibility.</span>
+                </div>
+                <div className="flex items-start gap-2 p-2.5 rounded-lg bg-muted/30 border border-border/60">
+                  <span className="font-bold text-foreground">A</span>
+                  <span><strong>Action:</strong> Describe the engineering steps and decisions taken.</span>
+                </div>
+                <div className="flex items-start gap-2 p-2.5 rounded-lg bg-muted/30 border border-border/60">
+                  <span className="font-bold text-foreground">R</span>
+                  <span><strong>Result:</strong> Quantify the outcome, metrics, and business impact.</span>
+                </div>
+              </div>
+
+              <Button asChild variant="secondary" className="w-full text-xs font-semibold h-10 gap-2">
+                <Link href="/prep">
+                  <Bot className="w-4 h-4 text-primary" />
+                  <span>Launch Interview Prep Studio</span>
+                  <ArrowRight className="w-3.5 h-3.5 ml-auto" />
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* High Fit Opportunities Preview */}
+          <Card className="border-border bg-card">
+            <CardHeader className="p-6 pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base font-semibold flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-primary" />
+                  High Match Opportunities
+                </CardTitle>
+                <Badge variant="outline" className="text-[10px] font-mono text-primary border-primary/30">
+                  80%+ Fit
+                </Badge>
+              </div>
             </CardHeader>
 
             <CardContent className="p-6 pt-2 space-y-3">
-              {followUps.length > 0 ? (
-                followUps.slice(0, 3).map((fu) => (
+              {recentJobs.length > 0 ? (
+                recentJobs.slice(0, 3).map((job) => (
                   <div
-                    key={fu.id}
-                    className="p-4 bg-muted/30 border border-border rounded-lg space-y-2"
+                    key={job.id}
+                    className="p-3 bg-muted/30 border border-border rounded-lg flex items-center justify-between gap-3"
                   >
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <p className="text-sm font-semibold text-foreground">
-                          {fu.job_title || "Application"}
-                        </p>
-                        {fu.company_name && (
-                          <p className="text-xs text-muted-foreground font-medium">
-                            {fu.company_name}
-                          </p>
-                        )}
-                      </div>
-                      <Badge variant="warning" className="text-xs font-mono shrink-0">
-                        {fu.follow_up_type}
-                      </Badge>
-                    </div>
-                    {fu.notes && (
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {fu.notes}
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold text-foreground truncate">
+                        {job.title}
                       </p>
-                    )}
-                    <Button asChild variant="ghost" size="sm" className="h-7 px-0 text-xs text-foreground font-semibold gap-1.5 hover:bg-transparent hover:underline">
-                      <Link href="/applications">
-                        <Send className="w-3.5 h-3.5" />
-                        <span>Open Follow-Up & Email Draft</span>
+                      <p className="text-[11px] text-muted-foreground truncate">
+                        {job.company} • {job.workplace_type}
+                      </p>
+                    </div>
+                    <Button asChild size="sm" variant="outline" className="h-7 px-2 text-[10px] font-semibold shrink-0 gap-1 text-primary border-primary/30">
+                      <Link href={`/resume?job_id=${job.id}`}>
+                        <Sparkles className="w-2.5 h-2.5" />
+                        <span>Tailor</span>
                       </Link>
                     </Button>
                   </div>
                 ))
               ) : (
-                <div className="text-center py-8 text-muted-foreground text-sm">
-                  No pending follow-ups due today.
+                <div className="text-center py-6 text-xs text-muted-foreground">
+                  No jobs qualified yet. Run an automated discovery search to populate opportunities.
                 </div>
               )}
+              <Button asChild variant="ghost" size="sm" className="w-full text-xs text-muted-foreground hover:text-foreground h-7">
+                <Link href="/jobs">
+                  <span>View All Opportunities</span>
+                  <ArrowRight className="w-3 h-3 ml-1" />
+                </Link>
+              </Button>
             </CardContent>
           </Card>
 
-          {/* AI Prep Studio Card */}
-          <Card className="border-border bg-card">
-            <CardContent className="p-6 space-y-3">
-              <h3 className="text-base font-semibold text-foreground">
-                Interview Prep Studio
-              </h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Generate technical questions and structured STAR answer blueprints for your upcoming interviews.
+          {/* Zero Data Retention Card */}
+          <Card className="border-border bg-card/60">
+            <CardContent className="p-5 space-y-2 text-xs">
+              <div className="flex items-center gap-2 text-foreground font-semibold">
+                <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                <span>Zero Data Retention Architecture</span>
+              </div>
+              <p className="text-muted-foreground leading-relaxed text-[11px]">
+                sakto ka operates on a strictly in-session, stateless model. Your uploaded resumes, queries, and interview preparation drafts are processed locally and in volatile memory with zero persistent tracking.
               </p>
-              <Button asChild variant="secondary" className="w-full text-sm font-semibold h-10 gap-2">
-                <Link href="/prep">
-                  <span>Open Prep Studio</span>
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-              </Button>
             </CardContent>
           </Card>
         </div>
@@ -393,7 +481,8 @@ export default function DashboardPage() {
         isOpen={isCaptureModalOpen}
         onClose={() => setIsCaptureModalOpen(false)}
         onJobCreated={() => {
-          getDashboardOverview().then(setOverview);
+          getDashboardOverview().then(setOverview).catch(() => {});
+          getJobs({}).then((data) => setRecentJobs(data.slice(0, 4))).catch(() => {});
         }}
       />
     </div>

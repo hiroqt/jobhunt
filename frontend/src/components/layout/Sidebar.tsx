@@ -8,14 +8,14 @@ import {
   Compass,
   Radar,
   Briefcase,
-  KanbanSquare,
-  CalendarCheck2,
   GraduationCap,
-  LineChart,
+  FileText,
   UserCheck,
   Menu,
   X,
   ChevronRight,
+  Shield,
+  BookOpen,
 } from "lucide-react";
 import { CandidateProfile, DashboardOverview } from "@/types";
 import { getCandidateProfile, getDashboardOverview } from "@/lib/api";
@@ -25,7 +25,6 @@ import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { AppLogo } from "@/components/layout/AppLogo";
 import { PrivacyNoticeModal } from "@/components/layout/PrivacyNoticeModal";
 import { GuidelinesModal } from "@/components/layout/GuidelinesModal";
-import { Shield, BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Sidebar: React.FC = () => {
@@ -41,7 +40,7 @@ export const Sidebar: React.FC = () => {
       .then(setProfile)
       .catch(() => {});
 
-    // Load actual live counts from API - no hardcoded numbers!
+    // Load overview
     getDashboardOverview()
       .then(setOverview)
       .catch(() => {});
@@ -51,20 +50,11 @@ export const Sidebar: React.FC = () => {
     setMobileOpen(false);
   }, [pathname]);
 
-  const activeAppsCount = overview?.active_applications ?? 0;
-  const scheduledInterviewsCount = overview?.interviews_scheduled ?? 0;
-
   const navItems = [
     {
       name: "Dashboard",
       href: "/",
       icon: LayoutDashboard,
-      badge: null,
-    },
-    {
-      name: "Automated Searches",
-      href: "/searches",
-      icon: Radar,
       badge: null,
     },
     {
@@ -74,27 +64,21 @@ export const Sidebar: React.FC = () => {
       badge: null,
     },
     {
-      name: "Application Pipeline",
-      href: "/applications",
-      icon: KanbanSquare,
-      badge: activeAppsCount > 0 ? `${activeAppsCount}` : null,
+      name: "Automated Searches",
+      href: "/searches",
+      icon: Radar,
+      badge: null,
     },
     {
-      name: "Interviews",
-      href: "/interviews",
-      icon: CalendarCheck2,
-      badge: scheduledInterviewsCount > 0 ? `${scheduledInterviewsCount}` : null,
+      name: "ATS Resume Studio",
+      href: "/resume",
+      icon: FileText,
+      badge: "NEW",
     },
     {
       name: "AI Prep Studio",
       href: "/prep",
       icon: GraduationCap,
-      badge: null,
-    },
-    {
-      name: "Career Analytics",
-      href: "/analytics",
-      icon: LineChart,
       badge: null,
     },
     {

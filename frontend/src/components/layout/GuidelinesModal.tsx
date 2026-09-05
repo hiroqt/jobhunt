@@ -10,7 +10,6 @@ import {
   GraduationCap,
   UserCheck,
   CheckCircle2,
-  AlertCircle,
   Clock,
   Search,
   ExternalLink,
@@ -47,11 +46,11 @@ export const GuidelinesModal: React.FC<GuidelinesModalProps> = ({
   >("discovery");
 
   const tabs = [
-    { id: "discovery", label: "Discovery & Scraping", icon: Compass },
-    { id: "matching", label: "Match Engine (0-100%)", icon: Sparkles },
-    { id: "pipeline", label: "Pipeline & Kanban", icon: KanbanSquare },
-    { id: "aiprep", label: "AI Prep & STAR Method", icon: GraduationCap },
-    { id: "profile", label: "Profile Optimization", icon: UserCheck },
+    { id: "discovery", label: "Discovery", icon: Compass },
+    { id: "matching", label: "Matching (0-100%)", icon: Sparkles },
+    { id: "pipeline", label: "Pipeline", icon: KanbanSquare },
+    { id: "aiprep", label: "AI Prep (STAR)", icon: GraduationCap },
+    { id: "profile", label: "Profile", icon: UserCheck },
   ] as const;
 
   return (
@@ -75,35 +74,35 @@ export const GuidelinesModal: React.FC<GuidelinesModalProps> = ({
           </TooltipTrigger>
           <TooltipContent side="bottom" align="center" className="max-w-xs text-center font-normal">
             <p className="font-semibold text-foreground">Guidelines & Best Practices</p>
-            <p className="text-[11px] text-muted-foreground">Click to open the comprehensive user workflow and matching manual.</p>
+            <p className="text-[11px] text-muted-foreground">Click to open user guide.</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="max-w-3xl max-h-[88vh] overflow-y-auto p-6 sm:p-7">
-          <DialogHeader className="border-b border-border/70 pb-4">
+        <DialogContent className="max-w-2xl sm:max-w-3xl w-[94vw] p-5 sm:p-6 overflow-hidden rounded-2xl border border-border shadow-2xl bg-card">
+          <DialogHeader className="border-b border-border/70 pb-3 space-y-3">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-primary/10 border border-primary/20 text-primary">
-                <BookOpen className="w-5 h-5" />
+              <div className="p-2 rounded-xl bg-primary/10 border border-primary/20 text-primary shrink-0">
+                <BookOpen className="w-4 h-4" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <DialogTitle className="text-lg sm:text-xl font-bold text-foreground capitalize">
+                  <DialogTitle className="text-base sm:text-lg font-bold text-foreground capitalize leading-none">
                     sakto ka Guidelines
                   </DialogTitle>
-                  <Badge variant="secondary" className="text-[10px] font-mono">
+                  <Badge variant="secondary" className="text-[10px] font-mono py-0 h-4">
                     User Playbook
                   </Badge>
                 </div>
-                <DialogDescription className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-                  Best practices for high-signal automated discovery, precise qualification, and technical interview mastery.
+                <DialogDescription className="text-xs text-muted-foreground mt-0.5">
+                  Best practices for high-signal discovery, qualification, and interview preparation.
                 </DialogDescription>
               </div>
             </div>
 
             {/* Tab Navigation */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pt-4 pb-0.5 scrollbar-none">
+            <div className="flex items-center gap-1.5 overflow-x-auto pt-1 pb-0.5 scrollbar-none">
               {tabs.map((tab) => {
                 const Icon = tab.icon;
                 const isActive = activeTab === tab.id;
@@ -112,7 +111,7 @@ export const GuidelinesModal: React.FC<GuidelinesModalProps> = ({
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
                     className={cn(
-                      "px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors flex items-center gap-1.5 shrink-0",
+                      "px-3 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors flex items-center gap-1.5 shrink-0",
                       isActive
                         ? "bg-primary text-primary-foreground shadow-xs"
                         : "text-muted-foreground hover:text-foreground hover:bg-muted"
@@ -126,211 +125,160 @@ export const GuidelinesModal: React.FC<GuidelinesModalProps> = ({
             </div>
           </DialogHeader>
 
-          {/* Tab Contents */}
-          <div className="py-3 text-sm space-y-4">
+          {/* Tab Contents - Compact and Non-Scrollable */}
+          <div className="py-2.5 text-xs min-h-[220px] flex flex-col justify-center">
             {activeTab === "discovery" && (
-              <div className="space-y-3.5 animate-in fade-in duration-150">
-                <div className="p-4 rounded-xl bg-muted/40 border border-border/80 space-y-2">
-                  <h4 className="font-semibold text-foreground flex items-center gap-2 text-sm">
-                    <Compass className="w-4 h-4 text-primary" />
-                    Automated Discovery Strategies
-                  </h4>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    Set up keyword queries under <strong>Automated Searches</strong>. Our crawler checks LinkedIn, Indeed, JobStreet, RemoteOK, and company career portals.
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 animate-in fade-in duration-150">
+                <div className="p-3 rounded-xl border border-border bg-muted/30 space-y-1">
+                  <div className="flex items-center gap-1.5 font-semibold text-foreground text-xs">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                    <span>Targeted Keyword Queries</span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    Use exact titles like <em>"Senior Full Stack Engineer"</em> or <em>"React Architect"</em> under Automated Searches for higher accuracy.
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="p-3.5 rounded-xl border border-border bg-card space-y-1.5">
-                    <div className="flex items-center gap-2 font-semibold text-xs text-foreground">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                      Specific Role Keywords
-                    </div>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      Use precise titles like <em>"Senior Full Stack Engineer"</em> or <em>"React TypeScript Architect"</em> rather than generic terms.
-                    </p>
+                <div className="p-3 rounded-xl border border-border bg-muted/30 space-y-1">
+                  <div className="flex items-center gap-1.5 font-semibold text-foreground text-xs">
+                    <Clock className="w-3.5 h-3.5 text-primary shrink-0" />
+                    <span>1-Week Freshness Span</span>
                   </div>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    Postings from the last 7 days receive priority matching to ensure listings are actively hiring.
+                  </p>
+                </div>
 
-                  <div className="p-3.5 rounded-xl border border-border bg-card space-y-1.5">
-                    <div className="flex items-center gap-2 font-semibold text-xs text-foreground">
-                      <Clock className="w-4 h-4 text-primary" />
-                      1-Week Freshness Span
-                    </div>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      Jobs posted within 7 days receive priority matching. Automated freshness indicators warn you if a posting may have expired.
-                    </p>
+                <div className="p-3 rounded-xl border border-border bg-muted/30 space-y-1">
+                  <div className="flex items-center gap-1.5 font-semibold text-foreground text-xs">
+                    <Search className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                    <span>Live ATS Link Verification</span>
                   </div>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    Click <strong>Verify Link</strong> in Job Explorer to ping company career endpoints and detect expired openings.
+                  </p>
+                </div>
 
-                  <div className="p-3.5 rounded-xl border border-border bg-card space-y-1.5">
-                    <div className="flex items-center gap-2 font-semibold text-xs text-foreground">
-                      <Search className="w-4 h-4 text-indigo-500" />
-                      Live Posting Verification
-                    </div>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      Click <strong>Verify Link</strong> in Job Explorer to ping the ATS source endpoint and confirm the opening is still accepting candidates.
-                    </p>
+                <div className="p-3 rounded-xl border border-border bg-muted/30 space-y-1">
+                  <div className="flex items-center gap-1.5 font-semibold text-foreground text-xs">
+                    <ExternalLink className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                    <span>Direct Job Capture</span>
                   </div>
-
-                  <div className="p-3.5 rounded-xl border border-border bg-card space-y-1.5">
-                    <div className="flex items-center gap-2 font-semibold text-xs text-foreground">
-                      <ExternalLink className="w-4 h-4 text-amber-500" />
-                      Direct URL Capture
-                    </div>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      Found a job elsewhere? Click <strong>Add Job URL</strong> to instantly extract requirements, salary bounds, and match against your resume.
-                    </p>
-                  </div>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    Click <strong>Add Job URL</strong> to automatically parse requirements and score compensation fit from any link.
+                  </p>
                 </div>
               </div>
             )}
 
             {activeTab === "matching" && (
-              <div className="space-y-3.5 animate-in fade-in duration-150">
-                <div className="p-4 rounded-xl bg-muted/40 border border-border/80 space-y-2">
-                  <h4 className="font-semibold text-foreground flex items-center gap-2 text-sm">
-                    <Sparkles className="w-4 h-4 text-primary" />
-                    How Match Scores Are Calculated
-                  </h4>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    The qualifying engine cross-references job requirements against your candidate profile across skills, experience seniority, and salary brackets.
-                  </p>
+              <div className="space-y-2 animate-in fade-in duration-150">
+                <div className="p-2.5 rounded-xl border border-emerald-500/20 bg-emerald-500/5 flex items-start gap-2.5">
+                  <Badge variant="success" className="font-mono text-[10px] shrink-0 mt-0.5">
+                    APPLY (80–100%)
+                  </Badge>
+                  <div className="space-y-0.5">
+                    <p className="text-xs font-semibold text-foreground">High Fit — Immediate Application Priority</p>
+                    <p className="text-[11px] text-muted-foreground">You meet all mandatory skill requirements and compensation matches your target criteria.</p>
+                  </div>
                 </div>
 
-                <div className="space-y-2.5">
-                  <div className="p-3 rounded-xl border border-emerald-500/20 bg-emerald-500/5 flex items-start gap-3">
-                    <Badge variant="success" className="font-mono text-xs shrink-0 mt-0.5">
-                      APPLY (80–100%)
-                    </Badge>
-                    <div className="space-y-0.5">
-                      <p className="text-xs font-semibold text-foreground">High Fit — Immediate Application Priority</p>
-                      <p className="text-xs text-muted-foreground">You meet all mandatory skills and the compensation/location matches your target criteria.</p>
-                    </div>
+                <div className="p-2.5 rounded-xl border border-amber-500/20 bg-amber-500/5 flex items-start gap-2.5">
+                  <Badge variant="outline" className="font-mono text-[10px] shrink-0 mt-0.5 text-amber-600 dark:text-amber-400 border-amber-500/40">
+                    REVIEW (60–79%)
+                  </Badge>
+                  <div className="space-y-0.5">
+                    <p className="text-xs font-semibold text-foreground">Borderline — Inspect Skill Gaps</p>
+                    <p className="text-[11px] text-muted-foreground">You match core technologies but may lack 1-2 secondary qualifications or tenure.</p>
                   </div>
+                </div>
 
-                  <div className="p-3 rounded-xl border border-amber-500/20 bg-amber-500/5 flex items-start gap-3">
-                    <Badge variant="outline" className="font-mono text-xs shrink-0 mt-0.5 text-amber-600 dark:text-amber-400 border-amber-500/40">
-                      REVIEW (60–79%)
-                    </Badge>
-                    <div className="space-y-0.5">
-                      <p className="text-xs font-semibold text-foreground">Borderline — Inspect Missing Requirements</p>
-                      <p className="text-xs text-muted-foreground">You match core technologies but may lack 1-2 secondary qualifications or years of tenure.</p>
-                    </div>
-                  </div>
-
-                  <div className="p-3 rounded-xl border border-rose-500/20 bg-rose-500/5 flex items-start gap-3">
-                    <Badge variant="destructive" className="font-mono text-xs shrink-0 mt-0.5">
-                      SKIP (&lt;60%)
-                    </Badge>
-                    <div className="space-y-0.5">
-                      <p className="text-xs font-semibold text-foreground">Low Fit — Heavy Skill Gap</p>
-                      <p className="text-xs text-muted-foreground">Critical required competencies are absent from your current profile or tech stack.</p>
-                    </div>
+                <div className="p-2.5 rounded-xl border border-rose-500/20 bg-rose-500/5 flex items-start gap-2.5">
+                  <Badge variant="destructive" className="font-mono text-[10px] shrink-0 mt-0.5">
+                    SKIP (&lt;60%)
+                  </Badge>
+                  <div className="space-y-0.5">
+                    <p className="text-xs font-semibold text-foreground">Low Fit — Heavy Requirements Gap</p>
+                    <p className="text-[11px] text-muted-foreground">Critical competencies or required frameworks are missing from your candidate profile.</p>
                   </div>
                 </div>
               </div>
             )}
 
             {activeTab === "pipeline" && (
-              <div className="space-y-3.5 animate-in fade-in duration-150">
-                <div className="p-4 rounded-xl bg-muted/40 border border-border/80 space-y-2">
-                  <h4 className="font-semibold text-foreground flex items-center gap-2 text-sm">
-                    <KanbanSquare className="w-4 h-4 text-primary" />
-                    Managing the 6 Pipeline Stages
-                  </h4>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    Track every opportunity from initial bookmark to signed offer with automatic follow-up reminders.
-                  </p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 animate-in fade-in duration-150">
+                <div className="p-2.5 rounded-lg border border-border bg-card">
+                  <p className="font-semibold text-foreground text-xs">1. Wishlist</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">Bookmarked roles under evaluation.</p>
                 </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
-                  <div className="p-3 rounded-lg border border-border bg-card">
-                    <p className="font-semibold text-foreground">1. Wishlist / Saved</p>
-                    <p className="text-muted-foreground mt-1">Bookmarked positions under review before applying.</p>
-                  </div>
-                  <div className="p-3 rounded-lg border border-border bg-card">
-                    <p className="font-semibold text-foreground">2. Applied</p>
-                    <p className="text-muted-foreground mt-1">Application submitted. Automatic 5-day follow-up scheduled.</p>
-                  </div>
-                  <div className="p-3 rounded-lg border border-border bg-card">
-                    <p className="font-semibold text-foreground">3. Screening</p>
-                    <p className="text-muted-foreground mt-1">Initial recruiter call or asynchronous assessment.</p>
-                  </div>
-                  <div className="p-3 rounded-lg border border-border bg-card">
-                    <p className="font-semibold text-foreground">4. Interviewing</p>
-                    <p className="text-muted-foreground mt-1">Technical rounds, live coding, and hiring manager loops.</p>
-                  </div>
-                  <div className="p-3 rounded-lg border border-border bg-card">
-                    <p className="font-semibold text-foreground">5. Offer Received</p>
-                    <p className="text-muted-foreground mt-1">Compensation negotiation and decision phase.</p>
-                  </div>
-                  <div className="p-3 rounded-lg border border-border bg-card">
-                    <p className="font-semibold text-foreground">6. Archived / Rejected</p>
-                    <p className="text-muted-foreground mt-1">Logged for conversion rate and analytics intelligence.</p>
-                  </div>
+                <div className="p-2.5 rounded-lg border border-border bg-card">
+                  <p className="font-semibold text-foreground text-xs">2. Applied</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">Submitted with 5-day follow-up reminder.</p>
+                </div>
+                <div className="p-2.5 rounded-lg border border-border bg-card">
+                  <p className="font-semibold text-foreground text-xs">3. Screening</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">Recruiter phone screen or quick assessment.</p>
+                </div>
+                <div className="p-2.5 rounded-lg border border-border bg-card">
+                  <p className="font-semibold text-foreground text-xs">4. Interviewing</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">Live technical rounds and architecture loops.</p>
+                </div>
+                <div className="p-2.5 rounded-lg border border-border bg-card">
+                  <p className="font-semibold text-foreground text-xs">5. Offer</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">Compensation review and negotiation.</p>
+                </div>
+                <div className="p-2.5 rounded-lg border border-border bg-card">
+                  <p className="font-semibold text-foreground text-xs">6. Archived</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">Recorded for analytics insights.</p>
                 </div>
               </div>
             )}
 
             {activeTab === "aiprep" && (
-              <div className="space-y-3.5 animate-in fade-in duration-150">
-                <div className="p-4 rounded-xl bg-muted/40 border border-border/80 space-y-2">
-                  <h4 className="font-semibold text-foreground flex items-center gap-2 text-sm">
-                    <GraduationCap className="w-4 h-4 text-primary" />
-                    AI Interview Prep & STAR Framework
-                  </h4>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    Generate customized interview battle plans and practice behavioral questions tailored specifically to each role's requirements.
-                  </p>
-                </div>
-
-                <div className="p-3.5 rounded-xl border border-primary/20 bg-primary/5 space-y-2 text-xs">
-                  <p className="font-semibold text-foreground">The STAR Response Formula:</p>
-                  <ul className="space-y-1 text-muted-foreground pl-3 list-disc">
-                    <li><strong className="text-foreground">S - Situation:</strong> Set the scene and provide necessary context for the challenge.</li>
-                    <li><strong className="text-foreground">T - Task:</strong> Describe your specific responsibility in that scenario.</li>
-                    <li><strong className="text-foreground">A - Action:</strong> Explain the exact technical steps, trade-offs, and tools you executed.</li>
-                    <li><strong className="text-foreground">R - Result:</strong> Conclude with measurable impact, performance gains, or latency reductions.</li>
-                  </ul>
+              <div className="p-3.5 rounded-xl border border-primary/20 bg-primary/5 space-y-2 animate-in fade-in duration-150">
+                <p className="font-semibold text-foreground text-xs flex items-center gap-1.5">
+                  <GraduationCap className="w-4 h-4 text-primary" />
+                  <span>STAR Interview Framework Formula</span>
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-muted-foreground">
+                  <div className="p-2 rounded-md bg-background/80 border border-border/50">
+                    <strong className="text-foreground">S - Situation:</strong> Context and technical challenge.
+                  </div>
+                  <div className="p-2 rounded-md bg-background/80 border border-border/50">
+                    <strong className="text-foreground">T - Task:</strong> Your direct responsibility in the project.
+                  </div>
+                  <div className="p-2 rounded-md bg-background/80 border border-border/50">
+                    <strong className="text-foreground">A - Action:</strong> Tools, architecture, and code you executed.
+                  </div>
+                  <div className="p-2 rounded-md bg-background/80 border border-border/50">
+                    <strong className="text-foreground">R - Result:</strong> Concrete metric, latency win, or ROI.
+                  </div>
                 </div>
               </div>
             )}
 
             {activeTab === "profile" && (
-              <div className="space-y-3.5 animate-in fade-in duration-150">
-                <div className="p-4 rounded-xl bg-muted/40 border border-border/80 space-y-2">
-                  <h4 className="font-semibold text-foreground flex items-center gap-2 text-sm">
-                    <UserCheck className="w-4 h-4 text-primary" />
-                    Candidate Profile Best Practices
-                  </h4>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    Keep your profile updated under the <strong>Candidate Profile</strong> section to maximize match score accuracy across all crawlers.
-                  </p>
+              <div className="space-y-2 animate-in fade-in duration-150">
+                <div className="flex items-start gap-2.5 p-2 rounded-lg border border-border bg-card text-xs">
+                  <span className="font-bold text-primary text-xs">1.</span>
+                  <p className="text-[11px] text-muted-foreground"><strong className="text-foreground">Verified Skills:</strong> Add specific libraries and cloud tools (e.g. Next.js, Docker, PostgreSQL) for high match scores.</p>
                 </div>
-
-                <div className="space-y-2 text-xs">
-                  <div className="flex items-start gap-2 p-2.5 rounded-lg border border-border bg-card">
-                    <span className="font-bold text-primary">1.</span>
-                    <p className="text-muted-foreground"><strong className="text-foreground">Skills List:</strong> Include specific libraries, cloud providers, and databases (e.g. Next.js, PostgreSQL, Docker, AWS).</p>
-                  </div>
-                  <div className="flex items-start gap-2 p-2.5 rounded-lg border border-border bg-card">
-                    <span className="font-bold text-primary">2.</span>
-                    <p className="text-muted-foreground"><strong className="text-foreground">Target Salary:</strong> Define your minimum acceptable threshold to filter out low-compensating roles automatically.</p>
-                  </div>
-                  <div className="flex items-start gap-2 p-2.5 rounded-lg border border-border bg-card">
-                    <span className="font-bold text-primary">3.</span>
-                    <p className="text-muted-foreground"><strong className="text-foreground">Workplace Preference:</strong> Specify Remote, Hybrid, or Onsite to calibrate the fit recommendation engine.</p>
-                  </div>
+                <div className="flex items-start gap-2.5 p-2 rounded-lg border border-border bg-card text-xs">
+                  <span className="font-bold text-primary text-xs">2.</span>
+                  <p className="text-[11px] text-muted-foreground"><strong className="text-foreground">Target Salary:</strong> Define your minimum compensation threshold to filter out low-paying roles.</p>
+                </div>
+                <div className="flex items-start gap-2.5 p-2 rounded-lg border border-border bg-card text-xs">
+                  <span className="font-bold text-primary text-xs">3.</span>
+                  <p className="text-[11px] text-muted-foreground"><strong className="text-foreground">Workplace Fit:</strong> Select Remote, Hybrid, or Onsite preferences to calibrate job qualification.</p>
                 </div>
               </div>
             )}
           </div>
 
-          <div className="pt-3 border-t border-border/70 flex items-center justify-between">
-            <span className="text-[11px] text-muted-foreground">
-              Tip: Press <kbd className="font-mono bg-muted px-1.5 py-0.5 rounded border border-border text-[10px]">Esc</kbd> anytime to close this guide.
-            </span>
-            <Button onClick={() => setIsOpen(false)} variant="default" size="sm" className="font-semibold text-xs px-4">
-              Close Guide
+          <div className="pt-2.5 border-t border-border/70 flex items-center justify-between text-[11px] text-muted-foreground">
+            <span>Press <kbd className="font-mono bg-muted px-1 py-0.5 rounded border border-border text-[10px]">Esc</kbd> to close</span>
+            <Button onClick={() => setIsOpen(false)} variant="default" size="sm" className="font-semibold text-xs h-7 px-3.5">
+              Done
             </Button>
           </div>
         </DialogContent>

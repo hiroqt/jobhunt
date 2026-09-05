@@ -10,6 +10,7 @@ import { JobCaptureModal } from "@/components/jobs/JobCaptureModal";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { Notification } from "@/types";
 import { getNotifications, markAllNotificationsRead, markNotificationRead } from "@/lib/api";
+import { SessionResetButton } from "@/components/layout/SessionResetButton";
 
 interface HeaderProps {
   onRefresh?: () => void;
@@ -203,6 +204,8 @@ export const Header: React.FC<HeaderProps> = ({ onRefresh }) => {
               </div>
             )}
           </div>
+
+          <SessionResetButton />
 
           <ThemeToggle />
 

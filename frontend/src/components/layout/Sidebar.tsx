@@ -208,6 +208,21 @@ export const Sidebar: React.FC = () => {
           <span>Theme Mode</span>
           <ThemeToggle />
         </div>
+
+        {/* Creator Attribution */}
+        <div className="pt-2 border-t border-border/50 text-center">
+          <p className="text-[11px] text-muted-foreground">
+            Created by{" "}
+            <a
+              href="https://github.com/hiroqt"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-foreground hover:text-primary transition-colors"
+            >
+              hiroqt / Arnel Baylon
+            </a>
+          </p>
+        </div>
       </div>
     </div>
   );

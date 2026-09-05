@@ -7,9 +7,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-COPY pyproject.toml .
+COPY pyproject.toml README.md* ./
 RUN pip install --no-cache-dir uv && \
-    uv pip install --system -e .
+    uv pip install --system fastapi "uvicorn[standard]" pydantic pydantic-settings sqlalchemy aiosqlite asyncpg alembic httpx beautifulsoup4 selectolax python-dotenv openai google-genai greenlet pypdf pytest pytest-asyncio python-multipart
 
 COPY . .
 

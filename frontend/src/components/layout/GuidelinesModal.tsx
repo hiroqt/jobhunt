@@ -162,10 +162,10 @@ export const GuidelinesModal: React.FC<GuidelinesModalProps> = ({
                 <div className="p-3 rounded-xl border border-border bg-muted/30 space-y-1">
                   <div className="flex items-center gap-1.5 font-semibold text-foreground text-xs">
                     <ExternalLink className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                    <span>Direct Job Capture</span>
+                    <span>Direct Platform Redirection</span>
                   </div>
                   <p className="text-[11px] text-muted-foreground leading-relaxed">
-                    Click <strong>Add Job URL</strong> to automatically parse requirements and score compensation fit from any link.
+                    Opening job URLs directs you to external employer portals. Destination sites will prompt you to log in on their platform to submit your application.
                   </p>
                 </div>
               </div>

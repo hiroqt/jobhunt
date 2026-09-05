@@ -93,10 +93,10 @@ export const PrivacyNoticeModal: React.FC<PrivacyNoticeModalProps> = ({
             <div className="p-3.5 rounded-xl border border-border bg-card space-y-1.5">
               <div className="flex items-center gap-2 text-foreground font-semibold text-xs sm:text-sm">
                 <Server className="w-4 h-4 text-amber-500 shrink-0" />
-                <span>Job Scraping & Direct Links</span>
+                <span>Job Redirection & Platform Auth</span>
               </div>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Automated discovery fetches public postings directly from ATS providers. Your account credentials on external job boards are never requested or stored.
+                Direct job links redirect you straight to employer/ATS websites. We do not bypass login gates or store your external platform credentials; destination portals enforce their own authentication when you view or apply.
               </p>
             </div>
 

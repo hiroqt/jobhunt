@@ -80,29 +80,29 @@ export const GuidelinesModal: React.FC<GuidelinesModalProps> = ({
       </TooltipProvider>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="max-w-2xl sm:max-w-3xl w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6 overflow-hidden rounded-2xl border border-border shadow-2xl bg-card">
-          <DialogHeader className="border-b border-border/70 pb-3 space-y-3">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-primary/10 border border-primary/20 text-primary shrink-0">
+        <DialogContent className="max-w-2xl sm:max-w-3xl w-[calc(100vw-1.5rem)] max-h-[90vh] sm:max-h-[85vh] flex flex-col p-4 sm:p-6 overflow-hidden rounded-2xl border border-border shadow-2xl bg-card">
+          <DialogHeader className="border-b border-border/70 pb-3 space-y-2.5 shrink-0">
+            <div className="flex items-center gap-2.5 sm:gap-3">
+              <div className="p-1.5 sm:p-2 rounded-xl bg-primary/10 border border-primary/20 text-primary shrink-0">
                 <BookOpen className="w-4 h-4" />
               </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <DialogTitle className="text-base sm:text-lg font-bold text-foreground capitalize leading-none">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <DialogTitle className="text-base sm:text-lg font-bold text-foreground capitalize leading-tight">
                     sakto ka Guidelines
                   </DialogTitle>
                   <Badge variant="secondary" className="text-[10px] font-mono py-0 h-4">
                     User Playbook
                   </Badge>
                 </div>
-                <DialogDescription className="text-xs text-muted-foreground mt-0.5">
+                <DialogDescription className="text-xs text-muted-foreground mt-0.5 line-clamp-2 sm:line-clamp-none">
                   Best practices for high-signal discovery, qualification, and interview preparation.
                 </DialogDescription>
               </div>
             </div>
 
             {/* Tab Navigation */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pt-1 pb-0.5 scrollbar-none">
+            <div className="flex items-center gap-1.5 overflow-x-auto pt-1 pb-1 -mx-1 px-1 scrollbar-thin scrollbar-thumb-muted">
               {tabs.map((tab) => {
                 const Icon = tab.icon;
                 const isActive = activeTab === tab.id;
@@ -111,7 +111,7 @@ export const GuidelinesModal: React.FC<GuidelinesModalProps> = ({
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
                     className={cn(
-                      "px-3 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors flex items-center gap-1.5 shrink-0",
+                      "px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors flex items-center gap-1.5 shrink-0",
                       isActive
                         ? "bg-primary text-primary-foreground shadow-xs"
                         : "text-muted-foreground hover:text-foreground hover:bg-muted"
@@ -125,8 +125,8 @@ export const GuidelinesModal: React.FC<GuidelinesModalProps> = ({
             </div>
           </DialogHeader>
 
-          {/* Tab Contents - Compact and Non-Scrollable */}
-          <div className="py-2.5 text-xs min-h-[220px] flex flex-col justify-center">
+          {/* Tab Contents - Scrollable on mobile/small viewports */}
+          <div className="py-3 text-xs overflow-y-auto flex-1 min-h-0 pr-1 space-y-2">
             {activeTab === "discovery" && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 animate-in fade-in duration-150">
                 <div className="p-3 rounded-xl border border-border bg-muted/30 space-y-1">
@@ -275,9 +275,10 @@ export const GuidelinesModal: React.FC<GuidelinesModalProps> = ({
             )}
           </div>
 
-          <div className="pt-2.5 border-t border-border/70 flex items-center justify-between text-[11px] text-muted-foreground">
-            <span>Press <kbd className="font-mono bg-muted px-1 py-0.5 rounded border border-border text-[10px]">Esc</kbd> to close</span>
-            <Button onClick={() => setIsOpen(false)} variant="default" size="sm" className="font-semibold text-xs h-7 px-3.5">
+          <div className="pt-2.5 border-t border-border/70 flex items-center justify-between text-[11px] text-muted-foreground shrink-0 mt-auto">
+            <span className="hidden sm:inline">Press <kbd className="font-mono bg-muted px-1 py-0.5 rounded border border-border text-[10px]">Esc</kbd> to close</span>
+            <span className="sm:hidden text-[10px]">Swipe down or tap Done</span>
+            <Button onClick={() => setIsOpen(false)} variant="default" size="sm" className="font-semibold text-xs h-7 px-3.5 ml-auto">
               Done
             </Button>
           </div>

@@ -31,6 +31,7 @@ import { Badge } from "@/components/ui/badge";
 import { MatchScoreBadge } from "@/components/jobs/MatchScoreBadge";
 import { JobQualifyingLoader } from "@/components/jobs/JobQualifyingLoader";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { formatSalaryRange } from "@/lib/utils";
 
 interface JobCaptureModalProps {
   isOpen: boolean;
@@ -349,6 +350,9 @@ export const JobCaptureModal: React.FC<JobCaptureModalProps> = ({
                     </h3>
                     <p className="text-sm text-muted-foreground font-medium mt-1">
                       {extractedJob.company} • {extractedJob.location || "Remote"} • {extractedJob.workplace_type}
+                      {(extractedJob.salary_min || extractedJob.salary_max) && (
+                        <span> • <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{formatSalaryRange(extractedJob.salary_min, extractedJob.salary_max, extractedJob.currency, true)}</span></span>
+                      )}
                     </p>
                   </div>
                   <MatchScoreBadge

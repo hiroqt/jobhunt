@@ -19,3 +19,31 @@ def test_skill_category_mapping():
     assert get_skill_category("Docker") == "DevOps"
     assert get_skill_category("AWS") == "Cloud"
     assert get_skill_category("pytest") == "Testing"
+
+
+def test_currency_normalization_php_and_others():
+    from backend.app.processing.normalizer import normalize_currency, get_currency_symbol, get_currency_flag
+    assert normalize_currency("PHP") == "PHP"
+    assert normalize_currency("₱") == "PHP"
+    assert normalize_currency("peso") == "PHP"
+    assert normalize_currency("Philippine Peso") == "PHP"
+    assert normalize_currency("PH") == "PHP"
+    assert normalize_currency("$") == "USD"
+    assert normalize_currency("USD") == "USD"
+    assert normalize_currency("S$") == "SGD"
+    assert normalize_currency("€") == "EUR"
+    assert normalize_currency(None) == "USD"
+
+    assert get_currency_symbol("PHP") == "₱"
+    assert get_currency_symbol("USD") == "$"
+    assert get_currency_symbol("SGD") == "S$"
+    assert get_currency_symbol(None) == "$"
+
+    assert get_currency_flag("PHP") == "🇵🇭"
+    assert get_currency_flag("USD") == "🇺🇸"
+    assert get_currency_flag("SGD") == "🇸🇬"
+    assert get_currency_flag("EUR") == "🇪🇺"
+    assert get_currency_flag("GBP") == "🇬🇧"
+    assert get_currency_flag(None) == "🇵🇭"
+
+

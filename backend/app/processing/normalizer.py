@@ -248,3 +248,71 @@ def extract_skills_from_text(text: str, extra_keywords: Optional[List[str]] = No
                     extracted.add(canon)
 
     return list(extracted)
+
+
+CURRENCY_SYMBOLS: Dict[str, str] = {
+    "PHP": "₱",
+    "USD": "$",
+    "SGD": "S$",
+    "EUR": "€",
+    "GBP": "£",
+    "JPY": "¥",
+    "CAD": "CA$",
+    "AUD": "AU$",
+    "MYR": "RM",
+    "IDR": "Rp",
+}
+
+
+def normalize_currency(curr_str: Optional[str]) -> str:
+    """
+    Normalizes arbitrary currency strings or symbols to ISO 4217 code.
+    Defaults to 'USD', with native support for Philippine Peso ('PHP' / '₱').
+    """
+    if not curr_str:
+        return "USD"
+    c = curr_str.strip().upper()
+    if c in ("PHP", "₱", "PHP.", "PESO", "PESOS", "PHILIPPINE PESO", "PH"):
+        return "PHP"
+    if c in ("USD", "$", "US$", "DOLLAR", "DOLLARS"):
+        return "USD"
+    if c in ("SGD", "S$", "SINGAPORE DOLLAR"):
+        return "SGD"
+    if c in ("EUR", "€", "EURO"):
+        return "EUR"
+    if c in ("GBP", "£", "POUND"):
+        return "GBP"
+    if c in ("MYR", "RM", "RINGGIT"):
+        return "MYR"
+    if c in ("IDR", "RP", "RUPIAH"):
+        return "IDR"
+    return c if len(c) == 3 else "USD"
+
+
+CURRENCY_FLAGS: Dict[str, str] = {
+    "PHP": "🇵🇭",
+    "USD": "🇺🇸",
+    "SGD": "🇸🇬",
+    "EUR": "🇪🇺",
+    "GBP": "🇬🇧",
+    "JPY": "🇯🇵",
+    "CAD": "🇨🇦",
+    "AUD": "🇦🇺",
+    "MYR": "🇲🇾",
+    "IDR": "🇮🇩",
+}
+
+
+def get_currency_symbol(curr_code: Optional[str]) -> str:
+    if not curr_code:
+        return "$"
+    return CURRENCY_SYMBOLS.get(curr_code.upper(), "$")
+
+
+def get_currency_flag(curr_code: Optional[str]) -> str:
+    if not curr_code:
+        return "🇵🇭"
+    return CURRENCY_FLAGS.get(curr_code.upper(), "🌐")
+
+
+

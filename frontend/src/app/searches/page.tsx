@@ -19,6 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { formatSalary, formatSalaryRange, getCurrencyFlag, getCurrencySymbol } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -64,6 +65,8 @@ export default function SearchesPage() {
   const [formLocations, setFormLocations] = useState("Remote");
   const [formRemoteType, setFormRemoteType] = useState("Remote");
   const [formMinSalary, setFormMinSalary] = useState(50000);
+  const [formMaxSalary, setFormMaxSalary] = useState(90000);
+  const [formCurrency, setFormCurrency] = useState("PHP");
   const [formFrequency, setFormFrequency] = useState<"MANUAL" | "HOURLY" | "DAILY" | "WEEKLY">("DAILY");
   const [submitting, setSubmitting] = useState(false);
 
@@ -100,7 +103,8 @@ export default function SearchesPage() {
         employment_types: ["Full-time"],
         experience_levels: ["Junior", "Entry Level"],
         salary_min: formMinSalary > 0 ? formMinSalary : undefined,
-        currency: "USD",
+        salary_max: formMaxSalary > 0 ? formMaxSalary : undefined,
+        currency: formCurrency,
         schedule_frequency: formFrequency,
         enabled: true,
       });
@@ -316,9 +320,11 @@ export default function SearchesPage() {
                         </span>
                       </div>
                       <div>
-                        <span>Min Salary: </span>
+                        <span>Salary Range: </span>
                         <span className="font-medium text-foreground">
-                          {search.salary_min ? `$${search.salary_min.toLocaleString()}` : "Any"}
+                          {search.salary_min || search.salary_max
+                            ? formatSalaryRange(search.salary_min, search.salary_max, search.currency, true)
+                            : "Any"}
                         </span>
                       </div>
                     </div>
@@ -397,7 +403,7 @@ export default function SearchesPage() {
 
       {/* Modal: Create Search */}
       <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
-        <DialogContent className="sm:max-w-[550px]">
+        <DialogContent className="sm:max-w-[620px]">
           <DialogHeader>
             <DialogTitle>New Search Configuration</DialogTitle>
             <DialogDescription>
@@ -485,7 +491,7 @@ export default function SearchesPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-xs font-semibold text-foreground block mb-1">Work Arrangement</label>
                 <select
@@ -500,17 +506,7 @@ export default function SearchesPage() {
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-foreground block mb-1">Min Salary ($ USD)</label>
-                <Input
-                  type="number"
-                  value={formMinSalary}
-                  onChange={(e) => setFormMinSalary(parseInt(e.target.value) || 0)}
-                  placeholder="50000"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-foreground block mb-1">Frequency</label>
+                <label className="text-xs font-semibold text-foreground block mb-1">Scan Frequency</label>
                 <select
                   value={formFrequency}
                   onChange={(e) => setFormFrequency(e.target.value as any)}
@@ -523,6 +519,79 @@ export default function SearchesPage() {
                 </select>
               </div>
             </div>
+
+            {/* Compensation & Salary Range (High-Visibility Dedicated Section) */}
+            <div className="p-3.5 rounded-xl bg-muted/40 border border-border/70 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                  <span>Salary Range & Currency</span>
+                </span>
+                <span className="text-xs font-mono font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded border border-emerald-500/20">
+                  {formatSalaryRange(formMinSalary, formMaxSalary, formCurrency, true)}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-0.5">
+                <div className="space-y-1">
+                  <label className="text-[11px] font-medium text-muted-foreground block">
+                    Currency
+                  </label>
+                  <select
+                    value={formCurrency}
+                    onChange={(e) => setFormCurrency(e.target.value)}
+                    className="w-full h-9 rounded-md border border-input bg-background px-2.5 py-1 text-xs font-medium shadow-sm focus:outline-none focus:ring-1 focus:ring-ring font-sans"
+                  >
+                    <option value="PHP">🇵🇭 PHP (₱)</option>
+                    <option value="USD">🇺🇸 USD ($)</option>
+                    <option value="SGD">🇸🇬 SGD (S$)</option>
+                    <option value="EUR">🇪🇺 EUR (€)</option>
+                    <option value="GBP">🇬🇧 GBP (£)</option>
+                    <option value="CAD">🇨🇦 CAD (CA$)</option>
+                    <option value="AUD">🇦🇺 AUD (AU$)</option>
+                    <option value="JPY">🇯🇵 JPY (¥)</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[11px] font-medium text-muted-foreground block">
+                    Min Salary ({getCurrencySymbol(formCurrency)})
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-mono text-muted-foreground pointer-events-none">
+                      {getCurrencySymbol(formCurrency)}
+                    </span>
+                    <Input
+                      type="number"
+                      step="1000"
+                      value={formMinSalary || ""}
+                      onChange={(e) => setFormMinSalary(parseInt(e.target.value) || 0)}
+                      placeholder="50,000"
+                      className="pl-7 pr-2 h-9 text-xs font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[11px] font-medium text-muted-foreground block">
+                    Max Salary ({getCurrencySymbol(formCurrency)})
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-mono text-muted-foreground pointer-events-none">
+                      {getCurrencySymbol(formCurrency)}
+                    </span>
+                    <Input
+                      type="number"
+                      step="1000"
+                      value={formMaxSalary || ""}
+                      onChange={(e) => setFormMaxSalary(parseInt(e.target.value) || 0)}
+                      placeholder="90,000"
+                      className="pl-7 pr-2 h-9 text-xs font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
 
             <DialogFooter className="pt-3">
               <Button type="button" variant="outline" onClick={() => setCreateModalOpen(false)}>

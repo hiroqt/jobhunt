@@ -37,7 +37,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { cn } from "@/lib/utils";
+import { cn, formatSalary, formatSalaryRange } from "@/lib/utils";
 
 function formatRelativeTime(dateStr?: string): string {
   if (!dateStr) return "Within 1w";
@@ -538,11 +538,11 @@ function JobsContent() {
                       <span>{job.workplace_type}</span>
                       <span>•</span>
                       <span>{job.location || "Remote"}</span>
-                      {job.salary_min && (
+                      {(job.salary_min || job.salary_max) && (
                         <>
                           <span>•</span>
-                          <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
-                            ${job.salary_min.toLocaleString()}
+                          <span className="text-emerald-600 dark:text-emerald-400 font-semibold inline-flex items-center gap-1">
+                            {formatSalaryRange(job.salary_min, job.salary_max, job.currency, true)}
                           </span>
                         </>
                       )}
@@ -598,11 +598,11 @@ function JobsContent() {
                       <MapPin className="w-4 h-4 text-muted-foreground" />
                       {selectedJob.location || "Remote"} ({selectedJob.workplace_type})
                     </span>
-                    {selectedJob.salary_min && (
+                    {(selectedJob.salary_min || selectedJob.salary_max) && (
                       <>
                         <span>•</span>
-                        <span className="text-emerald-600 dark:text-emerald-400 font-mono font-bold">
-                          ${selectedJob.salary_min.toLocaleString()} - ${selectedJob.salary_max?.toLocaleString()}
+                        <span className="text-emerald-600 dark:text-emerald-400 font-mono font-bold inline-flex items-center gap-1">
+                          {formatSalaryRange(selectedJob.salary_min, selectedJob.salary_max, selectedJob.currency, true)}
                         </span>
                       </>
                     )}

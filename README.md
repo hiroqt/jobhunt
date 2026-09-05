@@ -88,4 +88,6 @@ cd backend
 
 ## 📖 Product & Architecture Specification
 
-The complete 51-section PRD and ARD specification is documented in [docs/PRD_ARD.md](file:///Users/arnel/Projects/job_hunt_pipeline/docs/PRD_ARD.md).
+- **Technical Architecture & Processing Guide**: [docs/TECHNICAL_PROCESSING_GUIDE.md](file:///Users/arnel/Projects/job_hunt_pipeline/docs/TECHNICAL_PROCESSING_GUIDE.md)
+- **51-Section PRD & ARD Specification**: [docs/PRD_ARD.md](file:///Users/arnel/Projects/job_hunt_pipeline/docs/PRD_ARD.md)
+- **Job Verification Specification**: [docs/job_hunt_pipeline_job_verification_implementation.md](file:///Users/arnel/Projects/job_hunt_pipeline/docs/job_hunt_pipeline_job_verification_implementation.md)

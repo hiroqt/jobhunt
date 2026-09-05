@@ -38,3 +38,27 @@ async def test_fallback_interview_prep():
     assert len(prep.top_technical_questions) >= 2
     assert len(prep.top_behavioral_questions) >= 2
     assert len(prep.questions_to_ask_interviewer) >= 2
+
+
+@pytest.mark.asyncio
+async def test_fallback_job_extraction_philippine_salary():
+    sample_text = """
+    Job Title: Full Stack Developer
+    Company: Manila Cloud Solutions
+    Location: Taguig, Philippines
+    Salary: ₱60,000 - ₱90,000 per month
+    Experience: 2 years of experience
+    
+    Responsibilities:
+    - Build scalable React web applications and FastAPI services
+    - Deploy containerized applications using Docker
+    """
+    provider = FallbackHeuristicProvider()
+    job = await provider.extract_job_information(raw_text=sample_text, source_url="https://jobstreet.com.ph/job/98765")
+    
+    assert job.title == "Full Stack Developer"
+    assert job.company == "Manila Cloud Solutions"
+    assert job.currency == "PHP"
+    assert job.salary_min == 60000
+    assert job.salary_max == 90000
+

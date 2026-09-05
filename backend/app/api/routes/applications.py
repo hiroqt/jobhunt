@@ -93,15 +93,15 @@ async def create_application(
     )
     db.add(timeline)
 
-    # If applied, auto-schedule follow-up 5 business days later
+    # If applied, auto-schedule follow-up 5 business days (7 calendar days) later
     if application.status == "APPLIED":
         import datetime as dt
         due = datetime.now(timezone.utc) + dt.timedelta(days=7)
         fu = FollowUp(
             application_id=application.id,
             due_date=due,
-            follow_up_type="Day 5 Check",
-            notes="Follow up on application status if no response received."
+            follow_up_type="5 Business Days Check",
+            notes="Follow up on application status 5 business days (7 calendar days) after submission if no response received."
         )
         db.add(fu)
 
@@ -157,8 +157,19 @@ async def update_application_status(
 
     if old_status != new_status:
         app.status = new_status
-        if new_status == "APPLIED" and not app.applied_date:
-            app.applied_date = status_update.applied_date or datetime.now(timezone.utc)
+        if new_status == "APPLIED":
+            if not app.applied_date:
+                app.applied_date = status_update.applied_date or datetime.now(timezone.utc)
+            # Auto-schedule 5 business days check (7 calendar days)
+            import datetime as dt
+            due = datetime.now(timezone.utc) + dt.timedelta(days=7)
+            fu = FollowUp(
+                application_id=app.id,
+                due_date=due,
+                follow_up_type="5 Business Days Check",
+                notes="Follow up on application status 5 business days (7 calendar days) after submission if no response received."
+            )
+            db.add(fu)
         if status_update.salary_offered is not None:
             app.salary_offered = status_update.salary_offered
 

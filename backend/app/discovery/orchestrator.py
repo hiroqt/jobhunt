@@ -211,10 +211,15 @@ async def execute_search_pipeline(
                     posted_at=norm.posted_at,
                     verification_status=norm.verification_status,
                     verification_confidence=norm.verification_confidence,
+                    trust_score=v_res.trust_score.overall_trust_score,
+                    trust_grade=v_res.trust_score.trust_grade,
                     verified_at=norm.verified_at,
                     discovered_at=datetime.now(timezone.utc),
+                    first_seen_at=datetime.now(timezone.utc),
                     last_seen_at=datetime.now(timezone.utc),
+                    last_changed_at=datetime.now(timezone.utc),
                     raw_data=raw_job.raw_data or {"source_payload": "raw_discovery"},
+                    field_evidence_data=[e.model_dump() for e in v_res.field_evidence],
                 )
                 db.add(new_job)
                 await db.flush()
@@ -237,7 +242,9 @@ async def execute_search_pipeline(
                         job_id=new_job.id,
                         skill_id=tax_skill.id,
                         is_required=True,
-                        years_required=norm.min_years_experience or 1
+                        tier="REQUIRED",
+                        years_required=new_job.min_years_experience or 0,
+                        importance_weight=3
                     )
                     js.skill = tax_skill
                     db.add(js)
@@ -256,11 +263,14 @@ async def execute_search_pipeline(
                 rec, summary_rec = evaluate_decision_rules(
                     overall_score=score,
                     missing_critical_skills=missing_crit,
-                    experience_gap=max(0, (new_job.min_years_experience or 0) - (full_cand.years_of_experience or 0))
+                    experience_gap=max(0, (new_job.min_years_experience or 0) - (full_cand.years_of_experience or 0)),
+                    critical_constraint_failed=breakdown.critical_constraint_failed,
+                    hard_requirement_reason=breakdown.hard_requirement_reason
                 )
 
                 new_job.match_score = score
                 new_job.recommendation = rec
+                new_job.eligibility_status = breakdown.eligibility_status
                 new_job.match_summary = summary_rec
                 new_job.matched_skills = matched
                 new_job.missing_critical_skills = missing_crit

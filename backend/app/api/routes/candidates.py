@@ -10,7 +10,7 @@ from backend.app.models.skill import Skill
 from backend.app.schemas.candidate import CandidateProfileResponse, CandidateProfileUpdate
 from backend.app.schemas.skill import CandidateSkillCreate, CandidateSkillResponse, SkillResponse
 from backend.app.api.dependencies import get_current_candidate
-from backend.app.processing.normalizer import normalize_skill_name, get_skill_category
+from backend.app.processing.normalizer import normalize_skill_name, get_skill_category, normalize_currency
 
 router = APIRouter(prefix="/candidate", tags=["Candidate"])
 
@@ -59,6 +59,8 @@ async def update_candidate_profile(
     candidate: CandidateProfile = Depends(get_current_candidate)
 ):
     update_dict = update_data.model_dump(exclude_unset=True)
+    if "currency" in update_dict and update_dict["currency"]:
+        update_dict["currency"] = normalize_currency(update_dict["currency"])
     for key, value in update_dict.items():
         setattr(candidate, key, value)
     

@@ -10,7 +10,7 @@ from backend.app.sources.base import (
     SourceHealth,
 )
 from backend.app.processing.url_validator import validate_and_canonicalize_url
-from backend.app.processing.normalizer import normalize_skill_name, extract_skills_from_text
+from backend.app.processing.normalizer import normalize_skill_name, extract_skills_from_text, normalize_currency
 from backend.app.processing.link_checker import generate_search_fallback_url
 
 
@@ -94,7 +94,7 @@ class IndeedAdapter(JobSourceAdapter):
                 experience_level=query.experience_levels[0] if query.experience_levels else "Junior",
                 salary_min=query.salary_min or 55000,
                 salary_max=query.salary_max or 85000,
-                currency=query.currency or "USD",
+                currency=normalize_currency(query.currency or ("PHP" if "philippines" in loc.lower() else "USD")),
                 description=f"Active job listings for {kw} roles in {loc} posted to Indeed within the past 7 days.",
                 skills=discovered_skills,
                 posted_at=now - timedelta(days=1, hours=2),
@@ -125,7 +125,7 @@ class IndeedAdapter(JobSourceAdapter):
             min_years_experience=1,
             salary_min=raw_job.salary_min or 55000,
             salary_max=raw_job.salary_max or 80000,
-            currency=raw_job.currency or "USD",
+            currency=normalize_currency(raw_job.currency or ("PHP" if raw_job.location and "philippines" in raw_job.location.lower() else "USD")),
             raw_description=raw_job.description or f"Role: {raw_job.title} at {raw_job.company}",
             summary=f"Active opportunity at {raw_job.company} for {raw_job.title} posted within the past week.",
             skills=normalized_skills or [normalize_skill_name(raw_job.title)],

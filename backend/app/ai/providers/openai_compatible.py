@@ -5,7 +5,7 @@ from openai import AsyncOpenAI
 from backend.app.ai.base import BaseAIProvider
 from backend.app.schemas.job import JobCreate, JobSkillInfo
 from backend.app.schemas.ai import InterviewPrepResponse, QuestionAndStarGuide, ResumeTailorResponse, FollowUpEmailGenResponse
-from backend.app.processing.normalizer import normalize_skill_name, get_skill_category
+from backend.app.processing.normalizer import normalize_skill_name, get_skill_category, normalize_currency
 from backend.app.processing.source_detector import detect_job_source
 from backend.app.core.logging import logger
 
@@ -43,9 +43,9 @@ Analyze the provided job posting text and extract structured information in JSON
   "location": "Job location or 'Remote'",
   "workplace_type": "Remote | Hybrid | Onsite",
   "employment_type": "Full-time | Contract | Part-time | Internship",
-  "salary_min": null or integer (annual USD equivalent),
-  "salary_max": null or integer (annual USD equivalent),
-  "currency": "USD",
+  "salary_min": null or integer (numeric amount),
+  "salary_max": null or integer (numeric amount),
+  "currency": "ISO 4217 code (e.g. PHP, USD, SGD, EUR, GBP). Use PHP if posting is in Philippines or uses ₱/Php/Pesos",
   "experience_level": "Entry / Junior | Mid-Level | Senior",
   "min_years_experience": integer (0 for fresh grads/junior),
   "education_requirement": "Degree required or null",
@@ -109,7 +109,7 @@ Return ONLY pure JSON without markdown code fences or conversational filler."""
                 employment_type=data.get("employment_type", "Full-time"),
                 salary_min=data.get("salary_min"),
                 salary_max=data.get("salary_max"),
-                currency=data.get("currency", "USD"),
+                currency=normalize_currency(data.get("currency", "USD")),
                 experience_level=data.get("experience_level", "Entry / Junior"),
                 min_years_experience=data.get("min_years_experience", 0),
                 education_requirement=data.get("education_requirement"),

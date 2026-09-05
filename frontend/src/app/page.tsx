@@ -23,6 +23,7 @@ import { JobCaptureModal } from "@/components/jobs/JobCaptureModal";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { formatSalary } from "@/lib/utils";
 
 export default function DashboardPage() {
   const [overview, setOverview] = useState<DashboardOverview | null>(null);
@@ -192,7 +193,7 @@ export default function DashboardPage() {
             </div>
             <p className="text-xs text-muted-foreground truncate">
               {candidate?.target_salary && candidate.target_salary > 0
-                ? `Goal: $${candidate.target_salary.toLocaleString()}`
+                ? `Goal: ${formatSalary(candidate.target_salary, candidate.currency, true)}`
                 : "Target salary unconfigured"}
             </p>
           </CardContent>

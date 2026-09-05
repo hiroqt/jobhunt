@@ -28,6 +28,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { getCurrencySymbol, getCurrencyFlag, formatSalaryRange } from "@/lib/utils";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 export default function ProfilePage() {
@@ -45,6 +46,7 @@ export default function ProfilePage() {
   const [targetRoles, setTargetRoles] = useState("");
   const [minSalary, setMinSalary] = useState<number>(0);
   const [targetSalary, setTargetSalary] = useState<number>(0);
+  const [currency, setCurrency] = useState("PHP");
   const [education, setEducation] = useState("");
   const [githubUrl, setGithubUrl] = useState("");
   const [linkedinUrl, setLinkedinUrl] = useState("");
@@ -83,6 +85,7 @@ export default function ProfilePage() {
       setTargetRoles(profData.target_roles?.join(", ") || "");
       setMinSalary(profData.min_salary || 0);
       setTargetSalary(profData.target_salary || 0);
+      setCurrency(profData.currency || "PHP");
       setEducation(profData.education_level || "");
       setGithubUrl(profData.github_url || "");
       setLinkedinUrl(profData.linkedin_url || "");
@@ -115,6 +118,7 @@ export default function ProfilePage() {
         target_roles: rolesArray,
         min_salary: Number(minSalary) || undefined,
         target_salary: Number(targetSalary) || undefined,
+        currency,
         education_level: education,
         github_url: githubUrl,
         linkedin_url: linkedinUrl,
@@ -443,33 +447,71 @@ export default function ProfilePage() {
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="space-y-1.5">
+                  <label htmlFor="profile-currency" className="block text-sm font-medium text-foreground">
+                    Currency
+                  </label>
+                  <select
+                    id="profile-currency"
+                    value={currency}
+                    onChange={(e) => setCurrency(e.target.value)}
+                    className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring font-sans"
+                  >
+                    <option value="PHP">🇵🇭 PHP (₱ - Philippine Peso)</option>
+                    <option value="USD">🇺🇸 USD ($ - US Dollar)</option>
+                    <option value="SGD">🇸🇬 SGD (S$ - Singapore Dollar)</option>
+                    <option value="EUR">🇪🇺 EUR (€ - Euro)</option>
+                    <option value="GBP">🇬🇧 GBP (£ - British Pound)</option>
+                    <option value="CAD">🇨🇦 CAD (CA$ - Canadian Dollar)</option>
+                    <option value="AUD">🇦🇺 AUD (AU$ - Australian Dollar)</option>
+                    <option value="JPY">🇯🇵 JPY (¥ - Japanese Yen)</option>
+                  </select>
+                </div>
                 <div className="space-y-1.5">
                   <label htmlFor="profile-min-salary" className="block text-sm font-medium text-foreground">
-                    Minimum Annual Salary ($)
+                    Minimum Salary ({getCurrencyFlag(currency)} {getCurrencySymbol(currency)})
                   </label>
-                  <Input
-                    id="profile-min-salary"
-                    type="number"
-                    step="1000"
-                    value={minSalary}
-                    onChange={(e) => setMinSalary(Number(e.target.value))}
-                    className="h-10 text-sm font-mono"
-                  />
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-mono text-muted-foreground pointer-events-none">
+                      {getCurrencySymbol(currency)}
+                    </span>
+                    <Input
+                      id="profile-min-salary"
+                      type="number"
+                      step="1000"
+                      value={minSalary || ""}
+                      onChange={(e) => setMinSalary(Number(e.target.value))}
+                      className="h-10 pl-8 text-sm font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    />
+                  </div>
                 </div>
                 <div className="space-y-1.5">
                   <label htmlFor="profile-target-salary" className="block text-sm font-medium text-foreground">
-                    Target Salary ($)
+                    Target Salary ({getCurrencyFlag(currency)} {getCurrencySymbol(currency)})
                   </label>
-                  <Input
-                    id="profile-target-salary"
-                    type="number"
-                    step="1000"
-                    value={targetSalary}
-                    onChange={(e) => setTargetSalary(Number(e.target.value))}
-                    className="h-10 text-sm font-mono"
-                  />
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-mono text-muted-foreground pointer-events-none">
+                      {getCurrencySymbol(currency)}
+                    </span>
+                    <Input
+                      id="profile-target-salary"
+                      type="number"
+                      step="1000"
+                      value={targetSalary || ""}
+                      onChange={(e) => setTargetSalary(Number(e.target.value))}
+                      className="h-10 pl-8 text-sm font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    />
+                  </div>
                 </div>
+                {(minSalary > 0 || targetSalary > 0) && (
+                  <div className="sm:col-span-3 text-xs text-muted-foreground bg-muted/40 p-2.5 rounded-lg border border-border/50 flex items-center justify-between">
+                    <span>Desired Salary Range:</span>
+                    <span className="font-semibold font-mono text-emerald-600 dark:text-emerald-400">
+                      {formatSalaryRange(minSalary, targetSalary, currency, true)}
+                    </span>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-1.5">

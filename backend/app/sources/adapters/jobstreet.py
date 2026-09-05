@@ -14,7 +14,7 @@ from backend.app.sources.base import (
     SourceHealth,
 )
 from backend.app.processing.url_validator import validate_and_canonicalize_url
-from backend.app.processing.normalizer import normalize_skill_name, extract_skills_from_text
+from backend.app.processing.normalizer import normalize_skill_name, extract_skills_from_text, normalize_currency
 from backend.app.processing.link_checker import generate_search_fallback_url
 from backend.app.core.logging import logger
 
@@ -55,7 +55,7 @@ class JobStreetAdapter(JobSourceAdapter):
         elif "indonesia" in loc_l or "jakarta" in loc_l or loc_l.endswith("id"):
             return "www.jobstreet.co.id", query_curr or "IDR"
         else:
-            return "www.jobstreet.com.ph", query_curr or "USD"
+            return "www.jobstreet.com.ph", query_curr or "PHP"
 
     async def search(self, query: JobSearchQuery) -> List[RawJob]:
         results: List[RawJob] = []
@@ -263,7 +263,7 @@ class JobStreetAdapter(JobSourceAdapter):
             min_years_experience=0 if "entry" in raw_job.title.lower() or "junior" in raw_job.title.lower() else 1,
             salary_min=raw_job.salary_min or 50000,
             salary_max=raw_job.salary_max or 75000,
-            currency=raw_job.currency or "USD",
+            currency=normalize_currency(raw_job.currency or ("PHP" if not raw_job.location or "philippines" in raw_job.location.lower() else "USD")),
             raw_description=raw_job.description or f"Role: {raw_job.title} at {raw_job.company}",
             summary=f"Active opportunity at {raw_job.company} for {raw_job.title} on JobStreet with verified 1-week active status.",
             skills=normalized_skills or [normalize_skill_name(raw_job.title)],

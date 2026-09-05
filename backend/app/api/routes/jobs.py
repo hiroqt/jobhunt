@@ -19,6 +19,7 @@ from backend.app.processing.link_checker import verify_job_url_liveness, generat
 from backend.app.ai.factory import get_ai_provider
 from backend.app.matching.scorer import calculate_match_scores
 from backend.app.matching.rules import evaluate_decision_rules
+from backend.app.verification.identity import calculate_job_trust_score, evaluate_content_completeness
 from backend.app.core.logging import logger
 
 router = APIRouter(prefix="/jobs", tags=["Jobs"])
@@ -98,10 +99,29 @@ async def extract_and_analyze_job(
         source=job_create.source
     )
 
+    import hashlib
+    content_hash = hashlib.sha256((raw_text or "").encode("utf-8")).hexdigest() if raw_text else None
+
+    # Calculate trust score for manual extraction
+    trust_score_obj = calculate_job_trust_score(
+        source=job_create.source,
+        identity_confidence=0.95 if canonical_url else 0.75,
+        content_confidence=evaluate_content_completeness(
+            title=job_create.title,
+            company=job_create.company,
+            description=raw_text,
+            skills=job_create.skills,
+            salary_min=job_create.salary_min
+        ),
+        posted_at=datetime.now(timezone.utc),
+        is_active=link_info.get("is_active", True)
+    )
+
     # 3. Persist Job
     job = Job(
         url=canonical_url or search_fallback,
         canonical_url=canonical_url or search_fallback,
+        content_hash=content_hash,
         source=job_create.source,
         title=job_create.title,
         company=job_create.company,
@@ -122,8 +142,12 @@ async def extract_and_analyze_job(
         link_status=link_info.get("link_status", "ACTIVE"),
         link_type=link_info.get("link_type", "DIRECT"),
         search_url=search_fallback,
+        trust_score=trust_score_obj.overall_trust_score,
+        trust_grade=trust_score_obj.trust_grade,
         last_checked_at=datetime.now(timezone.utc),
         posted_at=datetime.now(timezone.utc),
+        first_seen_at=datetime.now(timezone.utc),
+        last_changed_at=datetime.now(timezone.utc),
     )
     db.add(job)
     await db.flush()
@@ -139,10 +163,12 @@ async def extract_and_analyze_job(
             db.add(skill)
             await db.flush()
         
+        tier = "REQUIRED" if skill_info.is_required else "PREFERRED"
         js = JobSkill(
             job_id=job.id,
             skill_id=skill.id,
             is_required=skill_info.is_required,
+            tier=tier,
             years_required=skill_info.years_required
         )
         js.skill = skill
@@ -178,11 +204,14 @@ async def extract_and_analyze_job(
     rec, summary = evaluate_decision_rules(
         overall_score=overall_score,
         missing_critical_skills=missing_crit,
-        experience_gap=max(0, (job.min_years_experience or 0) - (full_cand.years_of_experience or 0))
+        experience_gap=max(0, (job.min_years_experience or 0) - (full_cand.years_of_experience or 0)),
+        critical_constraint_failed=breakdown.critical_constraint_failed,
+        hard_requirement_reason=breakdown.hard_requirement_reason
     )
 
     job.match_score = overall_score
     job.recommendation = rec
+    job.eligibility_status = breakdown.eligibility_status
     job.match_summary = summary
     job.matched_skills = matched
     job.missing_critical_skills = missing_crit

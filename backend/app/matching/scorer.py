@@ -1,4 +1,4 @@
-from typing import List, Dict, Set, Tuple
+from typing import List, Dict, Set, Tuple, Optional
 from backend.app.schemas.matching import MatchBreakdown, SkillMatchDetail
 from backend.app.models.candidate import CandidateProfile, CandidateSkill
 from backend.app.models.job import Job, JobSkill
@@ -12,14 +12,15 @@ def calculate_match_scores(
     candidate_skills: List[CandidateSkill]
 ) -> Tuple[int, MatchBreakdown, List[SkillMatchDetail], List[str], List[str], List[str]]:
     """
-    Calculates weighted match score across 6 dimensions according to PRD V2.0:
-    - Technical Skills: 35%
+    Calculates weighted match score across 6 dimensions according to V3.0 Production Architecture:
+    - Technical Skills: 35% (using 4-tier skill weighting: CRITICAL=3.0, REQUIRED=2.0, PREFERRED=1.0, BONUS=0.5)
     - Role Compatibility: 25%
-    - Experience: 15%
+    - Experience: 15% (with semantic range and junior-friendly curve)
     - Education: 10%
     - Location / Remote: 10%
     - Other (Salary/Culture): 5%
     
+    Also evaluates Hard Requirement Eligibility Gate for mandatory non-negotiable constraints.
     Returns: (overall_score, breakdown, skill_details, matched_skills, missing_critical, missing_preferred)
     """
     # 1. Technical Skills (35%)
@@ -36,6 +37,8 @@ def calculate_match_scores(
 
     total_weight = 0.0
     earned_weight = 0.0
+    critical_constraint_failed = False
+    hard_requirement_reason: Optional[str] = None
 
     if not job_skills:
         # Default generous baseline if no explicit skills parsed
@@ -46,7 +49,26 @@ def calculate_match_scores(
                 continue
             skill_name = js.skill.name
             canon = normalize_skill_name(skill_name)
-            weight = 2.0 if js.is_required else 1.0
+            
+            # Determine 4-tier skill level
+            raw_tier = getattr(js, "tier", None)
+            if raw_tier in ("CRITICAL", "REQUIRED", "PREFERRED", "BONUS"):
+                tier = raw_tier
+            elif js.is_required and getattr(js, "importance_weight", 1) >= 4:
+                tier = "CRITICAL"
+            elif js.is_required:
+                tier = "REQUIRED"
+            else:
+                tier = "PREFERRED"
+
+            # Assign tier weights: CRITICAL=3.0, REQUIRED=2.0, PREFERRED=1.0, BONUS=0.5
+            tier_weights = {
+                "CRITICAL": 3.0,
+                "REQUIRED": 2.0,
+                "PREFERRED": 1.0,
+                "BONUS": 0.5
+            }
+            weight = tier_weights.get(tier, 2.0 if js.is_required else 1.0)
             total_weight += weight
             
             cs = cand_skill_map.get(canon.lower())
@@ -61,13 +83,17 @@ def calculate_match_scores(
                     candidate_has=True,
                     candidate_proficiency=cs.proficiency_level,
                     candidate_years=cs.years_experience,
-                    status=status
+                    status=status,
+                    tier=tier
                 ))
             else:
                 # Candidate missing skill
                 if js.is_required:
                     missing_critical.append(canon)
                     status = "MISSING"
+                    if tier == "CRITICAL" and not hard_requirement_reason:
+                        critical_constraint_failed = True
+                        hard_requirement_reason = f"Missing critical required skill '{canon}'"
                 else:
                     missing_preferred.append(canon)
                     status = "PARTIAL"
@@ -78,7 +104,8 @@ def calculate_match_scores(
                     candidate_has=False,
                     candidate_proficiency=None,
                     candidate_years=0,
-                    status=status
+                    status=status,
+                    tier=tier
                 ))
 
         tech_score = (earned_weight / total_weight * 100.0) if total_weight > 0 else 80.0
@@ -98,18 +125,22 @@ def calculate_match_scores(
     # 3. Experience Match (15%)
     cand_years = candidate.years_of_experience or 0
     job_req_years = job.min_years_experience or 0
+    exp_gap = max(0, job_req_years - cand_years)
     
     if cand_years >= job_req_years:
         exp_score = 100.0
-    elif (job_req_years - cand_years) <= 1:
-        exp_score = 80.0 # 1 year gap is considered highly viable for junior roles
-    elif (job_req_years - cand_years) <= 2:
-        exp_score = 55.0
+    elif exp_gap <= 1:
+        exp_score = 85.0  # Junior-friendly curve for 1-year gap
+    elif exp_gap <= 2:
+        exp_score = 60.0
     else:
         exp_score = 30.0
+        if exp_gap > 3 and not hard_requirement_reason:
+            critical_constraint_failed = True
+            hard_requirement_reason = f"Excessive experience gap ({exp_gap} years required delta)"
 
     # 4. Education Match (10%)
-    edu_score = 90.0 # Default high match for CS / IT / Bootcamp backgrounds
+    edu_score = 90.0  # Default high match for CS / IT / Bootcamp backgrounds
 
     # 5. Location / Workplace Type Match (10%)
     cand_workplaces = [w.lower() for w in (candidate.workplace_types or ["remote", "hybrid"])]
@@ -123,9 +154,31 @@ def calculate_match_scores(
     # 6. Other / Salary alignment (5%)
     other_score = 85.0
     if job.salary_min and candidate.min_salary:
-        if job.salary_min >= candidate.min_salary:
+        cand_curr = (getattr(candidate, "currency", None) or "USD").upper()
+        job_curr = (getattr(job, "currency", None) or "USD").upper()
+        
+        cand_min = float(candidate.min_salary)
+        job_min = float(job.salary_min)
+
+        # Standardize monthly vs annual for PHP (amounts < 200,000 PHP are monthly)
+        if cand_curr == "PHP" and cand_min < 200000:
+            cand_min *= 12.0
+        if job_curr == "PHP" and job_min < 200000:
+            job_min *= 12.0
+
+        # Approximate cross-currency conversion if currencies differ (e.g. PHP vs USD, 1 USD ≈ 56 PHP)
+        if job_curr == "USD" and cand_curr == "PHP":
+            job_min *= 56.0
+        elif job_curr == "PHP" and cand_curr == "USD":
+            job_min /= 56.0
+        elif job_curr == "SGD" and cand_curr == "PHP":
+            job_min *= 42.0
+        elif job_curr == "PHP" and cand_curr == "SGD":
+            job_min /= 42.0
+
+        if job_min >= cand_min:
             other_score = 100.0
-        elif job.salary_min >= candidate.min_salary * 0.8:
+        elif job_min >= cand_min * 0.8:
             other_score = 75.0
         else:
             other_score = 50.0
@@ -141,13 +194,18 @@ def calculate_match_scores(
     )
     overall_score = max(10, min(99, int(round(overall_float))))
 
+    eligibility_status = "FAILED_CRITICAL_CONSTRAINT" if critical_constraint_failed else "ELIGIBLE"
+
     breakdown = MatchBreakdown(
         technical_skills_score=round(tech_score, 1),
         role_compatibility_score=round(role_score, 1),
         experience_score=round(exp_score, 1),
         education_score=round(edu_score, 1),
         location_score=round(loc_score, 1),
-        other_score=round(other_score, 1)
+        other_score=round(other_score, 1),
+        eligibility_status=eligibility_status,
+        critical_constraint_failed=critical_constraint_failed,
+        hard_requirement_reason=hard_requirement_reason
     )
 
     return overall_score, breakdown, skill_details, matched_skills, missing_critical, missing_preferred

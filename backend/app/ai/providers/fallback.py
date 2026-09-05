@@ -3,7 +3,7 @@ from typing import Optional, List, Dict
 from backend.app.ai.base import BaseAIProvider
 from backend.app.schemas.job import JobCreate, JobSkillInfo
 from backend.app.schemas.ai import InterviewPrepResponse, QuestionAndStarGuide, ResumeTailorResponse, FollowUpEmailGenResponse
-from backend.app.processing.normalizer import SYNONYM_MAP, normalize_skill_name, get_skill_category
+from backend.app.processing.normalizer import SYNONYM_MAP, normalize_skill_name, get_skill_category, normalize_currency
 from backend.app.processing.source_detector import detect_job_source
 
 
@@ -94,6 +94,35 @@ class FallbackHeuristicProvider(BaseAIProvider):
             if len(responsibilities) >= 6:
                 break
 
+        # Check salary and currency
+        salary_min: Optional[int] = None
+        salary_max: Optional[int] = None
+        currency: str = "PHP" if any(k in lower_text for k in ["philippines", "manila", "cebu", "quezon city", "taguig", "makati"]) or "₱" in raw_text else "USD"
+
+        # Look for salary range patterns:
+        salary_pattern = r"(?:(PHP|₱|Php|USD|\$|EUR|€|GBP|£)\s*)?([0-9]{1,3}(?:,[0-9]{3})+|[0-9]{4,7})\s*(?:-|to|–)\s*(?:(PHP|₱|Php|USD|\$|EUR|€|GBP|£)\s*)?([0-9]{1,3}(?:,[0-9]{3})+|[0-9]{4,7})"
+        sal_match = re.search(salary_pattern, raw_text, re.IGNORECASE)
+        if sal_match:
+            curr_match = sal_match.group(1) or sal_match.group(3)
+            if curr_match:
+                currency = normalize_currency(curr_match)
+            try:
+                salary_min = int(sal_match.group(2).replace(",", ""))
+                salary_max = int(sal_match.group(4).replace(",", ""))
+            except ValueError:
+                pass
+        else:
+            single_pattern = r"(?:(PHP|₱|Php|USD|\$|EUR|€|GBP|£)\s*)([0-9]{1,3}(?:,[0-9]{3})+|[0-9]{4,7})"
+            single_match = re.search(single_pattern, raw_text, re.IGNORECASE)
+            if single_match:
+                curr_match = single_match.group(1)
+                if curr_match:
+                    currency = normalize_currency(curr_match)
+                try:
+                    salary_min = int(single_match.group(2).replace(",", ""))
+                except ValueError:
+                    pass
+
         source = detect_job_source(source_url) if source_url else "Manual"
 
         return JobCreate(
@@ -107,6 +136,9 @@ class FallbackHeuristicProvider(BaseAIProvider):
             employment_type="Full-time",
             experience_level="Junior" if min_years <= 2 else ("Senior" if min_years >= 5 else "Mid-Level"),
             min_years_experience=min_years,
+            salary_min=salary_min,
+            salary_max=salary_max,
+            currency=currency,
             raw_description=raw_text,
             summary=f"{title} position at {company}. Requires familiarity with {', '.join(list(detected_skills.keys())[:4]) if detected_skills else 'specified domain requirements'}.",
             responsibilities=responsibilities,

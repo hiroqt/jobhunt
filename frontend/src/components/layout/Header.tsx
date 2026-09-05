@@ -11,6 +11,7 @@ import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { Notification } from "@/types";
 import { getNotifications, markAllNotificationsRead, markNotificationRead } from "@/lib/api";
 import { SessionResetButton } from "@/components/layout/SessionResetButton";
+import { GuidelinesModal } from "@/components/layout/GuidelinesModal";
 
 interface HeaderProps {
   onRefresh?: () => void;
@@ -206,6 +207,8 @@ export const Header: React.FC<HeaderProps> = ({ onRefresh }) => {
           </div>
 
           <SessionResetButton />
+
+          <GuidelinesModal />
 
           <ThemeToggle />
 

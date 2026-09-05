@@ -22,6 +22,10 @@ import { getCandidateProfile, getDashboardOverview } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
+import { AppLogo } from "@/components/layout/AppLogo";
+import { PrivacyNoticeModal } from "@/components/layout/PrivacyNoticeModal";
+import { GuidelinesModal } from "@/components/layout/GuidelinesModal";
+import { Shield, BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Sidebar: React.FC = () => {
@@ -29,6 +33,7 @@ export const Sidebar: React.FC = () => {
   const [profile, setProfile] = useState<CandidateProfile | null>(null);
   const [overview, setOverview] = useState<DashboardOverview | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [privacyOpen, setPrivacyOpen] = useState(false);
 
   useEffect(() => {
     // Load candidate profile
@@ -103,15 +108,15 @@ export const Sidebar: React.FC = () => {
   const sidebarContent = (
     <div className="flex flex-col h-full bg-card border-r border-border select-none">
       {/* Brand Header */}
-      <div className="p-6 border-b border-border flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-3">
-          <Briefcase className="w-5 h-5 text-foreground shrink-0" />
+      <div className="p-5 border-b border-border flex items-center justify-between">
+        <Link href="/" className="flex items-center gap-3 group">
+          <AppLogo size="md" />
           <div>
-            <h1 className="font-semibold text-base tracking-tight text-foreground">
-              Job Hunt Pipeline
+            <h1 className="font-bold text-base tracking-tight text-foreground group-hover:text-primary transition-colors capitalize">
+              sakto ka
             </h1>
-            <p className="text-xs text-muted-foreground">
-              Career Management System
+            <p className="text-[11px] text-muted-foreground font-medium">
+              Career Intelligence System
             </p>
           </div>
         </Link>
@@ -173,11 +178,11 @@ export const Sidebar: React.FC = () => {
       </nav>
 
       {/* Bottom Profile / Quick Status Footer */}
-      <div className="p-4 border-t border-border bg-card space-y-3">
+      <div className="p-4 border-t border-border bg-card space-y-2.5">
         <Link
           href="/profile"
           aria-label="View Candidate Profile"
-          className="bg-background hover:bg-accent border border-border rounded-lg p-3.5 flex items-center justify-between gap-3 transition-colors group block"
+          className="bg-background hover:bg-accent border border-border rounded-lg p-3 flex items-center justify-between gap-3 transition-colors group block"
         >
           <div className="min-w-0 space-y-0.5">
             <p className="text-sm font-semibold text-foreground truncate">
@@ -191,7 +196,31 @@ export const Sidebar: React.FC = () => {
           </div>
           <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors shrink-0" />
         </Link>
-        <div className="flex items-center justify-between px-1 text-xs text-muted-foreground">
+
+        {/* Guidelines & Privacy Notice Quick Links */}
+        <div className="grid grid-cols-2 gap-2 pt-1 border-t border-border/50">
+          <GuidelinesModal
+            customTrigger={
+              <button
+                type="button"
+                className="w-full flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border/80 bg-background hover:bg-muted text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <BookOpen className="w-3 h-3 text-primary shrink-0" />
+                <span>Guidelines</span>
+              </button>
+            }
+          />
+          <button
+            type="button"
+            onClick={() => setPrivacyOpen(true)}
+            className="w-full flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border/80 bg-background hover:bg-muted text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <Shield className="w-3 h-3 text-emerald-500 shrink-0" />
+            <span>Privacy</span>
+          </button>
+        </div>
+
+        <div className="flex items-center justify-between px-1 pt-1 text-xs text-muted-foreground">
           <span>Theme Mode</span>
           <ThemeToggle />
         </div>
@@ -201,6 +230,10 @@ export const Sidebar: React.FC = () => {
 
   return (
     <>
+      <PrivacyNoticeModal
+        isOpen={privacyOpen}
+        onClose={() => setPrivacyOpen(false)}
+      />
       {/* Mobile Menu Trigger Button */}
       <div className="md:hidden fixed top-3 left-3 z-40">
         <Button

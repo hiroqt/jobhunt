@@ -20,8 +20,16 @@ const monoFont = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Job Hunt Pipeline — Career Application & Interview Management",
+  title: "sakto ka — Career Application & Interview Management",
   description: "Career management platform for tracking applications, qualifying job fit, and acing technical interviews.",
+  icons: {
+    icon: [
+      { url: "/job_hunt.png", type: "image/png" },
+    ],
+    apple: [
+      { url: "/job_hunt.png", type: "image/png" },
+    ],
+  },
 };
 
 export default function RootLayout({

@@ -65,8 +65,8 @@ export default function DashboardPage() {
       <div className="rounded-xl border border-border bg-card p-6 sm:p-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2 max-w-2xl">
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
-              Job Hunt Pipeline & Intelligence
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight capitalize">
+              sakto ka Career Intelligence
             </h1>
             <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
               Automated multi-source job discovery, qualification scoring against your candidate profile, application tracking CRM, and AI interview preparation.

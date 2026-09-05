@@ -27,6 +27,12 @@ import {
   RefreshCw,
   Globe,
   Clock,
+  ChevronDown,
+  Send,
+  Calendar,
+  Award,
+  Filter,
+  UserCheck,
 } from "lucide-react";
 import { getJobs, deleteJob, createApplication, saveJob, unsaveJob, verifyJobLink } from "@/lib/api";
 import { Job, LinkVerificationResponse } from "@/types";
@@ -37,6 +43,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 import { cn, formatSalary, formatSalaryRange } from "@/lib/utils";
 
 function formatRelativeTime(dateStr?: string): string {
@@ -71,8 +85,8 @@ function JobsContent() {
   const [loading, setLoading] = useState(true);
   const [isCaptureModalOpen, setIsCaptureModalOpen] = useState(false);
   const [addedJobs, setAddedJobs] = useState<Record<string, boolean>>({});
-  const [savingJobs, setSavingJobs] = useState<Record<string, "SAVED" | "APPLIED" | null>>({});
-  const [savedStages, setSavedStages] = useState<Record<string, "SAVED" | "APPLIED">>({});
+  const [savingJobs, setSavingJobs] = useState<Record<string, string | null>>({});
+  const [savedStages, setSavedStages] = useState<Record<string, string>>({});
   const [verifyingLinkId, setVerifyingLinkId] = useState<string | null>(null);
   const [linkCheckResult, setLinkCheckResult] = useState<LinkVerificationResponse | null>(null);
 
@@ -172,13 +186,13 @@ function JobsContent() {
     }
   };
 
-  const handleAddToPipeline = async (job: Job, stage: "SAVED" | "APPLIED" = "APPLIED") => {
+  const handleAddToPipeline = async (job: Job, stage: string = "APPLIED") => {
     setSavingJobs((prev) => ({ ...prev, [job.id]: stage }));
     try {
       await createApplication({
         job_id: job.id,
         status: stage,
-        notes: `Direct application added from Job Explorer with match score ${job.match_score || 0}%.`,
+        notes: `Direct application added from Job Explorer as ${stage} with match score ${job.match_score || 0}%.`,
       });
       setAddedJobs((prev) => ({ ...prev, [job.id]: true }));
       setSavedStages((prev) => ({ ...prev, [job.id]: stage }));
@@ -271,7 +285,7 @@ function JobsContent() {
       </div>
 
       {/* Main Filter and Search Bar */}
-      <Card className="border-border bg-card p-4 space-y-3">
+      <Card className="border-border bg-card p-4 space-y-3.5">
         {/* Tab Filters */}
         <div className="flex items-center gap-2 border-b border-border/60 pb-3">
           <button
@@ -312,64 +326,91 @@ function JobsContent() {
           </button>
         </div>
 
-        <form
-          onSubmit={handleSearchSubmit}
-          className="flex flex-col sm:flex-row flex-wrap items-center gap-3"
-        >
-          <div className="flex-1 min-w-[240px] w-full relative">
-            <Search className="w-4 h-4 text-muted-foreground absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-            <Input
-              type="search"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search title, company, or tech keywords..."
-              className="pl-10 h-10 text-sm bg-background border-border"
-            />
+        {/* Search Input Bar */}
+        <form onSubmit={handleSearchSubmit} className="space-y-3">
+          <div className="relative w-full flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search className="w-4 h-4 text-muted-foreground absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <Input
+                type="search"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search title, company, tech stack keywords, or location..."
+                className="pl-10 h-10 text-sm bg-background border-border"
+              />
+            </div>
+            <Button type="submit" variant="default" size="default" className="h-10 px-4 text-xs font-semibold shrink-0 gap-1.5">
+              <Search className="w-3.5 h-3.5" />
+              <span>Search</span>
+            </Button>
           </div>
 
-          <div className="flex items-center gap-2.5 w-full sm:w-auto flex-wrap sm:flex-nowrap">
-            <select
-              aria-label="Filter by source"
-              value={sourceFilter}
-              onChange={(e) => setSourceFilter(e.target.value)}
-              className="bg-background border border-border rounded-md px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring font-medium h-10"
-            >
-              <option value="">All Sources</option>
-              <option value="linkedin">LinkedIn</option>
-              <option value="indeed">Indeed</option>
-              <option value="jobstreet">JobStreet</option>
-              <option value="remoteok">RemoteOK</option>
-              <option value="public">Public ATS</option>
-              <option value="Manual">Manual</option>
-            </select>
+          {/* Filter Dropdowns Row: Positioned below the search bar */}
+          <div className="flex items-center justify-between gap-2.5 flex-wrap pt-1 border-t border-border/40">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs text-muted-foreground font-medium flex items-center gap-1 mr-1">
+                <Filter className="w-3.5 h-3.5 text-primary" />
+                <span>Filters:</span>
+              </span>
 
-            <select
-              aria-label="Filter by recommendation"
-              value={recommendationFilter}
-              onChange={(e) => setRecommendationFilter(e.target.value)}
-              className="bg-background border border-border rounded-md px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring font-medium h-10"
-            >
-              <option value="">All Scores</option>
-              <option value="APPLY">APPLY (High Match)</option>
-              <option value="REVIEW">REVIEW (Borderline)</option>
-              <option value="SKIP">SKIP (Low Match)</option>
-            </select>
+              <select
+                aria-label="Filter by source"
+                value={sourceFilter}
+                onChange={(e) => setSourceFilter(e.target.value)}
+                className="bg-background border border-border rounded-md px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring font-medium h-8"
+              >
+                <option value="">All Sources</option>
+                <option value="linkedin">LinkedIn</option>
+                <option value="indeed">Indeed</option>
+                <option value="jobstreet">JobStreet</option>
+                <option value="remoteok">RemoteOK</option>
+                <option value="public">Public ATS</option>
+                <option value="Manual">Manual</option>
+              </select>
 
-            <select
-              aria-label="Filter by workplace type"
-              value={workplaceFilter}
-              onChange={(e) => setWorkplaceFilter(e.target.value)}
-              className="bg-background border border-border rounded-md px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring font-medium h-10"
-            >
-              <option value="">All Workplaces</option>
-              <option value="Remote">Remote</option>
-              <option value="Hybrid">Hybrid</option>
-              <option value="Onsite">Onsite</option>
-            </select>
+              <select
+                aria-label="Filter by recommendation"
+                value={recommendationFilter}
+                onChange={(e) => setRecommendationFilter(e.target.value)}
+                className="bg-background border border-border rounded-md px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring font-medium h-8"
+              >
+                <option value="">All Match Scores</option>
+                <option value="APPLY">APPLY (80%+ High Fit)</option>
+                <option value="REVIEW">REVIEW (60-79% Borderline)</option>
+                <option value="SKIP">SKIP (&lt;60% Low Fit)</option>
+              </select>
 
-            <Button type="submit" variant="secondary" size="default" className="h-10 px-4 text-xs font-semibold shrink-0">
-              Filter
-            </Button>
+              <select
+                aria-label="Filter by workplace type"
+                value={workplaceFilter}
+                onChange={(e) => setWorkplaceFilter(e.target.value)}
+                className="bg-background border border-border rounded-md px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring font-medium h-8"
+              >
+                <option value="">All Workplaces</option>
+                <option value="Remote">Remote Only</option>
+                <option value="Hybrid">Hybrid</option>
+                <option value="Onsite">Onsite</option>
+              </select>
+            </div>
+
+            {(search || searchParams.get("search_id") || sourceFilter || recommendationFilter || workplaceFilter) && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setSearch("");
+                  setSourceFilter("");
+                  setRecommendationFilter("");
+                  setWorkplaceFilter("");
+                  window.history.replaceState(null, "", "/jobs");
+                  loadJobs("");
+                }}
+                className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+              >
+                Clear Filters
+              </Button>
+            )}
           </div>
         </form>
 
@@ -377,10 +418,10 @@ function JobsContent() {
         {(search || searchParams.get("search_id") || sourceFilter || recommendationFilter || workplaceFilter) && (
           <div className="flex items-center justify-between text-xs pt-1 border-t border-border/40 text-muted-foreground">
             <div className="flex items-center gap-1.5 flex-wrap">
-              <span>Showing filtered results:</span>
+              <span>Active query:</span>
               {search && (
                 <Badge variant="secondary" className="text-[11px] font-normal gap-1">
-                  Query: <strong className="font-semibold text-foreground">{search}</strong>
+                  "{search}"
                 </Badge>
               )}
               {searchParams.get("search_id") && (
@@ -395,7 +436,7 @@ function JobsContent() {
               )}
               {recommendationFilter && (
                 <Badge variant="secondary" className="text-[11px] font-normal">
-                  Score: {recommendationFilter}
+                  Fit: {recommendationFilter}
                 </Badge>
               )}
               {workplaceFilter && (
@@ -404,21 +445,6 @@ function JobsContent() {
                 </Badge>
               )}
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setSearch("");
-                setSourceFilter("");
-                setRecommendationFilter("");
-                setWorkplaceFilter("");
-                window.history.replaceState(null, "", "/jobs");
-                loadJobs("");
-              }}
-              className="h-6 px-2 text-[11px] text-muted-foreground hover:text-foreground"
-            >
-              Reset Filters
-            </Button>
           </div>
         )}
       </Card>
@@ -547,6 +573,103 @@ function JobsContent() {
                         </>
                       )}
                     </div>
+                  </div>
+
+                  {/* Dropdown Action Row Directly Below the Job */}
+                  <div
+                    className="flex items-center justify-between mt-3 pt-2.5 border-t border-border/50 text-xs gap-2"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {/* Stage Dropdown below the job */}
+                    <div className="flex items-center gap-1.5">
+                      {addedJobs[job.id] ? (
+                        <div className="flex items-center gap-1">
+                          <Badge variant="secondary" className="text-[10px] font-semibold py-0 px-2 h-6 gap-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30">
+                            <Check className="w-3 h-3" />
+                            <span>{savedStages[job.id] || "Applied"}</span>
+                          </Badge>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 px-1.5 text-[10px] text-muted-foreground hover:text-foreground"
+                              >
+                                <span>Change Stage</span>
+                                <ChevronDown className="w-3 h-3 ml-0.5" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent side="bottom" align="start" className="w-48 z-50">
+                              <DropdownMenuLabel className="text-[10px] text-muted-foreground font-normal">Switch Pipeline Stage</DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => handleAddToPipeline(job, "APPLIED")} className="text-xs cursor-pointer gap-2">
+                                <Send className="w-3.5 h-3.5 text-primary" />
+                                <span>Mark as Applied</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleAddToPipeline(job, "SAVED")} className="text-xs cursor-pointer gap-2">
+                                <BookmarkPlus className="w-3.5 h-3.5 text-amber-500" />
+                                <span>Save to Wishlist</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleAddToPipeline(job, "SCREENING")} className="text-xs cursor-pointer gap-2">
+                                <UserCheck className="w-3.5 h-3.5 text-cyan-500" />
+                                <span>Recruiter Screening</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleAddToPipeline(job, "INTERVIEW")} className="text-xs cursor-pointer gap-2">
+                                <Calendar className="w-3.5 h-3.5 text-indigo-500" />
+                                <span>Interview Scheduled</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleAddToPipeline(job, "OFFER")} className="text-xs cursor-pointer gap-2">
+                                <Award className="w-3.5 h-3.5 text-emerald-500" />
+                                <span>Offer Received</span>
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      ) : (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              disabled={savingJobs[job.id] !== null && savingJobs[job.id] !== undefined}
+                              className="h-6 px-2 text-[11px] font-semibold gap-1 text-foreground hover:bg-muted"
+                            >
+                              {savingJobs[job.id] ? (
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                              ) : (
+                                <Plus className="w-3 h-3 text-primary" />
+                              )}
+                              <span>Add to Pipeline</span>
+                              <ChevronDown className="w-3 h-3 text-muted-foreground" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent side="bottom" align="start" className="w-52 z-50">
+                            <DropdownMenuLabel className="text-[10px] text-muted-foreground font-normal">Select Initial Stage</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => handleAddToPipeline(job, "APPLIED")} className="text-xs cursor-pointer font-medium gap-2">
+                              <Send className="w-3.5 h-3.5 text-primary" />
+                              <span>Apply Now (Applied)</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleAddToPipeline(job, "SAVED")} className="text-xs cursor-pointer gap-2">
+                              <BookmarkPlus className="w-3.5 h-3.5 text-amber-500" />
+                              <span>Save to Wishlist</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleAddToPipeline(job, "SCREENING")} className="text-xs cursor-pointer gap-2">
+                              <UserCheck className="w-3.5 h-3.5 text-cyan-500" />
+                              <span>Recruiter Screening</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleAddToPipeline(job, "INTERVIEW")} className="text-xs cursor-pointer gap-2">
+                              <Calendar className="w-3.5 h-3.5 text-indigo-500" />
+                              <span>Interviewing</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleAddToPipeline(job, "OFFER")} className="text-xs cursor-pointer gap-2">
+                              <Award className="w-3.5 h-3.5 text-emerald-500" />
+                              <span>Offer Received</span>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
+                    </div>
 
                     {/* Quick Link Pill */}
                     {job.url && (
@@ -556,7 +679,7 @@ function JobsContent() {
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
                         title={`Open on ${getSourceDisplayName(job.source)}`}
-                        className="inline-flex items-center gap-1 text-[10px] font-sans font-medium text-primary hover:underline ml-2 shrink-0 bg-primary/5 px-2 py-0.5 rounded border border-primary/20"
+                        className="inline-flex items-center gap-1 text-[10px] font-sans font-medium text-primary hover:underline ml-auto shrink-0 bg-primary/5 px-2 py-0.5 rounded border border-primary/20"
                       >
                         <span>{getSourceDisplayName(job.source)}</span>
                         <ExternalLink className="w-2.5 h-2.5" />
@@ -818,10 +941,10 @@ function JobsContent() {
                 </div>
               )}
 
-              {/* Action Buttons */}
-              <div className="pt-3 border-t border-border flex flex-col sm:flex-row items-center gap-2.5">
+              {/* Action Buttons Below the Job */}
+              <div className="pt-3 border-t border-border space-y-3">
                 {!addedJobs[selectedJob.id] ? (
-                  <>
+                  <div className="flex flex-col sm:flex-row items-center gap-2.5">
                     <Button
                       onClick={() => handleAddToPipeline(selectedJob, "APPLIED")}
                       disabled={savingJobs[selectedJob.id] !== null && savingJobs[selectedJob.id] !== undefined}
@@ -835,7 +958,7 @@ function JobsContent() {
                         </>
                       ) : (
                         <>
-                          <Check className="w-4 h-4" />
+                          <Send className="w-4 h-4" />
                           <span>Add to Pipeline (Applied)</span>
                         </>
                       )}
@@ -844,12 +967,12 @@ function JobsContent() {
                       onClick={() => handleAddToPipeline(selectedJob, "SAVED")}
                       disabled={savingJobs[selectedJob.id] !== null && savingJobs[selectedJob.id] !== undefined}
                       variant="secondary"
-                      className="w-full sm:flex-1 h-10 font-semibold gap-2 text-sm"
+                      className="w-full sm:w-auto h-10 font-semibold gap-2 text-sm px-4"
                     >
                       {savingJobs[selectedJob.id] === "SAVED" ? (
                         <>
                           <Loader2 className="w-4 h-4 animate-spin" />
-                          <span>Saving to Wishlist...</span>
+                          <span>Saving...</span>
                         </>
                       ) : (
                         <>
@@ -858,19 +981,89 @@ function JobsContent() {
                         </>
                       )}
                     </Button>
-                  </>
+
+                    {/* Additional Stages Dropdown below the job */}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="w-full sm:w-auto h-10 px-3 text-xs font-semibold gap-1.5"
+                        >
+                          <span>More Stages</span>
+                          <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent side="bottom" align="end" className="w-52 z-50">
+                        <DropdownMenuLabel className="text-[11px] text-muted-foreground font-normal">Add to Custom Stage</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => handleAddToPipeline(selectedJob, "SCREENING")} className="text-xs cursor-pointer gap-2">
+                          <UserCheck className="w-3.5 h-3.5 text-cyan-500" />
+                          <span>Move to Screening</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleAddToPipeline(selectedJob, "INTERVIEW")} className="text-xs cursor-pointer gap-2">
+                          <Calendar className="w-3.5 h-3.5 text-indigo-500" />
+                          <span>Schedule Interview</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleAddToPipeline(selectedJob, "OFFER")} className="text-xs cursor-pointer gap-2">
+                          <Award className="w-3.5 h-3.5 text-emerald-500" />
+                          <span>Record Offer Received</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 ) : (
-                  <Alert variant="success" className="w-full">
-                    <CheckCircle2 className="w-4 h-4" />
-                    <AlertTitle>
-                      {savedStages[selectedJob.id] === "SAVED" ? "Saved to Wishlist" : "Application Registered"}
-                    </AlertTitle>
-                    <AlertDescription>
-                      {savedStages[selectedJob.id] === "SAVED"
-                        ? "Job saved to your pipeline in the Saved / Wishlist stage."
-                        : "Role tracked in your Applied stage with 5-day follow-up scheduled."}
-                    </AlertDescription>
-                  </Alert>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                      <div>
+                        <p className="text-xs font-semibold text-foreground">
+                          Tracked in Pipeline ({savedStages[selectedJob.id] || "Applied"})
+                        </p>
+                        <p className="text-[11px] text-muted-foreground">
+                          {savedStages[selectedJob.id] === "SAVED"
+                            ? "Position stored in your Wishlist."
+                            : "Application registered with active follow-ups."}
+                        </p>
+                      </div>
+                    </div>
+
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8 px-2.5 text-xs font-medium gap-1 bg-background text-foreground border-border shrink-0"
+                        >
+                          <span>Change Stage</span>
+                          <ChevronDown className="w-3 h-3 text-muted-foreground" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent side="bottom" align="end" className="w-48 z-50">
+                        <DropdownMenuLabel className="text-[11px] text-muted-foreground font-normal">Switch Stage</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => handleAddToPipeline(selectedJob, "APPLIED")} className="text-xs cursor-pointer gap-2">
+                          <Send className="w-3.5 h-3.5 text-primary" />
+                          <span>Applied</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleAddToPipeline(selectedJob, "SAVED")} className="text-xs cursor-pointer gap-2">
+                          <BookmarkPlus className="w-3.5 h-3.5 text-amber-500" />
+                          <span>Wishlist / Saved</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleAddToPipeline(selectedJob, "SCREENING")} className="text-xs cursor-pointer gap-2">
+                          <UserCheck className="w-3.5 h-3.5 text-cyan-500" />
+                          <span>Screening</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleAddToPipeline(selectedJob, "INTERVIEW")} className="text-xs cursor-pointer gap-2">
+                          <Calendar className="w-3.5 h-3.5 text-indigo-500" />
+                          <span>Interviewing</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleAddToPipeline(selectedJob, "OFFER")} className="text-xs cursor-pointer gap-2">
+                          <Award className="w-3.5 h-3.5 text-emerald-500" />
+                          <span>Offer</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 )}
               </div>
             </Card>

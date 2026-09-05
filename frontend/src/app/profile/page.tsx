@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   Loader2,
   FileCheck,
+  ShieldCheck,
 } from "lucide-react";
 import {
   getCandidateProfile,
@@ -30,6 +31,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { getCurrencySymbol, getCurrencyFlag, formatSalaryRange } from "@/lib/utils";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { PrivacyNoticeModal } from "@/components/layout/PrivacyNoticeModal";
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState<CandidateProfile | null>(null);
@@ -37,6 +39,7 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [privacyOpen, setPrivacyOpen] = useState(false);
 
   // Profile fields state
   const [fullName, setFullName] = useState("");
@@ -223,11 +226,24 @@ export default function ProfilePage() {
             Upload your resume to automatically extract verified skills, target roles, and career details.
           </p>
         </div>
-        {savedSuccess && (
-          <Badge variant="success" className="text-xs font-semibold px-3 py-1.5 gap-1.5 animate-in fade-in">
-            <CheckCircle2 className="w-4 h-4" /> Profile saved successfully
-          </Badge>
-        )}
+        <div className="flex items-center gap-2 shrink-0">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setPrivacyOpen(true)}
+            className="h-8 text-xs font-semibold gap-1.5 border-border text-muted-foreground hover:text-foreground"
+          >
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+            <span>Privacy Guarantee</span>
+          </Button>
+
+          {savedSuccess && (
+            <Badge variant="success" className="text-xs font-semibold px-3 py-1.5 gap-1.5 animate-in fade-in">
+              <CheckCircle2 className="w-4 h-4" /> Profile saved successfully
+            </Badge>
+          )}
+        </div>
       </div>
 
       {/* Resume Parser Card */}
@@ -740,6 +756,11 @@ export default function ProfilePage() {
           </Card>
         </div>
       </div>
+
+      <PrivacyNoticeModal
+        isOpen={privacyOpen}
+        onClose={() => setPrivacyOpen(false)}
+      />
     </div>
   );
 }

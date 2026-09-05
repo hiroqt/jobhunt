@@ -87,7 +87,7 @@ export default function PrepPage() {
       </div>
 
       {/* Selector & Generator Card */}
-      <Card className="border-border bg-card p-6 shadow-sm">
+      <Card className="border-border bg-card p-4 sm:p-6 shadow-sm">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
           <div className="md:col-span-6 space-y-1.5">
             <label htmlFor="select-role-prep" className="block text-sm font-semibold text-foreground">
@@ -162,7 +162,7 @@ export default function PrepPage() {
       ) : prepData ? (
         <div className="space-y-6">
           {/* Header Banner */}
-          <div className="p-6 bg-card border border-border rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
+          <div className="p-4 sm:p-6 bg-card border border-border rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
             <div>
               <h2 className="text-xl font-bold text-foreground">
                 {selectedJobObj?.title} @ {selectedJobObj?.company}
@@ -414,14 +414,14 @@ export default function PrepPage() {
 
           {/* Questions to Ask Interviewer */}
           {prepData.questions_to_ask_interviewer && prepData.questions_to_ask_interviewer.length > 0 && (
-            <Card className="border-border bg-card p-6 shadow-sm">
+            <Card className="border-border bg-card p-4 sm:p-6 shadow-sm">
               <h3 className="text-base font-bold text-foreground flex items-center gap-2 mb-4">
                 <FileQuestion className="w-5 h-5 text-foreground" />
                 High-Signal Questions for the Interviewer
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {prepData.questions_to_ask_interviewer.map((q, i) => (
-                  <div key={i} className="p-4 bg-muted/40 rounded-lg border border-border text-sm text-foreground">
+                  <div key={i} className="p-3.5 sm:p-4 bg-muted/40 rounded-lg border border-border text-sm text-foreground">
                     <span className="font-mono text-xs text-muted-foreground block mb-1">
                       Option {i + 1}
                     </span>
@@ -433,7 +433,7 @@ export default function PrepPage() {
           )}
         </div>
       ) : (
-        <Card className="border-border bg-card p-12 text-center space-y-3">
+        <Card className="border-border bg-card p-6 sm:p-12 text-center space-y-3">
           <GraduationCap className="w-10 h-10 text-muted-foreground mx-auto" />
           <h3 className="text-base font-semibold text-foreground">Select an opportunity to begin prep</h3>
           <p className="text-sm text-muted-foreground max-w-sm mx-auto">

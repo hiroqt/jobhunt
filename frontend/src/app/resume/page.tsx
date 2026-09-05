@@ -1134,7 +1134,7 @@ function ResumeStudioContent() {
   const [profile, setProfile] = useState<CandidateProfile | null>(null);
   const [availableJobs, setAvailableJobs] = useState<Job[]>([]);
   const [selectedTargetJob, setSelectedTargetJob] = useState<Job | null>(null);
-  const [activeTab, setActiveTab] = useState<"editor" | "diagnostics">("editor");
+  const [activeTab, setActiveTab] = useState<"editor" | "diagnostics" | "preview">("editor");
   const [copied, setCopied] = useState(false);
   const [isTailoring, setIsTailoring] = useState(false);
 
@@ -1639,34 +1639,34 @@ function ResumeStudioContent() {
         </div>
 
         {/* Global Action Toolbar */}
-        <div className="flex items-center gap-2.5 flex-wrap shrink-0">
+        <div className="flex items-center gap-2 flex-wrap shrink-0 w-full sm:w-auto">
           <Button
             variant="outline"
             size="sm"
             onClick={handleCopyPlainText}
-            className="h-9 px-3 text-xs font-semibold gap-1.5 border-border hover:bg-muted"
+            className="h-9 px-3 text-xs font-semibold gap-1.5 border-border hover:bg-muted flex-1 sm:flex-initial"
           >
             {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
-            <span>{copied ? "Copied Plain Text" : "Copy for ATS Form"}</span>
+            <span>{copied ? "Copied" : "Copy ATS Text"}</span>
           </Button>
 
           <Button
             onClick={handleDownloadPDF}
             variant="default"
             size="sm"
-            className="h-9 px-4 text-xs font-semibold gap-1.5 shadow-sm bg-primary hover:bg-primary/90 text-primary-foreground"
+            className="h-9 px-4 text-xs font-semibold gap-1.5 shadow-sm bg-primary hover:bg-primary/90 text-primary-foreground flex-1 sm:flex-initial"
           >
             <Download className="w-3.5 h-3.5" />
-            <span>Download ATS PDF (1-Page)</span>
+            <span>Download ATS PDF</span>
           </Button>
         </div>
       </div>
 
       {/* Preset & Optimization Bar */}
-      <Card className="border-border bg-card p-4 space-y-4 no-print">
+      <Card className="border-border bg-card p-3.5 sm:p-4 space-y-4 no-print">
         {/* Industry Preset Visual Cards */}
         <div className="space-y-2">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-2">
             <label className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
               <LayoutTemplate className="w-3.5 h-3.5 text-primary" />
               <span>Select Industry Template</span>
@@ -1744,12 +1744,12 @@ function ResumeStudioContent() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shrink-0 w-full sm:w-auto">
             <select
               aria-label="Target Job Selection"
               value={selectedTargetJob?.id || ""}
               onChange={(e) => handleSelectTargetJob(e.target.value)}
-              className="bg-background border border-border rounded-md px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring font-medium h-8 max-w-xs"
+              className="bg-background border border-border rounded-md px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring font-medium h-8 w-full sm:w-auto sm:max-w-xs"
             >
               <option value="">-- Standalone General Resume --</option>
               {availableJobs.map((j) => (
@@ -1764,7 +1764,7 @@ function ResumeStudioContent() {
                 size="sm"
                 onClick={handleTailorForJob}
                 disabled={isTailoring}
-                className="h-8 px-3 text-xs font-semibold gap-1.5 bg-primary text-primary-foreground shrink-0"
+                className="h-8 px-3 text-xs font-semibold gap-1.5 bg-primary text-primary-foreground shrink-0 w-full sm:w-auto"
               >
                 <Wand2 className={cn("w-3.5 h-3.5", isTailoring && "animate-spin")} />
                 <span>{isTailoring ? "Tailoring..." : "Align Keywords"}</span>
@@ -1774,11 +1774,53 @@ function ResumeStudioContent() {
         </div>
       </Card>
 
+      {/* Mobile Tab Segmented Switcher (Visible only on <lg screens) */}
+      <div className="flex lg:hidden items-center bg-card border border-border rounded-xl p-1 gap-1 no-print">
+        <button
+          onClick={() => setActiveTab("editor")}
+          className={cn(
+            "flex-1 py-2 rounded-lg text-xs font-semibold transition-colors flex items-center justify-center gap-1.5",
+            activeTab === "editor"
+              ? "bg-primary text-primary-foreground shadow-xs"
+              : "text-muted-foreground hover:text-foreground hover:bg-muted"
+          )}
+        >
+          <Sliders className="w-3.5 h-3.5" />
+          <span>Editor</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("preview")}
+          className={cn(
+            "flex-1 py-2 rounded-lg text-xs font-semibold transition-colors flex items-center justify-center gap-1.5",
+            activeTab === "preview"
+              ? "bg-primary text-primary-foreground shadow-xs"
+              : "text-muted-foreground hover:text-foreground hover:bg-muted"
+          )}
+        >
+          <Eye className="w-3.5 h-3.5" />
+          <span>Live Preview</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("diagnostics")}
+          className={cn(
+            "flex-1 py-2 rounded-lg text-xs font-semibold transition-colors flex items-center justify-center gap-1.5",
+            activeTab === "diagnostics"
+              ? "bg-primary text-primary-foreground shadow-xs"
+              : "text-muted-foreground hover:text-foreground hover:bg-muted"
+          )}
+        >
+          <ShieldCheck className="w-3.5 h-3.5" />
+          <span>Quality Check</span>
+        </button>
+      </div>
+
       {/* Main Studio Grid: Editor (Left 6 Cols) & Live Preview (Right 6 Cols) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left Panel: Structured Editor (6 Cols) */}
-        <div className="lg:col-span-6 space-y-4 no-print">
-          <div className="flex items-center justify-between bg-card border border-border rounded-xl p-1.5">
+        <div className={cn("lg:col-span-6 space-y-4 no-print", activeTab === "preview" ? "hidden lg:block" : "block")}>
+          <div className="hidden lg:flex items-center justify-between bg-card border border-border rounded-xl p-1.5">
             <div className="flex items-center gap-1">
               <button
                 onClick={() => setActiveTab("editor")}
@@ -2517,7 +2559,13 @@ function ResumeStudioContent() {
         </div>
 
         {/* Right Panel: Reactive Live ATS Document Preview (6 Cols) */}
-        <div id="ats-resume-print-container" className="lg:col-span-6 sticky top-20">
+        <div
+          id="ats-resume-print-container"
+          className={cn(
+            "lg:col-span-6 lg:sticky lg:top-20",
+            activeTab === "preview" ? "block" : "hidden lg:block"
+          )}
+        >
           <div className="flex items-center justify-between pb-2 text-xs text-muted-foreground no-print">
             <span className="font-semibold text-foreground flex items-center gap-1.5">
               <Eye className="w-3.5 h-3.5 text-primary" />
@@ -2529,7 +2577,7 @@ function ResumeStudioContent() {
           {/* Printable Document Box */}
           <div
             id="ats-resume-print-area"
-            className="bg-white text-black border border-border shadow-2xl rounded-xl p-8 sm:p-10 font-sans select-text"
+            className="bg-white text-black border border-border shadow-2xl rounded-xl p-4 sm:p-8 md:p-10 font-sans select-text overflow-x-auto"
             style={{ minHeight: "750px", color: "#000000" }}
           >
             {/* Header / Contact Info */}

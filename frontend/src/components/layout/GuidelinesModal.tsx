@@ -80,7 +80,7 @@ export const GuidelinesModal: React.FC<GuidelinesModalProps> = ({
       </TooltipProvider>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="max-w-2xl sm:max-w-3xl w-[94vw] p-5 sm:p-6 overflow-hidden rounded-2xl border border-border shadow-2xl bg-card">
+        <DialogContent className="max-w-2xl sm:max-w-3xl w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6 overflow-hidden rounded-2xl border border-border shadow-2xl bg-card">
           <DialogHeader className="border-b border-border/70 pb-3 space-y-3">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-xl bg-primary/10 border border-primary/20 text-primary shrink-0">

@@ -164,27 +164,27 @@ export default function SearchesPage() {
   return (
     <div className="space-y-8 max-w-7xl mx-auto pb-12">
       {/* Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-border/40 pb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border/40 pb-5 sm:pb-6">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="p-1.5 rounded-lg bg-primary/10 text-primary">
               <Compass className="w-5 h-5" />
             </span>
-            <h1 className="text-2xl font-bold tracking-tight">Automated Discovery & Saved Searches</h1>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Automated Discovery & Saved Searches</h1>
           </div>
-          <p className="text-muted-foreground text-sm">
+          <p className="text-muted-foreground text-xs sm:text-sm">
             Configure multi-source continuous job discovery. Collect, normalize, deduplicate, and qualify opportunities automatically.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" onClick={loadData} disabled={loading}>
-            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
-            Refresh
+        <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
+          <Button variant="outline" size="sm" onClick={loadData} disabled={loading} className="h-9 sm:h-10 text-xs font-semibold flex-1 sm:flex-initial">
+            <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${loading ? "animate-spin" : ""}`} />
+            <span>Refresh</span>
           </Button>
-          <Button size="sm" onClick={() => setCreateModalOpen(true)} className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm">
-            <Plus className="w-4 h-4 mr-2" />
-            New Search
+          <Button size="sm" onClick={() => setCreateModalOpen(true)} className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm h-9 sm:h-10 text-xs font-semibold flex-1 sm:flex-initial">
+            <Plus className="w-3.5 h-3.5 mr-1.5" />
+            <span>New Search</span>
           </Button>
         </div>
       </div>
@@ -192,14 +192,14 @@ export default function SearchesPage() {
       {/* Connected Source Adapters Health Bar */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold flex items-center gap-2 text-foreground">
+          <h3 className="text-xs sm:text-sm font-semibold flex items-center gap-2 text-foreground">
             <Radio className="w-4 h-4 text-emerald-500 animate-pulse" />
-            Connected Job Sources ({sources.length})
+            <span>Connected Job Sources ({sources.length})</span>
           </h3>
-          <span className="text-xs text-muted-foreground">Source-Agnostic Acquisition Engine</span>
+          <span className="text-[11px] sm:text-xs text-muted-foreground">Source-Agnostic Acquisition Engine</span>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3">
           {sources.map((src) => (
             <div
               key={src.source_name}
@@ -453,7 +453,7 @@ export default function SearchesPage() {
               <label className="text-xs font-semibold text-foreground block mb-1.5">
                 Target Sources
               </label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {["linkedin", "indeed", "jobstreet", "remoteok", "public"].map((src) => (
                   <button
                     type="button"
@@ -472,7 +472,7 @@ export default function SearchesPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="text-xs font-semibold text-foreground block mb-1">Keywords (comma-separated)</label>
                 <Input
@@ -493,7 +493,7 @@ export default function SearchesPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="text-xs font-semibold text-foreground block mb-1">Work Arrangement</label>
                 <select
@@ -694,7 +694,7 @@ export default function SearchesPage() {
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-4 gap-2 pt-1 text-[11px] text-muted-foreground">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-[11px] text-muted-foreground">
                     <div>Raw Scanned: <span className="text-foreground font-medium">{exec.jobs_found}</span></div>
                     <div>Saved: <span className="text-emerald-500 font-medium">{exec.jobs_normalized}</span></div>
                     <div>Deduplicated: <span className="text-amber-500 font-medium">{exec.jobs_deduplicated}</span></div>

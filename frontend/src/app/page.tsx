@@ -61,12 +61,12 @@ export default function DashboardPage() {
   const highMatchJobs = recentJobs.filter((j) => (j.match_score || 0) >= 80);
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-200">
+    <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-200">
       {/* Welcome Hero */}
-      <div className="rounded-2xl border border-border bg-gradient-to-br from-card via-card to-primary/5 p-6 sm:p-8 relative overflow-hidden shadow-xs">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+      <div className="rounded-2xl border border-border bg-gradient-to-br from-card via-card to-primary/5 p-4 sm:p-6 md:p-8 relative overflow-hidden shadow-xs">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-5 sm:gap-6 relative z-10">
           <div className="space-y-2 max-w-2xl">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-primary/20 gap-1.5 py-0.5 px-2.5">
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>Stateless AI Career Copilot</span>
@@ -76,21 +76,21 @@ export default function DashboardPage() {
                 <span>Zero Retention</span>
               </Badge>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground tracking-tight">
               sakto ka Career Intelligence
             </h1>
-            <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+            <p className="text-xs sm:text-sm md:text-base text-muted-foreground leading-relaxed">
               Automated multi-source job discovery, ATS-compliant resume builder &amp; keyword gap optimizer, and AI-powered interview preparation.
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-3 shrink-0">
-            <Button asChild variant="default" size="default" className="text-sm font-semibold gap-2 shadow-xs bg-primary hover:bg-primary/90 text-primary-foreground">
+          <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2.5 sm:gap-3 shrink-0">
+            <Button asChild variant="default" size="default" className="text-xs sm:text-sm font-semibold gap-2 shadow-xs bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto h-9 sm:h-10">
               <Link href="/resume">
                 <Sparkles className="w-4 h-4" />
                 <span>ATS Resume Studio</span>
               </Link>
             </Button>
-            <Button asChild variant="outline" size="default" className="text-sm font-medium gap-2">
+            <Button asChild variant="outline" size="default" className="text-xs sm:text-sm font-medium gap-2 w-full sm:w-auto h-9 sm:h-10">
               <Link href="/jobs">
                 <Compass className="w-4 h-4 text-primary" />
                 <span>Job Explorer</span>
@@ -100,7 +100,7 @@ export default function DashboardPage() {
               onClick={() => setIsCaptureModalOpen(true)}
               variant="outline"
               size="default"
-              className="gap-2 font-medium text-sm"
+              className="gap-2 font-medium text-xs sm:text-sm w-full sm:w-auto h-9 sm:h-10"
             >
               <Plus className="w-4 h-4" />
               <span>Capture Job URL</span>
@@ -110,28 +110,28 @@ export default function DashboardPage() {
       </div>
 
       {/* Primary KPI Stats Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4">
         <Link href="/jobs" className="block group">
           <Card className="border-border bg-card hover:border-primary/40 transition-colors h-full">
-            <CardContent className="p-5 space-y-2">
+            <CardContent className="p-3.5 sm:p-5 space-y-1.5 sm:space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                <span className="text-[10px] sm:text-xs font-semibold text-muted-foreground uppercase tracking-wider truncate mr-1">
                   Discovered Jobs
                 </span>
-                <div className="p-2 rounded-lg bg-primary/10 text-primary group-hover:scale-105 transition-transform">
-                  <Compass className="w-4 h-4" />
+                <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10 text-primary group-hover:scale-105 transition-transform shrink-0">
+                  <Compass className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </div>
               </div>
-              <div className="flex items-baseline gap-2 pt-1">
-                <span className="text-3xl sm:text-4xl font-bold text-foreground">
+              <div className="flex items-baseline gap-1.5 sm:gap-2 pt-0.5 sm:pt-1">
+                <span className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground">
                   {recentJobs.length}
                 </span>
-                <span className="text-xs text-muted-foreground font-mono">
+                <span className="text-[10px] sm:text-xs text-muted-foreground font-mono">
                   qualified
                 </span>
               </div>
-              <p className="text-xs text-muted-foreground">
-                Live across 5 job sources
+              <p className="text-[11px] sm:text-xs text-muted-foreground line-clamp-1">
+                Live across 5 sources
               </p>
             </CardContent>
           </Card>
@@ -139,25 +139,25 @@ export default function DashboardPage() {
 
         <Link href="/resume" className="block group">
           <Card className="border-border bg-card hover:border-primary/40 transition-colors h-full">
-            <CardContent className="p-5 space-y-2">
+            <CardContent className="p-3.5 sm:p-5 space-y-1.5 sm:space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                <span className="text-[10px] sm:text-xs font-semibold text-muted-foreground uppercase tracking-wider truncate mr-1">
                   ATS Resume Studio
                 </span>
-                <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 group-hover:scale-105 transition-transform">
-                  <FileText className="w-4 h-4" />
+                <div className="p-1.5 sm:p-2 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 group-hover:scale-105 transition-transform shrink-0">
+                  <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </div>
               </div>
-              <div className="flex items-baseline gap-2 pt-1">
-                <span className="text-3xl sm:text-4xl font-bold text-foreground">
+              <div className="flex items-baseline gap-1.5 sm:gap-2 pt-0.5 sm:pt-1">
+                <span className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground">
                   100%
                 </span>
-                <Badge variant="outline" className="text-[10px] font-mono text-emerald-600 border-emerald-500/30">
+                <Badge variant="outline" className="text-[9px] sm:text-[10px] font-mono text-emerald-600 border-emerald-500/30 px-1 py-0">
                   ATS Score
                 </Badge>
               </div>
-              <p className="text-xs text-muted-foreground">
-                Single-column vector PDF export
+              <p className="text-[11px] sm:text-xs text-muted-foreground line-clamp-1">
+                Vector PDF export
               </p>
             </CardContent>
           </Card>
@@ -165,25 +165,25 @@ export default function DashboardPage() {
 
         <Link href="/searches" className="block group">
           <Card className="border-border bg-card hover:border-primary/40 transition-colors h-full">
-            <CardContent className="p-5 space-y-2">
+            <CardContent className="p-3.5 sm:p-5 space-y-1.5 sm:space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                <span className="text-[10px] sm:text-xs font-semibold text-muted-foreground uppercase tracking-wider truncate mr-1">
                   Automated Feeds
                 </span>
-                <div className="p-2 rounded-lg bg-primary/10 text-primary group-hover:scale-105 transition-transform">
-                  <Radar className="w-4 h-4" />
+                <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10 text-primary group-hover:scale-105 transition-transform shrink-0">
+                  <Radar className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </div>
               </div>
-              <div className="flex items-baseline gap-2 pt-1">
-                <span className="text-3xl sm:text-4xl font-bold text-foreground">
+              <div className="flex items-baseline gap-1.5 sm:gap-2 pt-0.5 sm:pt-1">
+                <span className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground">
                   {searches.length}
                 </span>
-                <Badge variant="outline" className="text-[10px] font-mono text-primary border-primary/30">
+                <Badge variant="outline" className="text-[9px] sm:text-[10px] font-mono text-primary border-primary/30 px-1 py-0">
                   Active
                 </Badge>
               </div>
-              <p className="text-xs text-muted-foreground">
-                Autonomous scraping runs
+              <p className="text-[11px] sm:text-xs text-muted-foreground line-clamp-1">
+                Continuous scraping runs
               </p>
             </CardContent>
           </Card>
@@ -191,25 +191,25 @@ export default function DashboardPage() {
 
         <Link href="/prep" className="block group">
           <Card className="border-border bg-card hover:border-primary/40 transition-colors h-full">
-            <CardContent className="p-5 space-y-2">
+            <CardContent className="p-3.5 sm:p-5 space-y-1.5 sm:space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                <span className="text-[10px] sm:text-xs font-semibold text-muted-foreground uppercase tracking-wider truncate mr-1">
                   AI Interview Prep
                 </span>
-                <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 group-hover:scale-105 transition-transform">
-                  <Bot className="w-4 h-4" />
+                <div className="p-1.5 sm:p-2 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 group-hover:scale-105 transition-transform shrink-0">
+                  <Bot className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </div>
               </div>
-              <div className="flex items-baseline gap-2 pt-1">
-                <span className="text-3xl sm:text-4xl font-bold text-foreground">
+              <div className="flex items-baseline gap-1.5 sm:gap-2 pt-0.5 sm:pt-1">
+                <span className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground">
                   STAR
                 </span>
-                <span className="text-xs text-muted-foreground font-mono">
+                <span className="text-[10px] sm:text-xs text-muted-foreground font-mono">
                   Method
                 </span>
               </div>
-              <p className="text-xs text-muted-foreground">
-                Simulated behavioral answers
+              <p className="text-[11px] sm:text-xs text-muted-foreground line-clamp-1">
+                Simulated AI questions
               </p>
             </CardContent>
           </Card>
@@ -222,12 +222,12 @@ export default function DashboardPage() {
         <div className="lg:col-span-7 space-y-6">
           {/* ATS Resume Showcase Card */}
           <Card className="border-border bg-card overflow-hidden">
-            <CardHeader className="p-6 pb-4">
-              <div className="flex items-center justify-between">
+            <CardHeader className="p-4 sm:p-6 pb-3 sm:pb-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="space-y-1">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                      <FileText className="w-5 h-5 text-primary" />
+                      <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                       ATS-Standard Resume Studio
                     </CardTitle>
                     <Badge variant="secondary" className="text-[10px] bg-primary/10 text-primary border-primary/20">
@@ -238,7 +238,7 @@ export default function DashboardPage() {
                     Engineered to score 90%+ on Workday, Greenhouse, Lever, and Taleo parsers.
                   </CardDescription>
                 </div>
-                <Button asChild size="sm" variant="default" className="text-xs font-semibold gap-1.5 h-8">
+                <Button asChild size="sm" variant="default" className="text-xs font-semibold gap-1.5 h-8 self-start sm:self-auto shrink-0">
                   <Link href="/resume">
                     <span>Open Studio</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -247,7 +247,7 @@ export default function DashboardPage() {
               </div>
             </CardHeader>
 
-            <CardContent className="p-6 pt-0 space-y-4">
+            <CardContent className="p-4 sm:p-6 pt-0 space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                 <div className="p-3.5 rounded-xl border border-border bg-muted/30 space-y-1.5">
                   <div className="flex items-center gap-2 text-foreground font-semibold text-xs">
@@ -305,17 +305,17 @@ export default function DashboardPage() {
 
           {/* Top Skill Gaps Card */}
           <Card className="border-border bg-card">
-            <CardHeader className="flex flex-row items-center justify-between p-6 pb-4">
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-6 pb-3 sm:pb-4 gap-2">
               <div>
                 <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                  <Target className="w-5 h-5 text-foreground" />
+                  <Target className="w-4 h-4 sm:w-5 sm:h-5 text-foreground" />
                   Market Skill Gap Intelligence
                 </CardTitle>
                 <CardDescription className="text-xs sm:text-sm text-muted-foreground mt-0.5">
                   Frequently required capabilities identified across your search queries
                 </CardDescription>
               </div>
-              <Button asChild variant="ghost" size="sm" className="text-foreground hover:bg-accent gap-1 text-xs font-medium">
+              <Button asChild variant="ghost" size="sm" className="text-foreground hover:bg-accent gap-1 text-xs font-medium self-start sm:self-auto">
                 <Link href="/jobs">
                   <span>Explore Jobs</span>
                   <Compass className="w-3.5 h-3.5 text-primary" />
@@ -323,12 +323,12 @@ export default function DashboardPage() {
               </Button>
             </CardHeader>
 
-            <CardContent className="p-6 pt-2 space-y-3">
+            <CardContent className="p-4 sm:p-6 pt-0 sm:pt-2 space-y-3">
               {overview?.top_skill_gaps && overview.top_skill_gaps.length > 0 ? (
                 overview.top_skill_gaps.slice(0, 4).map((gap) => (
                   <div
                     key={gap.skill_name}
-                    className="bg-muted/40 border border-border p-3.5 rounded-xl flex items-center justify-between gap-3"
+                    className="bg-muted/40 border border-border p-3 sm:p-3.5 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3"
                   >
                     <div className="space-y-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
@@ -343,7 +343,7 @@ export default function DashboardPage() {
                         {gap.learning_recommendation}
                       </p>
                     </div>
-                    <Badge variant="destructive" className="font-mono text-xs shrink-0">
+                    <Badge variant="destructive" className="font-mono text-xs shrink-0 self-start sm:self-auto">
                       {gap.missing_count} Jobs
                     </Badge>
                   </div>
@@ -365,10 +365,10 @@ export default function DashboardPage() {
         <div className="lg:col-span-5 space-y-6">
           {/* AI Prep Studio Card */}
           <Card className="border-border bg-card">
-            <CardHeader className="p-6 pb-3">
+            <CardHeader className="p-4 sm:p-6 pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base font-semibold flex items-center gap-2">
-                  <Bot className="w-5 h-5 text-indigo-500" />
+                  <Bot className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-500" />
                   AI Interview Prep Coach
                 </CardTitle>
                 <Badge variant="secondary" className="text-[10px] bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/30">
@@ -380,7 +380,7 @@ export default function DashboardPage() {
               </CardDescription>
             </CardHeader>
 
-            <CardContent className="p-6 pt-2 space-y-4">
+            <CardContent className="p-4 sm:p-6 pt-0 sm:pt-2 space-y-4">
               <div className="space-y-2 text-xs text-muted-foreground">
                 <div className="flex items-start gap-2 p-2.5 rounded-lg bg-muted/30 border border-border/60">
                   <span className="font-bold text-foreground">S</span>

@@ -28,6 +28,7 @@ import {
   Filter,
   Bot,
   FileText,
+  ArrowLeft,
 } from "lucide-react";
 import { getJobs, deleteJob, saveJob, unsaveJob, verifyJobLink } from "@/lib/api";
 import { Job, LinkVerificationResponse } from "@/types";
@@ -64,6 +65,7 @@ function JobsContent() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [search, setSearch] = useState(initialQuery);
   const [activeTab, setActiveTab] = useState<"all" | "saved" | "high_match">("all");
+  const [mobileTab, setMobileTab] = useState<"list" | "detail">("list");
   const [recommendationFilter, setRecommendationFilter] = useState("");
   const [workplaceFilter, setWorkplaceFilter] = useState("");
   const [sourceFilter, setSourceFilter] = useState("");
@@ -228,21 +230,21 @@ function JobsContent() {
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
             Job Explorer
           </h1>
-          <p className="text-sm sm:text-base text-muted-foreground mt-1">
+          <p className="text-xs sm:text-sm md:text-base text-muted-foreground mt-1">
             Discover, bookmark, and evaluate jobs across all connected platforms against your profile.
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <Button asChild variant="outline" size="sm" className="gap-2 h-10 px-3.5 text-xs font-semibold">
+        <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
+          <Button asChild variant="outline" size="sm" className="gap-2 h-9 sm:h-10 px-3 sm:px-3.5 text-xs font-semibold flex-1 sm:flex-initial">
             <Link href="/searches">
               <Radar className="w-4 h-4 text-primary" />
-              Automated Discovery
+              <span>Automated Discovery</span>
             </Link>
           </Button>
           <Button
             onClick={() => setIsCaptureModalOpen(true)}
             variant="default"
-            className="gap-2 font-semibold text-sm h-10 px-4 shrink-0"
+            className="gap-2 font-semibold text-xs sm:text-sm h-9 sm:h-10 px-3 sm:px-4 shrink-0 flex-1 sm:flex-initial"
           >
             <Plus className="w-4 h-4" />
             <span>Capture Job</span>
@@ -251,44 +253,44 @@ function JobsContent() {
       </div>
 
       {/* Main Filter and Search Bar */}
-      <Card className="border-border bg-card p-4 space-y-3.5">
+      <Card className="border-border bg-card p-3.5 sm:p-4 space-y-3.5">
         {/* Tab Filters */}
-        <div className="flex items-center gap-2 border-b border-border/60 pb-3">
+        <div className="flex items-center gap-1.5 sm:gap-2 border-b border-border/60 pb-3 overflow-x-auto scrollbar-none">
           <button
             onClick={() => setActiveTab("all")}
             className={cn(
-              "px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5",
+              "px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 shrink-0",
               activeTab === "all"
                 ? "bg-primary text-primary-foreground shadow-xs"
                 : "text-muted-foreground hover:text-foreground hover:bg-muted"
             )}
           >
             <Compass className="w-3.5 h-3.5" />
-            All Jobs
+            <span>All Jobs</span>
           </button>
           <button
             onClick={() => setActiveTab("saved")}
             className={cn(
-              "px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5",
+              "px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 shrink-0",
               activeTab === "saved"
                 ? "bg-primary text-primary-foreground shadow-xs"
                 : "text-muted-foreground hover:text-foreground hover:bg-muted"
             )}
           >
             <Bookmark className="w-3.5 h-3.5" />
-            Saved Bookmarks
+            <span>Saved Bookmarks</span>
           </button>
           <button
             onClick={() => setActiveTab("high_match")}
             className={cn(
-              "px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5",
+              "px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 shrink-0",
               activeTab === "high_match"
                 ? "bg-primary text-primary-foreground shadow-xs"
                 : "text-muted-foreground hover:text-foreground hover:bg-muted"
             )}
           >
             <Sparkles className="w-3.5 h-3.5" />
-            High Match (80%+)
+            <span>High Match (80%+)</span>
           </button>
         </div>
 
@@ -302,19 +304,19 @@ function JobsContent() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search title, company, tech stack keywords, or location..."
-                className="pl-10 h-10 text-sm bg-background border-border"
+                className="pl-10 h-9 sm:h-10 text-xs sm:text-sm bg-background border-border"
               />
             </div>
-            <Button type="submit" variant="default" size="default" className="h-10 px-4 text-xs font-semibold shrink-0 gap-1.5">
+            <Button type="submit" variant="default" size="default" className="h-9 sm:h-10 px-3.5 sm:px-4 text-xs font-semibold shrink-0 gap-1.5">
               <Search className="w-3.5 h-3.5" />
               <span>Search</span>
             </Button>
           </div>
 
           {/* Filter Dropdowns Row: Positioned below the search bar */}
-          <div className="flex items-center justify-between gap-2.5 flex-wrap pt-1 border-t border-border/40">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs text-muted-foreground font-medium flex items-center gap-1 mr-1">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-1 border-t border-border/40">
+            <div className="grid grid-cols-1 sm:grid-cols-3 md:flex md:items-center gap-2 w-full sm:w-auto">
+              <span className="hidden md:flex text-xs text-muted-foreground font-medium items-center gap-1 mr-1">
                 <Filter className="w-3.5 h-3.5 text-primary" />
                 <span>Filters:</span>
               </span>
@@ -323,7 +325,7 @@ function JobsContent() {
                 aria-label="Filter by source"
                 value={sourceFilter}
                 onChange={(e) => setSourceFilter(e.target.value)}
-                className="bg-background border border-border rounded-md px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring font-medium h-8"
+                className="w-full sm:w-auto bg-background border border-border rounded-md px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring font-medium h-8"
               >
                 <option value="">All Sources</option>
                 <option value="linkedin">LinkedIn</option>
@@ -338,7 +340,7 @@ function JobsContent() {
                 aria-label="Filter by recommendation"
                 value={recommendationFilter}
                 onChange={(e) => setRecommendationFilter(e.target.value)}
-                className="bg-background border border-border rounded-md px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring font-medium h-8"
+                className="w-full sm:w-auto bg-background border border-border rounded-md px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring font-medium h-8"
               >
                 <option value="">All Match Scores</option>
                 <option value="APPLY">APPLY (80%+ High Fit)</option>
@@ -350,7 +352,7 @@ function JobsContent() {
                 aria-label="Filter by workplace type"
                 value={workplaceFilter}
                 onChange={(e) => setWorkplaceFilter(e.target.value)}
-                className="bg-background border border-border rounded-md px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring font-medium h-8"
+                className="w-full sm:w-auto bg-background border border-border rounded-md px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring font-medium h-8"
               >
                 <option value="">All Workplaces</option>
                 <option value="Remote">Remote Only</option>
@@ -372,7 +374,7 @@ function JobsContent() {
                   window.history.replaceState(null, "", "/jobs");
                   loadJobs("");
                 }}
-                className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+                className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground self-end sm:self-auto"
               >
                 Clear Filters
               </Button>
@@ -415,10 +417,41 @@ function JobsContent() {
         )}
       </Card>
 
+      {/* Mobile Segmented View Switcher (<lg only) */}
+      <div className="lg:hidden flex items-center bg-card border border-border rounded-xl p-1 gap-1 shadow-xs">
+        <button
+          type="button"
+          onClick={() => setMobileTab("list")}
+          className={cn(
+            "flex-1 py-2 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors",
+            mobileTab === "list"
+              ? "bg-primary text-primary-foreground shadow-xs"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          <Compass className="w-3.5 h-3.5" />
+          <span>Job Stream ({jobs.length})</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setMobileTab("detail")}
+          disabled={!selectedJob}
+          className={cn(
+            "flex-1 py-2 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors disabled:opacity-40",
+            mobileTab === "detail"
+              ? "bg-primary text-primary-foreground shadow-xs"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          <Sparkles className="w-3.5 h-3.5" />
+          <span>Job Details {selectedJob ? `(${selectedJob.title.slice(0, 14)}...)` : ""}</span>
+        </button>
+      </div>
+
       {/* Main Grid: Job List (Left) & Selected Job Deep-Dive (Right) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left: Job Card Stream (5 Cols) */}
-        <div className="lg:col-span-5 space-y-3">
+        <div className={cn("lg:col-span-5 space-y-3", mobileTab === "detail" ? "hidden lg:block" : "block")}>
           {loading ? (
             <div className="text-center py-12 text-muted-foreground text-sm">
               Loading opportunities...
@@ -455,6 +488,7 @@ function JobsContent() {
                   onClick={() => {
                     setSelectedJob(job);
                     setLinkCheckResult(null);
+                    setMobileTab("detail");
                   }}
                   tabIndex={0}
                   role="button"
@@ -462,10 +496,11 @@ function JobsContent() {
                     if (e.key === "Enter" || e.key === " ") {
                       setSelectedJob(job);
                       setLinkCheckResult(null);
+                      setMobileTab("detail");
                     }
                   }}
                   className={cn(
-                    "p-4 rounded-xl border transition-all cursor-pointer select-none outline-none focus-visible:ring-2 focus-visible:ring-ring relative group",
+                    "p-3.5 sm:p-4 rounded-xl border transition-all cursor-pointer select-none outline-none focus-visible:ring-2 focus-visible:ring-ring relative group",
                     isSelected
                       ? "bg-secondary border-primary/30 shadow-xs"
                       : "bg-card border-border hover:bg-accent/40"
@@ -593,9 +628,22 @@ function JobsContent() {
         </div>
 
         {/* Right: Selected Job Deep-Dive (7 Cols) */}
-        <div className="lg:col-span-7">
+        <div className={cn("lg:col-span-7", mobileTab === "list" ? "hidden lg:block" : "block")}>
           {selectedJob ? (
-            <Card className="border-border bg-card p-6 space-y-6 sticky top-20 shadow-lg">
+            <Card className="border-border bg-card p-4 sm:p-6 space-y-5 sm:space-y-6 lg:sticky lg:top-20 shadow-lg">
+              {/* Mobile Back Button */}
+              <div className="lg:hidden border-b border-border/60 pb-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setMobileTab("list")}
+                  className="h-8 px-2 text-xs font-semibold text-muted-foreground hover:text-foreground gap-1.5"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Back to Job Stream</span>
+                </Button>
+              </div>
+
               {/* Job Header */}
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 border-b border-border pb-5">
                 <div>

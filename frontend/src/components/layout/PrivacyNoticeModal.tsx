@@ -32,7 +32,7 @@ export const PrivacyNoticeModal: React.FC<PrivacyNoticeModalProps> = ({
 }) => {
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto p-6 sm:p-7">
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto p-4 sm:p-7">
         <DialogHeader className="space-y-2 border-b border-border/70 pb-4">
           <div className="flex items-center gap-2.5">
             <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400">

@@ -241,9 +241,9 @@ export const Sidebar: React.FC = () => {
           onClick={() => setMobileOpen(true)}
           aria-label="Open navigation menu"
           aria-expanded={mobileOpen}
-          className="h-10 w-10 border-border bg-card text-foreground shadow"
+          className="h-9 w-9 border-border bg-card text-foreground shadow-sm"
         >
-          <Menu className="w-5 h-5" />
+          <Menu className="w-4 h-4" />
         </Button>
       </div>
 
@@ -261,11 +261,11 @@ export const Sidebar: React.FC = () => {
           className="fixed inset-0 z-50 md:hidden flex"
         >
           <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
             onClick={() => setMobileOpen(false)}
             aria-hidden="true"
           />
-          <div className="relative w-72 max-w-[85vw] h-full shadow-2xl z-10">
+          <div className="relative w-72 max-w-[85vw] h-full shadow-2xl z-10 animate-in slide-in-from-left duration-200 overflow-y-auto">
             {sidebarContent}
           </div>
         </div>

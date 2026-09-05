@@ -248,7 +248,7 @@ export default function ProfilePage() {
 
       {/* Resume Parser Card */}
       <Card className="border-border bg-card shadow-sm">
-        <CardContent className="p-6 space-y-4">
+        <CardContent className="p-4 sm:p-6 space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
             <div className="space-y-1">
               <h2 className="text-lg font-bold text-foreground">
@@ -300,7 +300,7 @@ export default function ProfilePage() {
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") fileInputRef.current?.click();
                     }}
-                    className="border border-dashed border-border hover:border-primary/40 bg-background/50 rounded-xl p-6 text-center cursor-pointer transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="border border-dashed border-border hover:border-primary/40 bg-background/50 rounded-xl p-4 sm:p-6 text-center cursor-pointer transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <input
                       ref={fileInputRef}
@@ -393,7 +393,7 @@ export default function ProfilePage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left 7 Cols: Master Details Form */}
         <Card className="lg:col-span-7 border-border bg-card shadow-sm">
-          <CardHeader className="p-6 pb-4 flex flex-row items-center justify-between">
+          <CardHeader className="p-4 sm:p-6 pb-3 sm:pb-4 flex flex-row items-center justify-between">
             <CardTitle className="text-lg font-bold flex items-center gap-2">
               <Building className="w-4 h-4 text-foreground" />
               Master Career Information
@@ -403,7 +403,7 @@ export default function ProfilePage() {
             </span>
           </CardHeader>
 
-          <CardContent className="p-6 pt-2">
+          <CardContent className="p-4 sm:p-6 pt-2">
             <form onSubmit={handleSaveProfile} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
@@ -606,13 +606,13 @@ export default function ProfilePage() {
         <div className="lg:col-span-5 space-y-6">
           {/* Add Skill to Profile */}
           <Card className="border-border bg-card">
-            <CardHeader className="p-6 pb-4">
+            <CardHeader className="p-4 sm:p-6 pb-3 sm:pb-4">
               <CardTitle className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
                 <Plus className="w-4 h-4 text-emerald-500" />
                 Add Skill to Inventory
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-6 pt-0">
+            <CardContent className="p-4 sm:p-6 pt-0">
               <form onSubmit={handleAddSkill} className="space-y-3.5">
                 <div className="space-y-1.5">
                   <label htmlFor="add-skill-name" className="block text-sm font-medium text-foreground">
@@ -704,13 +704,13 @@ export default function ProfilePage() {
 
           {/* Active Skill Inventory by Category */}
           <Card className="border-border bg-card">
-            <CardHeader className="p-6 pb-4">
+            <CardHeader className="p-4 sm:p-6 pb-3 sm:pb-4">
               <CardTitle className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
                 <Layers className="w-4 h-4 text-foreground" />
                 Verified Skill Inventory ({profile?.skills.length || 0})
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-6 pt-0">
+            <CardContent className="p-4 sm:p-6 pt-0">
               {profile?.skills && profile.skills.length > 0 ? (
                 <div className="space-y-4">
                   {Object.entries(skillsByCategory).map(([category, items]) => (
@@ -745,7 +745,7 @@ export default function ProfilePage() {
                   ))}
                 </div>
               ) : (
-                <div className="p-8 bg-muted/20 border border-dashed border-border rounded-xl text-center space-y-2 text-sm text-muted-foreground">
+                <div className="p-4 sm:p-8 bg-muted/20 border border-dashed border-border rounded-xl text-center space-y-2 text-sm text-muted-foreground">
                   <p className="font-semibold text-foreground">No skills recorded yet</p>
                   <p className="text-xs text-muted-foreground">
                     Upload your resume above to automatically discover and verify your skills.

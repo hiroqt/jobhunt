@@ -6,7 +6,7 @@ from backend.app.schemas.job import JobResponse
 
 class JobSearchBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=200)
-    sources: List[str] = Field(default_factory=lambda: ["linkedin", "indeed", "remoteok"])
+    sources: List[str] = Field(default_factory=lambda: ["linkedin", "jobstreet", "kalibrr", "onlinejobs", "indeed", "remoteok", "bossjob", "philjobnet"])
     keywords: List[str] = Field(default_factory=list)
     locations: List[str] = Field(default_factory=list)
     remote_types: List[str] = Field(default_factory=lambda: ["Remote"])

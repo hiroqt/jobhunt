@@ -20,6 +20,11 @@ from backend.app.ai.factory import get_ai_provider
 from backend.app.matching.scorer import calculate_match_scores
 from backend.app.matching.rules import evaluate_decision_rules
 from backend.app.verification.identity import calculate_job_trust_score, evaluate_content_completeness
+from backend.app.processing.psoc_classifier import (
+    get_location_filter_keywords,
+    get_all_philippines_keywords,
+    get_psoc_group_keywords,
+)
 from backend.app.core.logging import logger
 
 router = APIRouter(prefix="/jobs", tags=["Jobs"])
@@ -227,6 +232,9 @@ async def extract_and_analyze_job(
 async def list_jobs(
     search: Optional[str] = None,
     search_id: Optional[str] = None,
+    location: Optional[str] = None,
+    ph_only: Optional[bool] = None,
+    psoc_group: Optional[int] = None,
     recommendation: Optional[str] = None,
     workplace_type: Optional[str] = None,
     employment_type: Optional[str] = None,
@@ -254,6 +262,45 @@ async def list_jobs(
         )
     if search_id:
         query = query.where(Job.search_id == search_id)
+
+    if ph_only:
+        ph_sources = ["jobstreet", "kalibrr", "onlinejobs", "bossjob", "philjobnet"]
+        all_ph_kw = get_all_philippines_keywords()
+        loc_clauses = [Job.location.ilike(f"%{k}%") for k in all_ph_kw]
+        query = query.where(
+            or_(
+                Job.source.in_(ph_sources),
+                Job.currency == "PHP",
+                *loc_clauses
+            )
+        )
+
+    if location:
+        is_remote, kw_list = get_location_filter_keywords(location)
+        if is_remote:
+            query = query.where(
+                or_(
+                    Job.workplace_type.ilike("%Remote%"),
+                    Job.location.ilike("%Remote%"),
+                    Job.location.ilike("%Worldwide%"),
+                    Job.location.ilike("%Anywhere%"),
+                    Job.location.ilike("%Work from home%"),
+                    Job.location.ilike("%WFH%")
+                )
+            )
+        elif kw_list:
+            loc_conditions = [Job.location.ilike(f"%{k}%") for k in kw_list]
+            query = query.where(or_(*loc_conditions))
+
+    if psoc_group is not None:
+        psoc_kws = get_psoc_group_keywords(psoc_group)
+        if psoc_kws:
+            psoc_conditions = []
+            for kw in psoc_kws:
+                psoc_conditions.append(Job.title.ilike(f"%{kw}%"))
+                psoc_conditions.append(Job.summary.ilike(f"%{kw}%"))
+            query = query.where(or_(*psoc_conditions))
+
     if recommendation:
         query = query.where(Job.recommendation == recommendation.upper())
     if workplace_type:

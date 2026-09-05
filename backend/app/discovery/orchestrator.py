@@ -88,7 +88,7 @@ async def execute_search_pipeline(
     )
 
     # 1. Dispatch queries across enabled sources concurrently
-    sources_to_query = search.sources or ["linkedin", "indeed", "remoteok"]
+    sources_to_query = search.sources or ["linkedin", "jobstreet", "kalibrr", "onlinejobs", "indeed", "remoteok", "bossjob", "philjobnet"]
     raw_jobs_by_source: Dict[str, List[RawJob]] = {}
     source_errors: Dict[str, str] = {}
 
@@ -218,7 +218,7 @@ async def execute_search_pipeline(
                     first_seen_at=datetime.now(timezone.utc),
                     last_seen_at=datetime.now(timezone.utc),
                     last_changed_at=datetime.now(timezone.utc),
-                    raw_data=raw_job.raw_data or {"source_payload": "raw_discovery"},
+                    raw_data=norm.raw_data or raw_job.raw_data or {"source_payload": "raw_discovery"},
                     field_evidence_data=[e.model_dump() for e in v_res.field_evidence],
                 )
                 db.add(new_job)

@@ -5,6 +5,10 @@ from backend.app.sources.adapters.linkedin import LinkedInAdapter
 from backend.app.sources.adapters.indeed import IndeedAdapter
 from backend.app.sources.adapters.jobstreet import JobStreetAdapter
 from backend.app.sources.adapters.public_careers import PublicCareersAdapter
+from backend.app.sources.adapters.kalibrr import KalibrrAdapter
+from backend.app.sources.adapters.onlinejobs import OnlineJobsAdapter
+from backend.app.sources.adapters.bossjob import BossjobAdapter
+from backend.app.sources.adapters.philjobnet import PhilJobNetAdapter
 
 
 class SourceRegistry:
@@ -22,6 +26,10 @@ class SourceRegistry:
         self.register(LinkedInAdapter())
         self.register(IndeedAdapter())
         self.register(JobStreetAdapter())
+        self.register(KalibrrAdapter())
+        self.register(OnlineJobsAdapter())
+        self.register(BossjobAdapter())
+        self.register(PhilJobNetAdapter())
         self.register(PublicCareersAdapter())
 
     def register(self, adapter: JobSourceAdapter):

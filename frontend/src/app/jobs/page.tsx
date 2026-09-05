@@ -69,6 +69,8 @@ function JobsContent() {
   const [recommendationFilter, setRecommendationFilter] = useState("");
   const [workplaceFilter, setWorkplaceFilter] = useState("");
   const [sourceFilter, setSourceFilter] = useState("");
+  const [locationFilter, setLocationFilter] = useState("");
+  const [psocFilter, setPsocFilter] = useState("");
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
   const [isCaptureModalOpen, setIsCaptureModalOpen] = useState(false);
@@ -86,10 +88,16 @@ function JobsContent() {
       const minScore = activeTab === "high_match" ? 80 : undefined;
       const savedOnly = activeTab === "saved" ? true : undefined;
       const searchIdParam = searchParams.get("search_id") || undefined;
+      const isPhOnly = locationFilter === "PH_ONLY";
+      const locParam = !isPhOnly && locationFilter ? locationFilter : undefined;
+      const psocParam = psocFilter ? parseInt(psocFilter, 10) : undefined;
 
       const data = await getJobs({
         search: customSearch !== undefined ? customSearch : search,
         search_id: searchIdParam,
+        location: locParam,
+        ph_only: isPhOnly,
+        psoc_group: psocParam,
         recommendation: recommendationFilter || undefined,
         workplace_type: workplaceFilter || undefined,
         source: sourceFilter || undefined,
@@ -112,7 +120,7 @@ function JobsContent() {
 
   useEffect(() => {
     loadJobs();
-  }, [searchParams, recommendationFilter, workplaceFilter, sourceFilter, activeTab]);
+  }, [searchParams, recommendationFilter, workplaceFilter, sourceFilter, locationFilter, psocFilter, activeTab]);
 
   // Debounced search on typing
   useEffect(() => {
@@ -216,10 +224,27 @@ function JobsContent() {
     const s = src.toLowerCase();
     if (s === "linkedin") return "LinkedIn";
     if (s === "indeed") return "Indeed";
-    if (s === "jobstreet") return "JobStreet";
+    if (s === "jobstreet") return "JobStreet PH";
+    if (s === "kalibrr") return "Kalibrr PH";
+    if (s === "onlinejobs") return "OnlineJobs.ph";
+    if (s === "bossjob") return "Bossjob PH";
+    if (s === "philjobnet") return "PhilJobNet (DOLE)";
     if (s === "remoteok") return "RemoteOK";
     if (s === "public") return "Company Careers";
     return src;
+  };
+
+  const getLocationDisplayName = (loc: string) => {
+    if (loc === "PH_ONLY") return "🇵🇭 Philippines Only";
+    if (loc === "NCR") return "Metro Manila (NCR)";
+    if (loc === "Cebu") return "Central Visayas (Cebu)";
+    if (loc === "Clark") return "Central Luzon (Clark)";
+    if (loc === "CALABARZON") return "CALABARZON";
+    if (loc === "Davao") return "Mindanao (Davao)";
+    if (loc === "Iloilo") return "Western Visayas (Iloilo)";
+    if (loc === "CAR") return "Northern Luzon (Baguio)";
+    if (loc === "Remote") return "Worldwide Remote";
+    return loc;
   };
 
   return (
@@ -313,14 +338,34 @@ function JobsContent() {
             </Button>
           </div>
 
-          {/* Filter Dropdowns Row: Positioned below the search bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-1 border-t border-border/40">
-            <div className="grid grid-cols-1 sm:grid-cols-3 md:flex md:items-center gap-2 w-full sm:w-auto">
+          {/* Filter Dropdowns Row */}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5 pt-1 border-t border-border/40">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:flex md:flex-wrap md:items-center gap-2 w-full lg:w-auto">
               <span className="hidden md:flex text-xs text-muted-foreground font-medium items-center gap-1 mr-1">
                 <Filter className="w-3.5 h-3.5 text-primary" />
                 <span>Filters:</span>
               </span>
 
+              {/* Location Filter */}
+              <select
+                aria-label="Filter by location"
+                value={locationFilter}
+                onChange={(e) => setLocationFilter(e.target.value)}
+                className="w-full sm:w-auto bg-background border border-border rounded-md px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring font-medium h-8"
+              >
+                <option value="">All Locations</option>
+                <option value="PH_ONLY">🇵🇭 Philippines Only</option>
+                <option value="NCR">📍 Metro Manila (NCR / BGC / Makati / Taguig / QC)</option>
+                <option value="Cebu">📍 Central Visayas (Cebu IT Park / Mandaue)</option>
+                <option value="Clark">📍 Central Luzon (Clark / Pampanga / Angeles / Subic)</option>
+                <option value="CALABARZON">📍 CALABARZON (Laguna / Cavite / Batangas / Rizal)</option>
+                <option value="Davao">📍 Mindanao (Davao / CDO / GenSan)</option>
+                <option value="Iloilo">📍 Western Visayas (Iloilo / Bacolod)</option>
+                <option value="CAR">📍 Northern Luzon / Cordillera (Baguio)</option>
+                <option value="Remote">🌐 Worldwide Remote / Work from Home</option>
+              </select>
+
+              {/* Source Filter */}
               <select
                 aria-label="Filter by source"
                 value={sourceFilter}
@@ -328,14 +373,34 @@ function JobsContent() {
                 className="w-full sm:w-auto bg-background border border-border rounded-md px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring font-medium h-8"
               >
                 <option value="">All Sources</option>
+                <option value="jobstreet">JobStreet PH</option>
+                <option value="kalibrr">Kalibrr PH</option>
+                <option value="onlinejobs">OnlineJobs.ph</option>
+                <option value="bossjob">Bossjob PH</option>
+                <option value="philjobnet">PhilJobNet (DOLE)</option>
                 <option value="linkedin">LinkedIn</option>
                 <option value="indeed">Indeed</option>
-                <option value="jobstreet">JobStreet</option>
                 <option value="remoteok">RemoteOK</option>
                 <option value="public">Public ATS</option>
                 <option value="Manual">Manual</option>
               </select>
 
+              {/* PSOC Major Group Taxonomy Filter */}
+              <select
+                aria-label="Filter by PSOC standard"
+                value={psocFilter}
+                onChange={(e) => setPsocFilter(e.target.value)}
+                className="w-full sm:w-auto bg-background border border-border rounded-md px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring font-medium h-8"
+              >
+                <option value="">All Roles (PSOC)</option>
+                <option value="1">Group 1: Managers & Leads</option>
+                <option value="2">Group 2: Professionals (Dev/Data)</option>
+                <option value="3">Group 3: Technicians & QA</option>
+                <option value="4">Group 4: Clerical & VA / Support</option>
+                <option value="5">Group 5: Sales & Marketing</option>
+              </select>
+
+              {/* Match Recommendation Filter */}
               <select
                 aria-label="Filter by recommendation"
                 value={recommendationFilter}
@@ -348,6 +413,7 @@ function JobsContent() {
                 <option value="SKIP">SKIP (&lt;60% Low Fit)</option>
               </select>
 
+              {/* Workplace Arrangement Filter */}
               <select
                 aria-label="Filter by workplace type"
                 value={workplaceFilter}
@@ -361,7 +427,7 @@ function JobsContent() {
               </select>
             </div>
 
-            {(search || searchParams.get("search_id") || sourceFilter || recommendationFilter || workplaceFilter) && (
+            {(search || searchParams.get("search_id") || sourceFilter || locationFilter || psocFilter || recommendationFilter || workplaceFilter) && (
               <Button
                 type="button"
                 variant="ghost"
@@ -369,12 +435,14 @@ function JobsContent() {
                 onClick={() => {
                   setSearch("");
                   setSourceFilter("");
+                  setLocationFilter("");
+                  setPsocFilter("");
                   setRecommendationFilter("");
                   setWorkplaceFilter("");
                   window.history.replaceState(null, "", "/jobs");
                   loadJobs("");
                 }}
-                className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground self-end sm:self-auto"
+                className="h-8 px-2.5 text-xs text-muted-foreground hover:text-foreground self-end sm:self-auto shrink-0"
               >
                 Clear Filters
               </Button>
@@ -383,10 +451,10 @@ function JobsContent() {
         </form>
 
         {/* Active Filter / Search Notification Bar */}
-        {(search || searchParams.get("search_id") || sourceFilter || recommendationFilter || workplaceFilter) && (
+        {(search || searchParams.get("search_id") || sourceFilter || locationFilter || psocFilter || recommendationFilter || workplaceFilter) && (
           <div className="flex items-center justify-between text-xs pt-1 border-t border-border/40 text-muted-foreground">
             <div className="flex items-center gap-1.5 flex-wrap">
-              <span>Active query:</span>
+              <span>Active filters:</span>
               {search && (
                 <Badge variant="secondary" className="text-[11px] font-normal gap-1">
                   "{search}"
@@ -397,9 +465,19 @@ function JobsContent() {
                   Targeted Discovery Run
                 </Badge>
               )}
+              {locationFilter && (
+                <Badge variant="secondary" className="text-[11px] font-normal">
+                  Location: {getLocationDisplayName(locationFilter)}
+                </Badge>
+              )}
               {sourceFilter && (
                 <Badge variant="secondary" className="text-[11px] font-normal">
-                  Source: {sourceFilter}
+                  Source: {getSourceDisplayName(sourceFilter)}
+                </Badge>
+              )}
+              {psocFilter && (
+                <Badge variant="secondary" className="text-[11px] font-normal">
+                  PSOC: Group {psocFilter}
                 </Badge>
               )}
               {recommendationFilter && (
@@ -512,8 +590,8 @@ function JobsContent() {
                         <h3 className="text-sm font-semibold text-foreground truncate">
                           {job.title}
                         </h3>
-                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 capitalize font-mono shrink-0">
-                          {job.source}
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 font-mono shrink-0">
+                          {getSourceDisplayName(job.source)}
                         </Badge>
                         {job.verification_status === "VERIFIED" && (
                           <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 flex items-center gap-0.5 shrink-0">
@@ -651,8 +729,8 @@ function JobsContent() {
                     <h2 className="text-xl font-bold text-foreground">
                       {selectedJob.title}
                     </h2>
-                    <Badge variant="secondary" className="text-xs uppercase font-mono tracking-wider">
-                      {selectedJob.source}
+                    <Badge variant="secondary" className="text-xs font-mono tracking-wider">
+                      {getSourceDisplayName(selectedJob.source)}
                     </Badge>
                     <Badge variant="outline" className="text-xs text-emerald-600 dark:text-emerald-400 border-emerald-500/30 bg-emerald-500/10 gap-1 font-medium">
                       <Clock className="w-3 h-3" />

@@ -45,6 +45,21 @@ import {
   Sliders,
 } from "lucide-react";
 
+function formatSourceName(src: string): string {
+  const map: Record<string, string> = {
+    jobstreet: "JobStreet PH",
+    kalibrr: "Kalibrr PH",
+    onlinejobs: "OnlineJobs.ph",
+    bossjob: "Bossjob PH",
+    philjobnet: "PhilJobNet (DOLE)",
+    linkedin: "LinkedIn",
+    indeed: "Indeed",
+    remoteok: "RemoteOK",
+    public: "Company Careers",
+  };
+  return map[src.toLowerCase()] || src;
+}
+
 export default function SearchesPage() {
   const router = useRouter();
   const [searches, setSearches] = useState<JobSearch[]>([]);
@@ -62,9 +77,18 @@ export default function SearchesPage() {
 
   // Form State
   const [formName, setFormName] = useState("");
-  const [formSources, setFormSources] = useState<string[]>(["linkedin", "indeed", "remoteok"]);
+  const [formSources, setFormSources] = useState<string[]>([
+    "jobstreet",
+    "kalibrr",
+    "onlinejobs",
+    "bossjob",
+    "philjobnet",
+    "linkedin",
+    "indeed",
+    "remoteok",
+  ]);
   const [formKeywords, setFormKeywords] = useState("");
-  const [formLocations, setFormLocations] = useState("Remote");
+  const [formLocations, setFormLocations] = useState("Philippines");
   const [formRemoteType, setFormRemoteType] = useState("Remote");
   const [formMinSalary, setFormMinSalary] = useState(50000);
   const [formMaxSalary, setFormMaxSalary] = useState(90000);
@@ -291,8 +315,8 @@ export default function SearchesPage() {
                       <span className="text-[11px] font-medium text-muted-foreground block mb-1.5">Sources</span>
                       <div className="flex flex-wrap gap-1">
                         {search.sources.map((src) => (
-                          <Badge key={src} variant="secondary" className="text-[10px] font-normal capitalize">
-                            {src}
+                          <Badge key={src} variant="secondary" className="text-[10px] font-normal">
+                            {formatSourceName(src)}
                           </Badge>
                         ))}
                       </div>
@@ -429,17 +453,19 @@ export default function SearchesPage() {
               <span className="text-[11px] text-muted-foreground block mb-1.5 font-medium">Quick Presets:</span>
               <div className="flex flex-wrap gap-1.5">
                 {[
-                  { name: "Laravel Backend", kw: "Laravel, PHP, MySQL", label: "Laravel" },
-                  { name: "Python / Django", kw: "Python, Django, PostgreSQL", label: "Python" },
-                  { name: "Full Stack React", kw: "React, TypeScript, Node.js", label: "React" },
-                  { name: "DevOps & Cloud", kw: "DevOps, Docker, Kubernetes, AWS", label: "DevOps" },
+                  { name: "PH Remote Full Stack", kw: "Laravel, React, TypeScript, PHP", label: "🇵🇭 PH Full Stack", loc: "Philippines, Remote" },
+                  { name: "BGC / Makati Tech Hub", kw: "Python, Golang, AWS, Node.js", label: "🇵🇭 BGC / Makati", loc: "Metro Manila, BGC, Taguig, Makati" },
+                  { name: "OnlineJobs.ph Remote Roles", kw: "Virtual Assistant, Customer Support, CSR", label: "🇵🇭 Remote VA / CSR", loc: "Remote (Philippines)" },
+                  { name: "Cebu Tech Park", kw: "React, Vue, Java, Spring", label: "🇵🇭 Cebu IT Park", loc: "Cebu City, Central Visayas" },
+                  { name: "Global Remote Engineer", kw: "Next.js, Tailwind, PostgreSQL", label: "🌐 Global Remote", loc: "Worldwide, Remote" },
                 ].map((preset) => (
                   <button
                     type="button"
                     key={preset.label}
                     onClick={() => {
-                      setFormName(`${preset.name} Remote`);
+                      setFormName(preset.name);
                       setFormKeywords(preset.kw);
+                      setFormLocations(preset.loc);
                     }}
                     className="px-2 py-0.5 rounded-md border border-border/70 text-[11px] text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
                   >
@@ -454,19 +480,29 @@ export default function SearchesPage() {
                 Target Sources
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {["linkedin", "indeed", "jobstreet", "remoteok", "public"].map((src) => (
+                {[
+                  { id: "jobstreet", name: "JobStreet PH" },
+                  { id: "kalibrr", name: "Kalibrr PH" },
+                  { id: "onlinejobs", name: "OnlineJobs.ph" },
+                  { id: "bossjob", name: "Bossjob PH" },
+                  { id: "philjobnet", name: "PhilJobNet (DOLE)" },
+                  { id: "linkedin", name: "LinkedIn" },
+                  { id: "indeed", name: "Indeed" },
+                  { id: "remoteok", name: "RemoteOK" },
+                  { id: "public", name: "Public ATS" },
+                ].map((src) => (
                   <button
                     type="button"
-                    key={src}
-                    onClick={() => toggleSource(src)}
-                    className={`p-2.5 rounded-lg border text-xs font-medium capitalize text-left flex items-center justify-between transition-colors ${
-                      formSources.includes(src)
+                    key={src.id}
+                    onClick={() => toggleSource(src.id)}
+                    className={`p-2.5 rounded-lg border text-xs font-medium text-left flex items-center justify-between transition-colors ${
+                      formSources.includes(src.id)
                         ? "border-primary bg-primary/10 text-primary"
                         : "border-border/60 bg-muted/30 text-muted-foreground hover:bg-muted"
                     }`}
                   >
-                    <span>{src}</span>
-                    {formSources.includes(src) && <CheckCircle2 className="w-3.5 h-3.5 text-primary" />}
+                    <span className="truncate">{src.name}</span>
+                    {formSources.includes(src.id) && <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0 ml-1" />}
                   </button>
                 ))}
               </div>

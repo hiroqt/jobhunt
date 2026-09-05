@@ -173,6 +173,9 @@ export async function extractAndAnalyzeJob(
 export async function getJobs(options?: {
   search?: string;
   search_id?: string;
+  location?: string;
+  ph_only?: boolean;
+  psoc_group?: number;
   recommendation?: string;
   workplace_type?: string;
   source?: string;
@@ -184,6 +187,9 @@ export async function getJobs(options?: {
   const params = new URLSearchParams();
   if (options?.search) params.set("search", options.search);
   if (options?.search_id) params.set("search_id", options.search_id);
+  if (options?.location) params.set("location", options.location);
+  if (options?.ph_only) params.set("ph_only", "true");
+  if (options?.psoc_group !== undefined) params.set("psoc_group", options.psoc_group.toString());
   if (options?.recommendation) params.set("recommendation", options.recommendation);
   if (options?.workplace_type) params.set("workplace_type", options.workplace_type);
   if (options?.source) params.set("source", options.source);

@@ -81,7 +81,7 @@ async def test_search_jobs_api_arbitrary_term():
         results = search_res.json()
         assert len(results) >= 1
         # Verify that all results returned for search=laravel actually mention laravel in title, company, or text
-        assert all("laravel" in (j["title"] + " " + j.get("raw_description", "") + " " + j.get("summary", "")).lower() for j in results)
+        assert all("laravel" in (j["title"] + " " + (j.get("raw_description") or "") + " " + (j.get("summary") or "")).lower() for j in results)
 
         # Search by 'Enterprise Software Lab'
         company_res = await client.get("/api/jobs?search=Enterprise%20Software")

@@ -111,13 +111,19 @@ async def test_job_extraction_and_matching():
 async def test_skills_taxonomy_endpoint():
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
+        # Add a skill first in dynamic mode
+        await client.post("/api/candidate/skills", json={
+            "skill_name": "FastAPI",
+            "skill_category": "Backend",
+            "proficiency_level": "Advanced",
+            "years_experience": 3
+        })
         response = await client.get("/api/candidate/skills/taxonomy")
         assert response.status_code == 200
         skills = response.json()
         assert isinstance(skills, list)
         assert len(skills) > 0
-        assert "name" in skills[0]
-        assert "category" in skills[0]
+        assert any(s["name"] == "FastAPI" for s in skills)
 
 
 @pytest.mark.asyncio

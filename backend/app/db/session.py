@@ -1,40 +1,27 @@
 from typing import AsyncGenerator
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from backend.app.core.config import settings
+from contextlib import asynccontextmanager
+from fastapi import Request
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from backend.app.core.logging import logger
-
-from pathlib import Path
-
-# Create engine with appropriate pool arguments based on DB type
-connect_args = {}
-db_url = settings.DATABASE_URL
-if "sqlite" in db_url:
-    connect_args = {"check_same_thread": False}
-    # If using relative SQLite path, resolve to canonical backend/job_hunt.db
-    if "///./" in db_url:
-        # Resolve to backend/job_hunt.db
-        project_root = Path(__file__).resolve().parent.parent.parent.parent
-        canonical_db = project_root / "backend" / "job_hunt.db"
-        db_url = f"sqlite+aiosqlite:///{canonical_db}"
-
-engine = create_async_engine(
-    db_url,
-    echo=settings.DEBUG,
-    future=True,
-    connect_args=connect_args,
-)
-
-AsyncSessionLocal = async_sessionmaker(
-    bind=engine,
-    class_=AsyncSession,
-    expire_on_commit=False,
-    autocommit=False,
-    autoflush=False,
-)
+from backend.app.db.session_manager import session_manager
 
 
-async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    async with AsyncSessionLocal() as session:
+async def get_db(request: Request) -> AsyncGenerator[AsyncSession, None]:
+    """
+    Dynamically resolves the scoped database session for the incoming request's
+    X-Session-ID header. Ensures 100% ephemeral isolation between visitors.
+    """
+    session_id = None
+    if request:
+        try:
+            session_id = request.headers.get("x-session-id") or request.query_params.get("session_id")
+        except Exception:
+            session_id = None
+    
+    session_maker, _ = await session_manager.get_or_create_session(session_id)
+    
+    async with session_maker() as session:
         try:
             yield session
             await session.commit()
@@ -46,51 +33,15 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 
 
 async def init_db() -> None:
-    from backend.app.models.base import Base
-    # Import all models so that Base.metadata has all table definitions registered
-    import backend.app.models.candidate # noqa
-    import backend.app.models.skill # noqa
-    import backend.app.models.job # noqa
-    import backend.app.models.application # noqa
-    import backend.app.models.interview # noqa
-    import backend.app.models.follow_up # noqa
-    import backend.app.models.resume # noqa
-    import backend.app.models.feedback # noqa
-    import backend.app.models.search # noqa
-    import backend.app.models.notification # noqa
+    """Initializes the default guest session DB for server startup checks."""
+    logger.info("Initializing ephemeral session manager...")
+    await session_manager.get_or_create_session("guest_default")
+    logger.info("Ephemeral session engine ready.")
 
-    logger.info("Initializing database tables...")
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-        
-        def migrate_sqlite_columns(connection):
-            try:
-                from sqlalchemy import text
-                cursor = connection.execute(text("PRAGMA table_info(jobs)"))
-                cols = [row[1] for row in cursor.fetchall()]
-                if "posted_at" not in cols:
-                    connection.execute(text("ALTER TABLE jobs ADD COLUMN posted_at DATETIME;"))
-                    logger.info("Added missing posted_at column to jobs table.")
-                if "verification_status" not in cols:
-                    connection.execute(text("ALTER TABLE jobs ADD COLUMN verification_status VARCHAR(50) DEFAULT 'UNVERIFIED';"))
-                    logger.info("Added missing verification_status column to jobs table.")
-                if "verification_confidence" not in cols:
-                    connection.execute(text("ALTER TABLE jobs ADD COLUMN verification_confidence REAL;"))
-                    logger.info("Added missing verification_confidence column to jobs table.")
-                if "verified_at" not in cols:
-                    connection.execute(text("ALTER TABLE jobs ADD COLUMN verified_at DATETIME;"))
-                    logger.info("Added missing verified_at column to jobs table.")
-                if "discovered_at" not in cols:
-                    connection.execute(text("ALTER TABLE jobs ADD COLUMN discovered_at DATETIME;"))
-                    logger.info("Added missing discovered_at column to jobs table.")
-                if "last_seen_at" not in cols:
-                    connection.execute(text("ALTER TABLE jobs ADD COLUMN last_seen_at DATETIME;"))
-                    logger.info("Added missing last_seen_at column to jobs table.")
-                if "raw_data" not in cols:
-                    connection.execute(text("ALTER TABLE jobs ADD COLUMN raw_data JSON;"))
-                    logger.info("Added missing raw_data column to jobs table.")
-            except Exception as ex:
-                logger.warning(f"SQLite column migration error: {ex}")
 
-        await conn.run_sync(migrate_sqlite_columns)
-    logger.info("Database tables initialized successfully.")
+# Helper for standalone CLI / test runner access
+@asynccontextmanager
+async def AsyncSessionLocal() -> AsyncGenerator[AsyncSession, None]:
+    maker, _ = await session_manager.get_or_create_session("guest_default")
+    async with maker() as session:
+        yield session

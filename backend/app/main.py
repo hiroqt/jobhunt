@@ -1,4 +1,5 @@
 import sys
+import asyncio
 from pathlib import Path
 
 # Ensure project root is on sys.path regardless of execution directory
@@ -16,10 +17,11 @@ from fastapi.responses import JSONResponse
 
 from backend.app.core.config import settings
 from backend.app.core.logging import logger
-from backend.app.db.session import init_db, AsyncSessionLocal
-from backend.app.db.seed import seed_initial_data
+from backend.app.db.session import init_db
+from backend.app.db.session_manager import session_manager
 
 import backend.app.models # noqa: F401
+from backend.app.api.routes.session import router as session_router
 from backend.app.api.routes.candidates import router as candidates_router
 from backend.app.api.routes.jobs import router as jobs_router
 from backend.app.api.routes.searches import router as searches_router
@@ -33,24 +35,32 @@ from backend.app.api.routes.ai import router as ai_router
 from backend.app.api.routes.analytics import router as analytics_router
 
 
+async def _periodic_session_cleanup():
+    while True:
+        try:
+            await asyncio.sleep(600) # Every 10 minutes
+            await session_manager.cleanup_expired_sessions(max_idle_seconds=3600)
+        except asyncio.CancelledError:
+            break
+        except Exception as e:
+            logger.warning(f"Error during periodic session cleanup: {e}")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup: initialize database tables and seed initial taxonomy
-    logger.info("Starting up Job Hunt Pipeline API...")
+    # Startup: initialize ephemeral session engine
+    logger.info("Starting up Job Hunt Pipeline API (Stateless Ephemeral Session Mode)...")
     await init_db()
-    async with AsyncSessionLocal() as session:
-        try:
-            await seed_initial_data(session)
-        except Exception as e:
-            logger.warning(f"Error seeding database: {e}")
+    cleanup_task = asyncio.create_task(_periodic_session_cleanup())
     yield
+    cleanup_task.cancel()
     logger.info("Shutting down Job Hunt Pipeline API...")
 
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
-    description="Backend API for Job Hunt Pipeline - Personal Job Search & Career Intelligence Platform",
+    description="Backend API for Job Hunt Pipeline - Ephemeral Guest & Stateless Career Intelligence Platform",
     lifespan=lifespan
 )
 
@@ -73,6 +83,7 @@ async def global_exception_handler(request, exc: Exception):
     )
 
 # Register API Routers
+app.include_router(session_router, prefix=settings.API_V1_STR)
 app.include_router(candidates_router, prefix=settings.API_V1_STR)
 app.include_router(jobs_router, prefix=settings.API_V1_STR)
 app.include_router(searches_router, prefix=settings.API_V1_STR)
@@ -92,6 +103,8 @@ async def health_check():
         "status": "healthy",
         "service": settings.PROJECT_NAME,
         "version": settings.VERSION,
+        "mode": "ephemeral_guest_stateless",
+        "active_guest_sessions": session_manager.get_active_session_count(),
         "ai_provider": settings.DEFAULT_AI_PROVIDER
     }
 
@@ -99,7 +112,7 @@ async def health_check():
 @app.get("/", tags=["Root"])
 async def root():
     return {
-        "message": "Welcome to Job Hunt Pipeline API",
+        "message": "Welcome to Job Hunt Pipeline API (Stateless Ephemeral Mode)",
         "docs_url": "/docs",
         "version": settings.VERSION
     }

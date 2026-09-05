@@ -33,19 +33,9 @@ export function getGuestSessionId(): string {
   return sid;
 }
 
-// Reset guest session automatically when user leaves or closes window
-if (typeof window !== "undefined") {
-  window.addEventListener("pagehide", () => {
-    try {
-      const sid = window.sessionStorage.getItem("jobhunt_guest_session_id");
-      if (sid && navigator.sendBeacon) {
-        navigator.sendBeacon(`${API_BASE}/session/reset?session_id=${encodeURIComponent(sid)}`);
-      }
-    } catch {
-      // Ignore background unload errors
-    }
-  });
-}
+// Guest session persists for the duration of the browser tab via sessionStorage.
+// Explicit resets can be triggered via the UI Reset Session button.
+
 
 export async function resetGuestSession(): Promise<void> {
   const sid = getGuestSessionId();

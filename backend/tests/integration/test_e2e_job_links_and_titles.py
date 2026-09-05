@@ -105,9 +105,10 @@ async def test_e2e_automated_searches_job_links_and_titles():
                     assert "f_TPR=r604800" in url, f"LinkedIn URL missing 1-week filter f_TPR=r604800: {url}"
 
             elif "jobstreet" in source:
-                # JobStreet links must have createdAt=7d (1-week span)
-                assert "jobstreet.com.ph/jobs" in url
-                assert "createdAt=7d" in url, f"JobStreet URL missing 1-week filter createdAt=7d: {url}"
+                # JobStreet links can be direct job view (/job/<id>) or search query with 1-week span
+                assert "jobstreet" in url.lower()
+                if "/jobs?" in url or "keywords=" in url:
+                    assert "createdAt=7d" in url, f"JobStreet URL missing 1-week filter createdAt=7d: {url}"
 
             elif "remoteok" in source:
                 assert "remoteok" in url.lower()

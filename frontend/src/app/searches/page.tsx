@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   JobSearch,
   SearchExecution,
@@ -45,6 +46,7 @@ import {
 } from "lucide-react";
 
 export default function SearchesPage() {
+  const router = useRouter();
   const [searches, setSearches] = useState<JobSearch[]>([]);
   const [sources, setSources] = useState<SourceInfo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -639,7 +641,8 @@ export default function SearchesPage() {
                 const targetUrl = lastRunResult?.search_id
                   ? `/jobs?search_id=${lastRunResult.search_id}`
                   : "/jobs";
-                window.location.href = targetUrl;
+                setResultModalOpen(false);
+                router.push(targetUrl);
               }}
             >
               View Discovered Jobs

@@ -168,7 +168,7 @@ async def execute_search_pipeline(
                 # ENFORCE 1-WEEK SPAN: Exclude jobs older than 7 days
                 if norm.posted_at:
                     p_at = norm.posted_at if norm.posted_at.tzinfo else norm.posted_at.replace(tzinfo=timezone.utc)
-                    if p_at < one_week_ago or p_at > now:
+                    if p_at < one_week_ago or p_at > (now + timedelta(days=1)):
                         log_step(f"Excluded job '{norm.title}' from '{src_name}' (posted {p_at.isoformat()}) outside 1-week span.", "DEBUG")
                         continue
                 else:

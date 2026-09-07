@@ -1,5 +1,7 @@
 import Link from "next/link";
-import { Compass } from "lucide-react";
+import {
+  Compass01Icon as Compass
+} from "hugeicons-react";
 
 export default function NotFound() {
   return (

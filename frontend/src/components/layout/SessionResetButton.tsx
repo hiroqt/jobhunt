@@ -1,7 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
-import { RotateCcw, ShieldCheck, Check } from "lucide-react";
+import {
+  RotateLeft01Icon as RotateCcw,
+  SecurityCheckIcon as ShieldCheck,
+  Tick02Icon as Check
+} from "hugeicons-react";
 import { Button } from "@/components/ui/button";
 import { resetGuestSession } from "@/lib/api";
 

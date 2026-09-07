@@ -2,7 +2,18 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Search, Command, Bell, CheckCircle2, Target, Clock, Layers } from "lucide-react";
+import {
+  Add01Icon as Plus,
+  Search01Icon as Search,
+  CommandIcon as Command,
+  Notification01Icon as Bell,
+  CheckmarkCircle02Icon as CheckCircle2,
+  Target01Icon as Target,
+  Clock01Icon as Clock,
+  Layers01Icon as Layers,
+  Compass01Icon as Compass,
+  Cancel01Icon as X
+} from "hugeicons-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +23,7 @@ import { Notification } from "@/types";
 import { getNotifications, markAllNotificationsRead, markNotificationRead } from "@/lib/api";
 import { SessionResetButton } from "@/components/layout/SessionResetButton";
 import { GuidelinesModal } from "@/components/layout/GuidelinesModal";
+import { useOnboarding } from "@/context/OnboardingContext";
 
 interface HeaderProps {
   onRefresh?: () => void;
@@ -19,6 +31,7 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ onRefresh }) => {
   const router = useRouter();
+  const { startTour } = useOnboarding();
   const [isCaptureModalOpen, setIsCaptureModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -76,11 +89,13 @@ export const Header: React.FC<HeaderProps> = ({ onRefresh }) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
         searchInputRef.current?.focus();
+      } else if (e.key === "Escape" && notifsOpen) {
+        setNotifsOpen(false);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [notifsOpen]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -139,55 +154,100 @@ export const Header: React.FC<HeaderProps> = ({ onRefresh }) => {
               )}
             </Button>
 
-            {/* Dropdown Popup */}
+            {/* Click-outside backdrop overlay */}
             {notifsOpen && (
-              <div className="absolute right-0 mt-2 w-[calc(100vw-1.5rem)] sm:w-96 max-w-sm rounded-xl border border-border bg-card shadow-xl p-3 z-50 animate-in fade-in-0 zoom-in-95 duration-100">
-                <div className="flex items-center justify-between pb-2 mb-2 border-b border-border/60">
-                  <div className="flex items-center gap-1.5">
-                    <span className="font-semibold text-xs text-foreground">Notifications</span>
-                    {unreadCount > 0 && (
-                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">
+              <div
+                className="fixed inset-0 z-40 bg-transparent"
+                onClick={() => setNotifsOpen(false)}
+                aria-hidden="true"
+              />
+            )}
+
+            {/* Dropdown Popup / Mobile Responsive Modal */}
+            {notifsOpen && (
+              <div
+                role="dialog"
+                aria-label="Notifications"
+                className="fixed inset-x-3 top-[4.25rem] sm:absolute sm:inset-auto sm:right-0 sm:top-full sm:mt-2 w-auto sm:w-96 max-w-none sm:max-w-sm rounded-2xl sm:rounded-xl border border-border bg-white dark:bg-zinc-900 text-card-foreground shadow-2xl p-3.5 sm:p-3 z-50 animate-in fade-in-0 zoom-in-95 duration-150 flex flex-col max-h-[75dvh] sm:max-h-96"
+              >
+                {/* Modal Header */}
+                <div className="flex items-center justify-between pb-2.5 mb-2 border-b border-border/60 shrink-0">
+                  <div className="flex items-center gap-1.5 sm:gap-2">
+                    <span className="font-semibold text-xs sm:text-sm text-foreground">Notifications</span>
+                    {unreadCount > 0 ? (
+                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 font-mono bg-primary/10 text-primary border-primary/20">
                         {unreadCount} new
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 text-muted-foreground font-mono">
+                        0 unread
                       </Badge>
                     )}
                   </div>
-                  {unreadCount > 0 && (
+                  <div className="flex items-center gap-2">
+                    {unreadCount > 0 && (
+                      <button
+                        type="button"
+                        onClick={handleMarkAllRead}
+                        className="text-[11px] text-primary hover:underline font-medium"
+                      >
+                        Mark all read
+                      </button>
+                    )}
                     <button
-                      onClick={handleMarkAllRead}
-                      className="text-[11px] text-primary hover:underline font-medium"
+                      type="button"
+                      onClick={() => setNotifsOpen(false)}
+                      className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors -mr-1"
+                      aria-label="Close notifications"
                     >
-                      Mark all read
+                      <X className="w-3.5 h-3.5" />
                     </button>
-                  )}
+                  </div>
                 </div>
 
-                <div className="space-y-1.5 max-h-72 overflow-y-auto">
+                {/* Notifications Scrollable List */}
+                <div className="space-y-1.5 overflow-y-auto max-h-[58dvh] sm:max-h-72 overscroll-contain pr-0.5">
                   {notifications.length === 0 ? (
-                    <p className="text-xs text-muted-foreground text-center py-6">
-                      No notifications yet.
-                    </p>
+                    <div className="text-center py-8 px-4 space-y-2">
+                      <div className="w-9 h-9 rounded-full bg-muted/60 flex items-center justify-center mx-auto text-muted-foreground">
+                        <Bell className="w-4 h-4" />
+                      </div>
+                      <p className="text-xs font-semibold text-foreground">No new notifications</p>
+                      <p className="text-[11px] text-muted-foreground max-w-xs mx-auto">
+                        High match opportunities and crawler results will appear here automatically.
+                      </p>
+                    </div>
                   ) : (
                     notifications.map((n) => (
                       <div
                         key={n.id}
                         onClick={() => handleNotificationClick(n)}
-                        className={`p-2.5 rounded-lg border text-xs cursor-pointer transition-colors ${
+                        className={`p-2.5 sm:p-3 rounded-xl border text-xs cursor-pointer transition-all active:scale-[0.99] ${
                           !n.read
                             ? "bg-primary/5 border-primary/20 hover:bg-primary/10"
-                            : "border-transparent hover:bg-muted/50"
+                            : "border-border/50 hover:bg-muted/50"
                         }`}
                       >
-                        <div className="flex items-start gap-2">
+                        <div className="flex items-start gap-2.5">
                           {n.type === "HIGH_MATCH" ? (
-                            <Target className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
+                            <div className="p-1.5 rounded-lg bg-primary/10 text-primary shrink-0 mt-0.5">
+                              <Target className="w-3.5 h-3.5" />
+                            </div>
                           ) : (
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                            <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-500 shrink-0 mt-0.5">
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                            </div>
                           )}
-                          <div className="space-y-0.5 min-w-0">
-                            <p className="font-semibold text-foreground text-[11px] truncate leading-tight">
-                              {n.title}
-                            </p>
-                            <p className="text-[11px] text-muted-foreground line-clamp-2 leading-normal">
+                          <div className="space-y-0.5 min-w-0 flex-1">
+                            <div className="flex items-center justify-between gap-1.5">
+                              <p className="font-semibold text-foreground text-xs truncate">
+                                {n.title}
+                              </p>
+                              {!n.read && (
+                                <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+                              )}
+                            </div>
+                            <p className="text-[11px] text-muted-foreground line-clamp-2 leading-relaxed">
                               {n.message}
                             </p>
                             <span className="text-[10px] font-mono text-muted-foreground/70 block pt-0.5">
@@ -211,6 +271,19 @@ export const Header: React.FC<HeaderProps> = ({ onRefresh }) => {
           </div>
 
           <div className="hidden md:flex">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={startTour}
+              className="h-10 w-10 text-muted-foreground hover:text-foreground relative rounded-lg"
+              aria-label="Start Step-by-Step Walkthrough"
+              title="Interactive Tour & Onboarding"
+            >
+              <Compass className="w-4 h-4 text-indigo-500" />
+            </Button>
+          </div>
+
+          <div className="hidden md:flex">
             <GuidelinesModal />
           </div>
 
@@ -219,6 +292,7 @@ export const Header: React.FC<HeaderProps> = ({ onRefresh }) => {
           </div>
 
           <Button
+            id="tour-add-job-url"
             onClick={() => setIsCaptureModalOpen(true)}
             variant="default"
             size="default"

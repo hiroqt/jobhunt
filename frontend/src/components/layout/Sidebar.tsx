@@ -4,19 +4,19 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard,
-  Compass,
-  Radar,
-  Briefcase,
-  GraduationCap,
-  FileText,
-  UserCheck,
-  Menu,
-  X,
-  ChevronRight,
-  Shield,
-  BookOpen,
-} from "lucide-react";
+  DashboardSquare01Icon as LayoutDashboard,
+  Compass01Icon as Compass,
+  ChartRadarIcon as Radar,
+  Briefcase01Icon as Briefcase,
+  Mortarboard01Icon as GraduationCap,
+  File01Icon as FileText,
+  UserCheck01Icon as UserCheck,
+  Menu01Icon as Menu,
+  Cancel01Icon as X,
+  ArrowRight01Icon as ChevronRight,
+  Shield01Icon as Shield,
+  BookOpen01Icon as BookOpen
+} from "hugeicons-react";
 import { CandidateProfile, DashboardOverview } from "@/types";
 import { getCandidateProfile, getDashboardOverview } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
@@ -25,10 +25,13 @@ import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { AppLogo } from "@/components/layout/AppLogo";
 import { PrivacyNoticeModal } from "@/components/layout/PrivacyNoticeModal";
 import { GuidelinesModal } from "@/components/layout/GuidelinesModal";
+import { useOnboarding } from "@/context/OnboardingContext";
+import { TikTokIcon, GitHubIcon } from "@/components/layout/SocialIcons";
 import { cn } from "@/lib/utils";
 
 export const Sidebar: React.FC = () => {
   const pathname = usePathname();
+  const { startTour } = useOnboarding();
   const [profile, setProfile] = useState<CandidateProfile | null>(null);
   const [overview, setOverview] = useState<DashboardOverview | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -58,15 +61,15 @@ export const Sidebar: React.FC = () => {
       badge: null,
     },
     {
-      name: "Job Explorer",
-      href: "/jobs",
-      icon: Briefcase,
+      name: "Discover a Job",
+      href: "/searches",
+      icon: Radar,
       badge: null,
     },
     {
-      name: "Automated Searches",
-      href: "/searches",
-      icon: Radar,
+      name: "Job Explorer",
+      href: "/jobs",
+      icon: Briefcase,
       badge: null,
     },
     {
@@ -181,26 +184,37 @@ export const Sidebar: React.FC = () => {
           <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors shrink-0" />
         </Link>
 
-        {/* Guidelines & Privacy Notice Quick Links */}
-        <div className="grid grid-cols-2 gap-2 pt-1 border-t border-border/50">
+        {/* Guidelines, Walkthrough & Privacy Notice Quick Links */}
+        <div className="grid grid-cols-3 gap-1.5 pt-1 border-t border-border/50">
+          <button
+            type="button"
+            onClick={startTour}
+            className="w-full flex items-center justify-center gap-1 px-1.5 py-1.5 rounded-md border border-border/80 bg-background hover:bg-muted text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors"
+            title="Start Step-by-Step Walkthrough"
+          >
+            <Compass className="w-3 h-3 text-indigo-500 shrink-0" />
+            <span className="truncate">Tour</span>
+          </button>
           <GuidelinesModal
             customTrigger={
               <button
                 type="button"
-                className="w-full flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border/80 bg-background hover:bg-muted text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors"
+                className="w-full flex items-center justify-center gap-1 px-1.5 py-1.5 rounded-md border border-border/80 bg-background hover:bg-muted text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors"
+                title="Guidelines & Best Practices"
               >
                 <BookOpen className="w-3 h-3 text-primary shrink-0" />
-                <span>Guidelines</span>
+                <span className="truncate">Guide</span>
               </button>
             }
           />
           <button
             type="button"
             onClick={() => setPrivacyOpen(true)}
-            className="w-full flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border/80 bg-background hover:bg-muted text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors"
+            className="w-full flex items-center justify-center gap-1 px-1.5 py-1.5 rounded-md border border-border/80 bg-background hover:bg-muted text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors"
+            title="Privacy Notice"
           >
             <Shield className="w-3 h-3 text-emerald-500 shrink-0" />
-            <span>Privacy</span>
+            <span className="truncate">Privacy</span>
           </button>
         </div>
 
@@ -224,18 +238,31 @@ export const Sidebar: React.FC = () => {
         </div>
 
         {/* Creator Attribution */}
-        <div className="pt-2 border-t border-border/50 text-center">
-          <p className="text-[11px] text-muted-foreground">
-            Created by{" "}
+        <div className="pt-2 border-t border-border/50 text-center space-y-1">
+          <div className="flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground">
+            <span>Created by</span>
             <a
               href="https://github.com/hiroqt"
               target="_blank"
               rel="noopener noreferrer"
-              className="font-medium text-foreground hover:text-primary transition-colors"
+              className="inline-flex items-center gap-1 font-medium text-foreground hover:text-primary transition-colors"
             >
-              hiroqt / Arnel Baylon
+              <GitHubIcon className="w-3 h-3 text-foreground shrink-0" />
+              <span>hiroqt / Arnel Baylon</span>
             </a>
-          </p>
+          </div>
+          <div className="flex items-center justify-center gap-1.5 text-[10px] text-muted-foreground">
+            <span>TikTok:</span>
+            <a
+              href="https://www.tiktok.com/@yheelllls"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 font-medium text-foreground hover:text-primary transition-colors"
+            >
+              <TikTokIcon className="w-3 h-3 shrink-0" />
+              <span>@yheelllls</span>
+            </a>
+          </div>
         </div>
       </div>
     </div>

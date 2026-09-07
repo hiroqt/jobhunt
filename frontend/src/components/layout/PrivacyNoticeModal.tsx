@@ -2,15 +2,15 @@
 
 import React from "react";
 import {
-  Shield,
-  ShieldCheck,
-  Lock,
-  Trash2,
-  Cpu,
-  EyeOff,
-  Server,
-  FileCheck,
-} from "lucide-react";
+  Shield01Icon as Shield,
+  SecurityCheckIcon as ShieldCheck,
+  LockPasswordIcon as Lock,
+  Delete02Icon as Trash2,
+  CpuIcon as Cpu,
+  ViewOffSlashIcon as EyeOff,
+  ServerStack01Icon as Server,
+  FileValidationIcon as FileCheck
+} from "hugeicons-react";
 import {
   Dialog,
   DialogContent,

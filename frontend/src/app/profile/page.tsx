@@ -2,19 +2,19 @@
 
 import React, { useEffect, useState, useRef } from "react";
 import {
-  UserCheck,
-  Building,
-  Layers,
-  Save,
-  Plus,
-  Trash2,
-  UploadCloud,
-  FileText,
-  CheckCircle2,
-  Loader2,
-  FileCheck,
-  ShieldCheck,
-} from "lucide-react";
+  UserCheck01Icon as UserCheck,
+  Building01Icon as Building,
+  Layers01Icon as Layers,
+  FloppyDiskIcon as Save,
+  Add01Icon as Plus,
+  Delete02Icon as Trash2,
+  CloudUploadIcon as UploadCloud,
+  File01Icon as FileText,
+  CheckmarkCircle02Icon as CheckCircle2,
+  Loading03Icon as Loader2,
+  FileValidationIcon as FileCheck,
+  SecurityCheckIcon as ShieldCheck
+} from "hugeicons-react";
 import {
   getCandidateProfile,
   updateCandidateProfile,
@@ -203,6 +203,15 @@ export default function ProfilePage() {
     }
   };
 
+  // Remove highlight once resume parse task is completed
+  useEffect(() => {
+    if (resumeParseSuccess) {
+      document.querySelectorAll(".tour-highlight-active").forEach((el) => {
+        el.classList.remove("tour-highlight-active");
+      });
+    }
+  }, [resumeParseSuccess]);
+
   // Group verified skills by category
   const skillsByCategory: Record<string, CandidateSkill[]> = {};
   if (profile?.skills) {
@@ -247,7 +256,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Resume Parser Card */}
-      <Card className="border-border bg-card shadow-sm">
+      <Card id="tour-profile-resume" className="border-border bg-card shadow-sm">
         <CardContent className="p-4 sm:p-6 space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
             <div className="space-y-1">
@@ -294,6 +303,8 @@ export default function ProfilePage() {
               <div className="md:col-span-8">
                 {uploadMode === "file" ? (
                   <div
+                    id="tour-profile-dropzone"
+                    data-tour-done={resumeParseSuccess ? "true" : "false"}
                     onClick={() => fileInputRef.current?.click()}
                     tabIndex={0}
                     role="button"
@@ -336,6 +347,8 @@ export default function ProfilePage() {
                   </div>
                 ) : (
                   <Textarea
+                    id="tour-profile-dropzone"
+                    data-tour-done={resumeParseSuccess ? "true" : "false"}
                     rows={4}
                     value={pastedResumeText}
                     onChange={(e) => setPastedResumeText(e.target.value)}
@@ -345,7 +358,11 @@ export default function ProfilePage() {
                 )}
               </div>
 
-              <div className="md:col-span-4 space-y-3">
+              <div
+                id="tour-profile-model-select"
+                data-tour-done={resumeParseSuccess ? "true" : "false"}
+                className="md:col-span-4 space-y-3"
+              >
                 <div className="space-y-1.5">
                   <label htmlFor="resume-ai-provider" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                     Extraction Model
@@ -605,7 +622,7 @@ export default function ProfilePage() {
         {/* Right 5 Cols: Skill Taxonomy & Inventory Management */}
         <div className="lg:col-span-5 space-y-6">
           {/* Add Skill to Profile */}
-          <Card className="border-border bg-card">
+          <Card id="tour-profile-skills" className="border-border bg-card">
             <CardHeader className="p-4 sm:p-6 pb-3 sm:pb-4">
               <CardTitle className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
                 <Plus className="w-4 h-4 text-emerald-500" />

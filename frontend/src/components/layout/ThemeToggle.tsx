@@ -1,7 +1,12 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Sun, Moon, Laptop, Check } from "lucide-react";
+import {
+  Sun03Icon as Sun,
+  Moon02Icon as Moon,
+  LaptopIcon as Laptop,
+  Tick02Icon as Check
+} from "hugeicons-react";
 import { useTheme } from "@/context/ThemeContext";
 import { Button } from "@/components/ui/button";
 import {

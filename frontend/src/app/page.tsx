@@ -3,21 +3,21 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import {
-  Compass,
-  Radar,
-  FileText,
-  Bot,
-  ShieldCheck,
-  Plus,
-  ArrowRight,
-  Target,
-  CheckCircle2,
-  ExternalLink,
-  Zap,
-  Lock,
-  Download,
-  Building2,
-} from "lucide-react";
+  Compass01Icon as Compass,
+  ChartRadarIcon as Radar,
+  File01Icon as FileText,
+  AiChat01Icon as Bot,
+  SecurityCheckIcon as ShieldCheck,
+  Add01Icon as Plus,
+  ArrowRight01Icon as ArrowRight,
+  Target01Icon as Target,
+  CheckmarkCircle02Icon as CheckCircle2,
+  LinkSquare01Icon as ExternalLink,
+  FlashIcon as Zap,
+  LockPasswordIcon as Lock,
+  Download01Icon as Download,
+  Building02Icon as Building2
+} from "hugeicons-react";
 import { getDashboardOverview, getCandidateProfile, getSearches, getJobs } from "@/lib/api";
 import { DashboardOverview, CandidateProfile, JobSearch, Job } from "@/types";
 import { JobCaptureModal } from "@/components/jobs/JobCaptureModal";
@@ -90,9 +90,9 @@ export default function DashboardPage() {
               </Link>
             </Button>
             <Button asChild variant="outline" size="default" className="text-xs sm:text-sm font-medium gap-2 w-full sm:w-auto h-9 sm:h-10">
-              <Link href="/jobs">
-                <Compass className="w-4 h-4 text-primary" />
-                <span>Job Explorer</span>
+              <Link href="/searches">
+                <Radar className="w-4 h-4 text-primary" />
+                <span>Discover a Job</span>
               </Link>
             </Button>
             <Button

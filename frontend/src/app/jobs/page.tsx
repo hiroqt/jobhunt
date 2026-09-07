@@ -18,7 +18,8 @@ import {
   Check,
   Loader2,
   Radar,
-  Sparkles,
+  Target,
+  Sliders,
   ShieldCheck,
   ShieldAlert,
   SearchCheck,
@@ -314,7 +315,7 @@ function JobsContent() {
                 : "text-muted-foreground hover:text-foreground hover:bg-muted"
             )}
           >
-            <Sparkles className="w-3.5 h-3.5" />
+            <Target className="w-3.5 h-3.5" />
             <span>High Match (80%+)</span>
           </button>
         </div>
@@ -521,7 +522,7 @@ function JobsContent() {
               : "text-muted-foreground hover:text-foreground"
           )}
         >
-          <Sparkles className="w-3.5 h-3.5" />
+          <FileText className="w-3.5 h-3.5" />
           <span>Job Details {selectedJob ? `(${selectedJob.title.slice(0, 14)}...)` : ""}</span>
         </button>
       </div>
@@ -667,7 +668,7 @@ function JobsContent() {
                         className="h-7 px-2.5 text-[11px] font-semibold gap-1 text-primary border-primary/30 hover:bg-primary/10"
                       >
                         <Link href={`/resume?job_id=${job.id}`}>
-                          <Sparkles className="w-3 h-3 text-primary" />
+                          <Sliders className="w-3 h-3 text-primary" />
                           <span>Optimize Resume</span>
                         </Link>
                       </Button>
@@ -976,7 +977,7 @@ function JobsContent() {
                     className="w-full sm:flex-1 h-10 font-semibold gap-2 text-sm bg-primary hover:bg-primary/90 text-primary-foreground shadow-xs"
                   >
                     <Link href={`/resume?job_id=${selectedJob.id}`}>
-                      <Sparkles className="w-4 h-4" />
+                      <Sliders className="w-4 h-4" />
                       <span>Optimize Resume for this Role</span>
                     </Link>
                   </Button>

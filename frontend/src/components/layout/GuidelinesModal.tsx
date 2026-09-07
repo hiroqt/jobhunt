@@ -5,7 +5,7 @@ import {
   HelpCircle,
   BookOpen,
   Compass,
-  Sparkles,
+  Target,
   KanbanSquare,
   GraduationCap,
   UserCheck,
@@ -47,7 +47,7 @@ export const GuidelinesModal: React.FC<GuidelinesModalProps> = ({
 
   const tabs = [
     { id: "discovery", label: "Discovery", icon: Compass },
-    { id: "matching", label: "Matching (0-100%)", icon: Sparkles },
+    { id: "matching", label: "Matching (0-100%)", icon: Target },
     { id: "pipeline", label: "Pipeline", icon: KanbanSquare },
     { id: "aiprep", label: "AI Prep (STAR)", icon: GraduationCap },
     { id: "profile", label: "Profile", icon: UserCheck },

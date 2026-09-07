@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import {
-  Sparkles,
   Compass,
   Radar,
   FileText,
@@ -68,7 +67,7 @@ export default function DashboardPage() {
           <div className="space-y-2 max-w-2xl">
             <div className="flex items-center gap-2 flex-wrap">
               <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-primary/20 gap-1.5 py-0.5 px-2.5">
-                <Sparkles className="w-3.5 h-3.5" />
+                <Bot className="w-3.5 h-3.5" />
                 <span>Stateless AI Career Copilot</span>
               </Badge>
               <Badge variant="outline" className="text-xs text-emerald-600 dark:text-emerald-400 border-emerald-500/30 bg-emerald-500/10 gap-1 py-0.5 px-2">
@@ -86,7 +85,7 @@ export default function DashboardPage() {
           <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2.5 sm:gap-3 shrink-0">
             <Button asChild variant="default" size="default" className="text-xs sm:text-sm font-semibold gap-2 shadow-xs bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto h-9 sm:h-10">
               <Link href="/resume">
-                <Sparkles className="w-4 h-4" />
+                <FileText className="w-4 h-4" />
                 <span>ATS Resume Studio</span>
               </Link>
             </Button>
@@ -261,7 +260,7 @@ export default function DashboardPage() {
 
                 <div className="p-3.5 rounded-xl border border-border bg-muted/30 space-y-1.5">
                   <div className="flex items-center gap-2 text-foreground font-semibold text-xs">
-                    <Sparkles className="w-4 h-4 text-primary" />
+                    <Zap className="w-4 h-4 text-primary" />
                     <span>AI Bullet-Point Enhancer</span>
                   </div>
                   <p className="text-xs text-muted-foreground leading-relaxed">
@@ -415,7 +414,7 @@ export default function DashboardPage() {
             <CardHeader className="p-6 pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base font-semibold flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-primary" />
+                  <Target className="w-4 h-4 text-primary" />
                   High Match Opportunities
                 </CardTitle>
                 <Badge variant="outline" className="text-[10px] font-mono text-primary border-primary/30">
@@ -441,7 +440,7 @@ export default function DashboardPage() {
                     </div>
                     <Button asChild size="sm" variant="outline" className="h-7 px-2 text-[10px] font-semibold shrink-0 gap-1 text-primary border-primary/30">
                       <Link href={`/resume?job_id=${job.id}`}>
-                        <Sparkles className="w-2.5 h-2.5" />
+                        <Target className="w-2.5 h-2.5" />
                         <span>Tailor</span>
                       </Link>
                     </Button>

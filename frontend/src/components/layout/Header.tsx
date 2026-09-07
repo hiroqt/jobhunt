@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Search, Command, Bell, CheckCircle2, Sparkles, Clock, Layers } from "lucide-react";
+import { Plus, Search, Command, Bell, CheckCircle2, Target, Clock, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -179,7 +179,7 @@ export const Header: React.FC<HeaderProps> = ({ onRefresh }) => {
                       >
                         <div className="flex items-start gap-2">
                           {n.type === "HIGH_MATCH" ? (
-                            <Sparkles className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
+                            <Target className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
                           ) : (
                             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
                           )}

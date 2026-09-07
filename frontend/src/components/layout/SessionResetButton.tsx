@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { RotateCcw, ShieldCheck, Sparkles, Check } from "lucide-react";
+import { RotateCcw, ShieldCheck, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { resetGuestSession } from "@/lib/api";
 

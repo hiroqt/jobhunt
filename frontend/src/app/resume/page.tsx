@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   FileText,
-  Sparkles,
+  Target,
   Download,
   Copy,
   Check,
@@ -25,7 +25,6 @@ import {
   ShieldCheck,
   Code2,
   FolderGit2,
-  Wand2,
   RotateCcw,
   LayoutTemplate,
   Layers,
@@ -1729,7 +1728,7 @@ function ResumeStudioContent() {
         <div className="pt-2 border-t border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="space-y-0.5">
             <div className="flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-primary" />
+              <Target className="w-3.5 h-3.5 text-primary" />
               <span className="text-xs font-bold uppercase tracking-wider text-foreground">Target Role Optimization (Optional)</span>
               {selectedTargetJob && (
                 <Badge variant="secondary" className="text-[10px] uppercase font-mono">
@@ -1766,7 +1765,7 @@ function ResumeStudioContent() {
                 disabled={isTailoring}
                 className="h-8 px-3 text-xs font-semibold gap-1.5 bg-primary text-primary-foreground shrink-0 w-full sm:w-auto"
               >
-                <Wand2 className={cn("w-3.5 h-3.5", isTailoring && "animate-spin")} />
+                <Sliders className={cn("w-3.5 h-3.5", isTailoring && "animate-spin")} />
                 <span>{isTailoring ? "Tailoring..." : "Align Keywords"}</span>
               </Button>
             )}

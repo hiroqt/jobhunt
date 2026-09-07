@@ -2,18 +2,18 @@
 
 import React, { useState } from "react";
 import {
-  HelpCircle,
-  BookOpen,
-  Compass,
-  Target,
-  KanbanSquare,
-  GraduationCap,
-  UserCheck,
-  CheckCircle2,
-  Clock,
-  Search,
-  ExternalLink,
-} from "lucide-react";
+  HelpCircleIcon as HelpCircle,
+  BookOpen01Icon as BookOpen,
+  Compass01Icon as Compass,
+  Target01Icon as Target,
+  Layers01Icon as Layers,
+  Mortarboard01Icon as GraduationCap,
+  UserCheck01Icon as UserCheck,
+  CheckmarkCircle02Icon as CheckCircle2,
+  Clock01Icon as Clock,
+  Search01Icon as Search,
+  LinkSquare01Icon as ExternalLink
+} from "hugeicons-react";
 import {
   Dialog,
   DialogContent,
@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useOnboarding } from "@/context/OnboardingContext";
 import { cn } from "@/lib/utils";
 
 interface GuidelinesModalProps {
@@ -40,6 +41,7 @@ export const GuidelinesModal: React.FC<GuidelinesModalProps> = ({
   customTrigger,
   defaultOpen = false,
 }) => {
+  const { startTour } = useOnboarding();
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const [activeTab, setActiveTab] = useState<
     "discovery" | "matching" | "pipeline" | "aiprep" | "profile"
@@ -48,7 +50,7 @@ export const GuidelinesModal: React.FC<GuidelinesModalProps> = ({
   const tabs = [
     { id: "discovery", label: "Discovery", icon: Compass },
     { id: "matching", label: "Matching (0-100%)", icon: Target },
-    { id: "pipeline", label: "Pipeline", icon: KanbanSquare },
+    { id: "pipeline", label: "Pipeline", icon: Layers },
     { id: "aiprep", label: "AI Prep (STAR)", icon: GraduationCap },
     { id: "profile", label: "Profile", icon: UserCheck },
   ] as const;
@@ -135,7 +137,7 @@ export const GuidelinesModal: React.FC<GuidelinesModalProps> = ({
                     <span>Targeted Keyword Queries</span>
                   </div>
                   <p className="text-[11px] text-muted-foreground leading-relaxed">
-                    Use exact titles like <em>"Senior Full Stack Engineer"</em> or <em>"React Architect"</em> under Automated Searches for higher accuracy.
+                    Use exact titles like <em>"Senior Full Stack Engineer"</em> or <em>"React Architect"</em> under Discover a Job for higher accuracy.
                   </p>
                 </div>
 
@@ -275,12 +277,25 @@ export const GuidelinesModal: React.FC<GuidelinesModalProps> = ({
             )}
           </div>
 
-          <div className="pt-2.5 border-t border-border/70 flex items-center justify-between text-[11px] text-muted-foreground shrink-0 mt-auto">
-            <span className="hidden sm:inline">Press <kbd className="font-mono bg-muted px-1 py-0.5 rounded border border-border text-[10px]">Esc</kbd> to close</span>
-            <span className="sm:hidden text-[10px]">Swipe down or tap Done</span>
-            <Button onClick={() => setIsOpen(false)} variant="default" size="sm" className="font-semibold text-xs h-7 px-3.5 ml-auto">
-              Done
+          <div className="pt-2.5 border-t border-border/70 flex items-center justify-between text-[11px] text-muted-foreground shrink-0 mt-auto gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setIsOpen(false);
+                startTour();
+              }}
+              className="font-semibold text-xs h-7 px-2.5 gap-1.5 text-indigo-600 dark:text-indigo-400 border-indigo-500/30 hover:bg-indigo-50 dark:hover:bg-indigo-950/40"
+            >
+              <Compass className="w-3.5 h-3.5" />
+              <span>Start Interactive Tour</span>
             </Button>
+            <div className="flex items-center gap-2 ml-auto">
+              <span className="hidden sm:inline">Press <kbd className="font-mono bg-muted px-1 py-0.5 rounded border border-border text-[10px]">Esc</kbd></span>
+              <Button onClick={() => setIsOpen(false)} variant="default" size="sm" className="font-semibold text-xs h-7 px-3.5">
+                Done
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

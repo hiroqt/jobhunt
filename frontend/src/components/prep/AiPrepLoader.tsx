@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
+import {
+  Loading03Icon as Loader2
+} from "hugeicons-react";
 
 interface AiPrepLoaderProps {
   jobTitle?: string;

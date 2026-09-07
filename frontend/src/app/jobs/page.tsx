@@ -4,33 +4,33 @@ import React, { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
-  Compass,
-  Search,
-  CheckCircle2,
-  AlertTriangle,
-  Plus,
-  Building2,
-  MapPin,
-  ExternalLink,
-  Trash2,
-  Bookmark,
-  BookmarkCheck,
-  Check,
-  Loader2,
-  Radar,
-  Target,
-  Sliders,
-  ShieldCheck,
-  ShieldAlert,
-  SearchCheck,
-  RefreshCw,
-  Globe,
-  Clock,
-  Filter,
-  Bot,
-  FileText,
-  ArrowLeft,
-} from "lucide-react";
+  Compass01Icon as Compass,
+  Search01Icon as Search,
+  CheckmarkCircle02Icon as CheckCircle2,
+  Alert02Icon as AlertTriangle,
+  Add01Icon as Plus,
+  Building02Icon as Building2,
+  MapPinIcon as MapPin,
+  LinkSquare01Icon as ExternalLink,
+  Delete02Icon as Trash2,
+  Bookmark01Icon as Bookmark,
+  BookmarkCheck01Icon as BookmarkCheck,
+  Tick02Icon as Check,
+  Loading03Icon as Loader2,
+  ChartRadarIcon as Radar,
+  Target01Icon as Target,
+  SlidersHorizontalIcon as Sliders,
+  SecurityCheckIcon as ShieldCheck,
+  SecurityValidationIcon as ShieldAlert,
+  JobSearchIcon as SearchCheck,
+  RefreshIcon as RefreshCw,
+  Globe02Icon as Globe,
+  Clock01Icon as Clock,
+  FilterIcon as Filter,
+  AiChat01Icon as Bot,
+  File01Icon as FileText,
+  ArrowLeft01Icon as ArrowLeft
+} from "hugeicons-react";
 import { getJobs, deleteJob, saveJob, unsaveJob, verifyJobLink } from "@/lib/api";
 import { Job, LinkVerificationResponse } from "@/types";
 import { MatchScoreBadge } from "@/components/jobs/MatchScoreBadge";
@@ -264,7 +264,7 @@ function JobsContent() {
           <Button asChild variant="outline" size="sm" className="gap-2 h-9 sm:h-10 px-3 sm:px-3.5 text-xs font-semibold flex-1 sm:flex-initial">
             <Link href="/searches">
               <Radar className="w-4 h-4 text-primary" />
-              <span>Automated Discovery</span>
+              <span>Discover a Job</span>
             </Link>
           </Button>
           <Button
@@ -279,7 +279,7 @@ function JobsContent() {
       </div>
 
       {/* Main Filter and Search Bar */}
-      <Card className="border-border bg-card p-3.5 sm:p-4 space-y-3.5">
+      <Card id="tour-jobs-filter-card" className="border-border bg-card p-3.5 sm:p-4 space-y-3.5">
         {/* Tab Filters */}
         <div className="flex items-center gap-1.5 sm:gap-2 border-b border-border/60 pb-3 overflow-x-auto scrollbar-none">
           <button
@@ -557,14 +557,18 @@ function JobsContent() {
               </div>
             </Card>
           ) : (
-            jobs.map((job) => {
+            jobs.map((job, idx) => {
               const isSelected = selectedJob?.id === job.id;
               const linkIsActive = job.is_active !== false && job.link_status !== "EXPIRED";
 
               return (
                 <div
                   key={job.id}
+                  id={idx === 0 ? "tour-first-job-card" : undefined}
                   onClick={() => {
+                    document.querySelectorAll(".tour-highlight-active").forEach((el) => {
+                      el.classList.remove("tour-highlight-active");
+                    });
                     setSelectedJob(job);
                     setLinkCheckResult(null);
                     setMobileTab("detail");

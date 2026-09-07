@@ -4,43 +4,43 @@ import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
-  FileText,
-  Target,
-  Download,
-  Copy,
-  Check,
-  Plus,
-  Trash2,
-  Building2,
-  GraduationCap,
-  Briefcase,
-  Award,
-  ExternalLink,
-  RefreshCw,
-  Sliders,
-  Eye,
-  EyeOff,
-  CheckCircle2,
-  FileCheck,
-  ShieldCheck,
-  Code2,
-  FolderGit2,
-  RotateCcw,
-  LayoutTemplate,
-  Layers,
-  Settings2,
-  DollarSign,
-  TrendingUp,
-  Users,
-  HeartPulse,
-  Phone,
-  MapPin,
-  Mail,
-  Linkedin,
-  Github,
-  Globe,
-  X,
-} from "lucide-react";
+  File01Icon as FileText,
+  Target01Icon as Target,
+  Download01Icon as Download,
+  Copy01Icon as Copy,
+  Tick02Icon as Check,
+  Add01Icon as Plus,
+  Delete02Icon as Trash2,
+  Building02Icon as Building2,
+  Mortarboard01Icon as GraduationCap,
+  Briefcase01Icon as Briefcase,
+  Award01Icon as Award,
+  LinkSquare01Icon as ExternalLink,
+  RefreshIcon as RefreshCw,
+  SlidersHorizontalIcon as Sliders,
+  EyeIcon as Eye,
+  ViewOffSlashIcon as EyeOff,
+  CheckmarkCircle02Icon as CheckCircle2,
+  FileValidationIcon as FileCheck,
+  SecurityCheckIcon as ShieldCheck,
+  SourceCodeIcon as Code2,
+  Folder01Icon as FolderGit2,
+  RotateLeft01Icon as RotateCcw,
+  Layout01Icon as LayoutTemplate,
+  Layers01Icon as Layers,
+  SlidersHorizontalIcon as Settings2,
+  Dollar01Icon as DollarSign,
+  ChartIncreaseIcon as TrendingUp,
+  UserGroupIcon as Users,
+  Activity01Icon as HeartPulse,
+  Call02Icon as Phone,
+  MapPinIcon as MapPin,
+  Mail01Icon as Mail,
+  Linkedin01Icon as Linkedin,
+  Github01Icon as Github,
+  Globe02Icon as Globe,
+  Cancel01Icon as X
+} from "hugeicons-react";
 import { getCandidateProfile, getJobs } from "@/lib/api";
 import { CandidateProfile, Job } from "@/types";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -1650,6 +1650,7 @@ function ResumeStudioContent() {
           </Button>
 
           <Button
+            id="tour-resume-pdf-btn"
             onClick={handleDownloadPDF}
             variant="default"
             size="sm"
@@ -1662,7 +1663,7 @@ function ResumeStudioContent() {
       </div>
 
       {/* Preset & Optimization Bar */}
-      <Card className="border-border bg-card p-3.5 sm:p-4 space-y-4 no-print">
+      <Card id="tour-resume-preset-card" className="border-border bg-card p-3.5 sm:p-4 space-y-4 no-print">
         {/* Industry Preset Visual Cards */}
         <div className="space-y-2">
           <div className="flex items-center justify-between flex-wrap gap-2">

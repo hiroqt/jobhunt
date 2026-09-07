@@ -2,16 +2,16 @@
 
 import React, { useEffect, useState } from "react";
 import {
-  Brain,
-  GraduationCap,
-  ChevronDown,
-  ChevronUp,
-  Target,
-  FileQuestion,
-  Loader2,
-  Copy,
-  Check,
-} from "lucide-react";
+  AiBrain01Icon as Brain,
+  Mortarboard01Icon as GraduationCap,
+  ArrowDown01Icon as ChevronDown,
+  ArrowUp01Icon as ChevronUp,
+  Target01Icon as Target,
+  FileSearchIcon as FileQuestion,
+  Loading03Icon as Loader2,
+  Copy01Icon as Copy,
+  Tick02Icon as Check
+} from "hugeicons-react";
 import { getJobs, generateInterviewPrep } from "@/lib/api";
 import { Job, InterviewPrepResponse } from "@/types";
 import { Card } from "@/components/ui/card";
@@ -87,7 +87,7 @@ export default function PrepPage() {
       </div>
 
       {/* Selector & Generator Card */}
-      <Card className="border-border bg-card p-4 sm:p-6 shadow-sm">
+      <Card id="tour-prep-card" className="border-border bg-card p-4 sm:p-6 shadow-sm">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
           <div className="md:col-span-6 space-y-1.5">
             <label htmlFor="select-role-prep" className="block text-sm font-semibold text-foreground">
@@ -129,6 +129,7 @@ export default function PrepPage() {
 
           <div className="md:col-span-3">
             <Button
+              id="tour-prep-generate-btn"
               onClick={handleGeneratePrep}
               disabled={loading || !selectedJobId}
               variant="default"

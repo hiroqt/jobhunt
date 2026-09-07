@@ -2,18 +2,18 @@
 
 import React, { useState } from "react";
 import {
-  Link as LinkIcon,
-  FileText,
-  CheckCircle2,
-  AlertTriangle,
-  RotateCcw,
-  Loader2,
-  BookmarkPlus,
-  Check,
-  Info,
-  ChevronDown,
-  ChevronUp,
-} from "lucide-react";
+  Link01Icon as LinkIcon,
+  File01Icon as FileText,
+  CheckmarkCircle02Icon as CheckCircle2,
+  Alert02Icon as AlertTriangle,
+  RotateLeft01Icon as RotateCcw,
+  Loading03Icon as Loader2,
+  BookmarkAdd01Icon as BookmarkPlus,
+  Tick02Icon as Check,
+  InformationCircleIcon as Info,
+  ArrowDown01Icon as ChevronDown,
+  ArrowUp01Icon as ChevronUp
+} from "hugeicons-react";
 import { extractAndAnalyzeJob, createApplication } from "@/lib/api";
 import { Job, ApplicationStage } from "@/types";
 import {

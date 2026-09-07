@@ -30,20 +30,24 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import {
-  Compass,
-  Play,
-  Plus,
-  Trash2,
-  RefreshCw,
-  Clock,
-  CheckCircle2,
-  AlertCircle,
-  Activity,
-  Layers,
-  Radio,
-  FileText,
-  Sliders,
-} from "lucide-react";
+  Compass01Icon as Compass,
+  ChartRadarIcon as Radar,
+  PlayIcon as Play,
+  Add01Icon as Plus,
+  Delete02Icon as Trash2,
+  RefreshIcon as RefreshCw,
+  Clock01Icon as Clock,
+  CheckmarkCircle02Icon as CheckCircle2,
+  AlertCircleIcon as AlertCircle,
+  Activity01Icon as Activity,
+  Layers01Icon as Layers,
+  RadioIcon as Radio,
+  File01Icon as FileText,
+  SlidersHorizontalIcon as Sliders,
+  ArrowRight01Icon as ArrowRight,
+  Briefcase01Icon as Briefcase
+} from "hugeicons-react";
+import { useOnboarding } from "@/context/OnboardingContext";
 
 function formatSourceName(src: string): string {
   const map: Record<string, string> = {
@@ -62,6 +66,7 @@ function formatSourceName(src: string): string {
 
 export default function SearchesPage() {
   const router = useRouter();
+  const { currentStepIndex, isOpen, jumpToStep } = useOnboarding();
   const [searches, setSearches] = useState<JobSearch[]>([]);
   const [sources, setSources] = useState<SourceInfo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -75,6 +80,10 @@ export default function SearchesPage() {
   const [lastRunResult, setLastRunResult] = useState<SearchRunResponse | null>(null);
   const [resultModalOpen, setResultModalOpen] = useState(false);
 
+  // Modal 1-by-1 Sequential Step Glow State
+  const [modalGlowStep, setModalGlowStep] = useState<number>(1);
+  const [hasExecutedDiscovery, setHasExecutedDiscovery] = useState<boolean>(false);
+
   // Form State
   const [formName, setFormName] = useState("");
   const [formSources, setFormSources] = useState<string[]>([
@@ -86,6 +95,7 @@ export default function SearchesPage() {
     "linkedin",
     "indeed",
     "remoteok",
+    "public",
   ]);
   const [formKeywords, setFormKeywords] = useState("");
   const [formLocations, setFormLocations] = useState("Philippines");
@@ -95,6 +105,182 @@ export default function SearchesPage() {
   const [formCurrency, setFormCurrency] = useState("PHP");
   const [formFrequency, setFormFrequency] = useState<"MANUAL" | "HOURLY" | "DAILY" | "WEEKLY">("DAILY");
   const [submitting, setSubmitting] = useState(false);
+
+  // Derived step completion states
+  const isStep1Done = formName.trim().length >= 3;
+  const isStep2Done = formSources.length > 0;
+  const isStep3Done = formKeywords.trim().length >= 2;
+  const isStep4Done = formMinSalary > 0 || formMaxSalary > 0;
+
+  // Advance step strictly forward to next pending step (never cycles back to done steps)
+  const advanceNextStep = (fromStep: number) => {
+    if (fromStep === 1) {
+      if (!isStep2Done) {
+        setModalGlowStep(2);
+      } else if (!isStep3Done) {
+        setModalGlowStep(3);
+      } else if (!isStep4Done) {
+        setModalGlowStep(4);
+      } else {
+        setModalGlowStep(5);
+      }
+    } else if (fromStep === 2) {
+      if (!isStep3Done) {
+        setModalGlowStep(3);
+      } else if (!isStep4Done) {
+        setModalGlowStep(4);
+      } else {
+        setModalGlowStep(5);
+      }
+    } else if (fromStep === 3) {
+      if (!isStep4Done) {
+        setModalGlowStep(4);
+      } else {
+        setModalGlowStep(5);
+      }
+    } else if (fromStep === 4) {
+      setModalGlowStep(5);
+    }
+  };
+
+  // When modal opens: clear background highlights and focus Step 1
+  useEffect(() => {
+    if (createModalOpen) {
+      document.querySelectorAll(".tour-highlight-active").forEach((el) => {
+        if (!el.closest('[role="dialog"]')) {
+          el.classList.remove("tour-highlight-active");
+        }
+      });
+      setModalGlowStep(1);
+    }
+  }, [createModalOpen]);
+
+  // Data-driven forward progression: When Name is filled -> advance forward
+  useEffect(() => {
+    if (!createModalOpen) return;
+
+    if (modalGlowStep === 1 && formName.trim().length >= 3) {
+      const timer = setTimeout(() => {
+        if (formSources.length > 0) {
+          setModalGlowStep(formKeywords.trim().length >= 2 ? 4 : 3);
+        } else {
+          setModalGlowStep(2);
+        }
+      }, 900);
+      return () => clearTimeout(timer);
+    }
+  }, [formName, modalGlowStep, createModalOpen, formSources.length, formKeywords]);
+
+  // Data-driven forward progression: When Keywords is filled -> advance forward to Salary (Step 4)
+  useEffect(() => {
+    if (!createModalOpen) return;
+
+    if (modalGlowStep === 3 && formKeywords.trim().length >= 3) {
+      const timer = setTimeout(() => {
+        setModalGlowStep(4);
+      }, 900);
+      return () => clearTimeout(timer);
+    }
+  }, [formKeywords, modalGlowStep, createModalOpen]);
+
+  // Scroll active glow element into view inside modal
+  useEffect(() => {
+    if (!createModalOpen) return;
+
+    const stepIdMap: Record<number, string> = {
+      1: "tour-form-name",
+      2: "tour-form-sources",
+      3: "tour-form-keywords-loc",
+      4: "tour-form-salary",
+      5: "tour-form-submit",
+    };
+
+    const targetId = stepIdMap[modalGlowStep];
+    if (targetId) {
+      const el = document.getElementById(targetId);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+    }
+  }, [modalGlowStep, createModalOpen]);
+
+  // Step 2 Tour: Step-by-Step Glowing Progression
+  // 1. If active searches exist: "Discover Now" on the card glows!
+  // 2. While scanning: glowing is cleared.
+  // 3. When discovery completes: "View Discovered Jobs" in the modal glows!
+  // 4. Clicking "View Discovered Jobs" moves directly to Step 3 (Job Explorer).
+  useEffect(() => {
+    if (!isOpen || currentStepIndex !== 2) return;
+
+    const clearHighlights = () => {
+      document.querySelectorAll(".tour-highlight-active").forEach((el) => {
+        el.classList.remove("tour-highlight-active");
+      });
+    };
+
+    // Priority 1: When Discovery results modal is open, glow "View Discovered Jobs"!
+    if (resultModalOpen) {
+      clearHighlights();
+      const timer = setTimeout(() => {
+        const viewJobsBtn = document.getElementById("tour-view-discovered-jobs");
+        if (viewJobsBtn) {
+          viewJobsBtn.classList.add("tour-highlight-active");
+          viewJobsBtn.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }, 120);
+      return () => {
+        clearTimeout(timer);
+        clearHighlights();
+      };
+    }
+
+    // Priority 2: If Create Search modal is open, or search is scanning, or still loading:
+    // clear background highlights so completed tasks do not glow!
+    if (createModalOpen || runningSearchId || loading) {
+      clearHighlights();
+      return;
+    }
+
+    // Priority 3: If active search configuration cards exist, glow "Discover Now" on the first card!
+    if (searches.length > 0) {
+      clearHighlights();
+      const timer = setTimeout(() => {
+        const discoverBtn = document.getElementById("tour-search-card-run");
+        if (discoverBtn) {
+          discoverBtn.classList.add("tour-highlight-active");
+          discoverBtn.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }, 150);
+      return () => {
+        clearTimeout(timer);
+        clearHighlights();
+      };
+    }
+
+    // Priority 4: If no search configuration exists yet, glow "+ New Search"
+    if (searches.length === 0) {
+      clearHighlights();
+      const timer = setTimeout(() => {
+        const newSearchBtn = document.getElementById("tour-searches-new-btn");
+        if (newSearchBtn) {
+          newSearchBtn.classList.add("tour-highlight-active");
+          newSearchBtn.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+      }, 150);
+      return () => {
+        clearTimeout(timer);
+        clearHighlights();
+      };
+    }
+  }, [
+    isOpen,
+    currentStepIndex,
+    loading,
+    searches.length,
+    createModalOpen,
+    resultModalOpen,
+    runningSearchId,
+  ]);
 
   useEffect(() => {
     loadData();
@@ -136,7 +322,19 @@ export default function SearchesPage() {
       });
 
       setCreateModalOpen(false);
+      // Remove any glow from the modal submit button
+      document.querySelectorAll(".tour-highlight-active").forEach((el) => {
+        el.classList.remove("tour-highlight-active");
+      });
       await loadData();
+
+      // Smoothly scroll directly to Discover Now button on the newly saved card
+      setTimeout(() => {
+        const runBtn = document.getElementById("tour-search-card-run");
+        if (runBtn) {
+          runBtn.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }, 350);
     } catch (err: any) {
       alert(`Error creating search: ${err.message}`);
     } finally {
@@ -145,6 +343,11 @@ export default function SearchesPage() {
   }
 
   async function handleRunSearch(searchId: string) {
+    // Instantly remove glow because user just clicked Discover Now - task is completed!
+    document.querySelectorAll(".tour-highlight-active").forEach((el) => {
+      el.classList.remove("tour-highlight-active");
+    });
+    setHasExecutedDiscovery(true);
     setRunningSearchId(searchId);
     try {
       const res = await runSearch(searchId);
@@ -192,9 +395,9 @@ export default function SearchesPage() {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="p-1.5 rounded-lg bg-primary/10 text-primary">
-              <Compass className="w-5 h-5" />
+              <Radar className="w-5 h-5" />
             </span>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Automated Discovery & Saved Searches</h1>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Discover a Job</h1>
           </div>
           <p className="text-muted-foreground text-xs sm:text-sm">
             Configure multi-source continuous job discovery. Collect, normalize, deduplicate, and qualify opportunities automatically.
@@ -206,7 +409,7 @@ export default function SearchesPage() {
             <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${loading ? "animate-spin" : ""}`} />
             <span>Refresh</span>
           </Button>
-          <Button size="sm" onClick={() => setCreateModalOpen(true)} className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm h-9 sm:h-10 text-xs font-semibold flex-1 sm:flex-initial">
+          <Button id="tour-searches-new-btn" size="sm" onClick={() => setCreateModalOpen(true)} className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm h-9 sm:h-10 text-xs font-semibold flex-1 sm:flex-initial">
             <Plus className="w-3.5 h-3.5 mr-1.5" />
             <span>New Search</span>
           </Button>
@@ -247,7 +450,7 @@ export default function SearchesPage() {
       </div>
 
       {/* Saved Searches Grid */}
-      <div className="space-y-4">
+      <div id="tour-searches-active-config" className="space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
             <Sliders className="w-4 h-4 text-primary" />
@@ -282,7 +485,7 @@ export default function SearchesPage() {
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {searches.map((search) => {
+            {searches.map((search, idx) => {
               const isRunning = runningSearchId === search.id;
               const executions = search.executions || [];
               const latestExec = executions[0];
@@ -290,6 +493,7 @@ export default function SearchesPage() {
               return (
                 <Card
                   key={search.id}
+                  id={idx === 0 ? "tour-active-search-card" : undefined}
                   className="flex flex-col justify-between border-border/70 bg-card hover:shadow-md transition-all duration-200"
                 >
                   <CardHeader className="pb-3">
@@ -401,8 +605,10 @@ export default function SearchesPage() {
                       </Button>
 
                       <Button
+                        id={idx === 0 ? "tour-search-card-run" : undefined}
+                        data-tour-done={isRunning ? "true" : "false"}
                         size="sm"
-                        className="h-8 bg-primary text-primary-foreground hover:bg-primary/90 text-xs shadow-xs"
+                        className="h-8 bg-primary text-primary-foreground hover:bg-primary/90 text-xs shadow-xs font-medium"
                         onClick={() => handleRunSearch(search.id)}
                         disabled={isRunning}
                       >
@@ -429,56 +635,265 @@ export default function SearchesPage() {
 
       {/* Modal: Create Search */}
       <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
-        <DialogContent className="sm:max-w-[620px]">
-          <DialogHeader>
-            <DialogTitle>New Search Configuration</DialogTitle>
-            <DialogDescription>
-              Define target keywords, candidate preferences, and source platforms to scan.
-            </DialogDescription>
+        <DialogContent className="sm:max-w-[620px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="border-b border-border/60 pb-3">
+            <div className="flex items-center gap-2">
+              <span className="p-1.5 rounded-lg bg-primary/10 text-primary">
+                <Compass className="w-4 h-4" />
+              </span>
+              <div>
+                <DialogTitle className="text-base font-bold text-foreground">New Search Configuration</DialogTitle>
+                <DialogDescription className="text-xs text-muted-foreground mt-0.5">
+                  Follow steps 1–5 below to configure your automated crawler, then click Save.
+                </DialogDescription>
+              </div>
+            </div>
           </DialogHeader>
 
-          <form onSubmit={handleCreateSearch} className="space-y-4 pt-2">
-            <div>
-              <label className="text-xs font-semibold text-foreground block mb-1">Search Name</label>
-              <Input
-                value={formName}
-                onChange={(e) => setFormName(e.target.value)}
-                placeholder="e.g. Laravel Backend Remote, Python Engineer, or React Developer"
-                required
-              />
-            </div>
+          {/* Step-by-Step Flow Instructions Banner inside Modal */}
+          <div className="p-3.5 rounded-xl bg-primary/5 border border-primary/20 text-xs space-y-2">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div className="flex items-center gap-1.5">
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-500 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500"></span>
+                </span>
+                <span className="font-bold text-foreground text-xs">
+                  Step {modalGlowStep} of 5:{" "}
+                  {modalGlowStep === 1 && "Search Name & Target Role"}
+                  {modalGlowStep === 2 && "Pick Target Sources"}
+                  {modalGlowStep === 3 && "Keywords & Locations"}
+                  {modalGlowStep === 4 && "Salary Range & Currency"}
+                  {modalGlowStep === 5 && "Save Configuration"}
+                </span>
+              </div>
 
-            {/* Quick role preset shortcuts */}
-            <div>
-              <span className="text-[11px] text-muted-foreground block mb-1.5 font-medium">Quick Presets:</span>
-              <div className="flex flex-wrap gap-1.5">
-                {[
-                  { name: "PH Remote Full Stack", kw: "Laravel, React, TypeScript, PHP", label: "🇵🇭 PH Full Stack", loc: "Philippines, Remote" },
-                  { name: "BGC / Makati Tech Hub", kw: "Python, Golang, AWS, Node.js", label: "🇵🇭 BGC / Makati", loc: "Metro Manila, BGC, Taguig, Makati" },
-                  { name: "OnlineJobs.ph Remote Roles", kw: "Virtual Assistant, Customer Support, CSR", label: "🇵🇭 Remote VA / CSR", loc: "Remote (Philippines)" },
-                  { name: "Cebu Tech Park", kw: "React, Vue, Java, Spring", label: "🇵🇭 Cebu IT Park", loc: "Cebu City, Central Visayas" },
-                  { name: "Global Remote Engineer", kw: "Next.js, Tailwind, PostgreSQL", label: "🌐 Global Remote", loc: "Worldwide, Remote" },
-                ].map((preset) => (
-                  <button
-                    type="button"
-                    key={preset.label}
-                    onClick={() => {
-                      setFormName(preset.name);
-                      setFormKeywords(preset.kw);
-                      setFormLocations(preset.loc);
-                    }}
-                    className="px-2 py-0.5 rounded-md border border-border/70 text-[11px] text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
-                  >
-                    + {preset.label}
-                  </button>
-                ))}
+              {/* Stepper Controls */}
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setModalGlowStep((prev) => (prev > 1 ? prev - 1 : 1))}
+                  disabled={modalGlowStep === 1}
+                  className="px-2 py-0.5 rounded border border-border/70 text-[10px] font-semibold bg-background hover:bg-muted text-muted-foreground hover:text-foreground disabled:opacity-40 disabled:pointer-events-none transition-colors"
+                  title="Previous Step"
+                >
+                  ◀ Prev
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setModalGlowStep((prev) => (prev < 5 ? prev + 1 : 5))}
+                  disabled={modalGlowStep === 5}
+                  className="px-2 py-0.5 rounded border border-border/70 text-[10px] font-semibold bg-background hover:bg-muted text-muted-foreground hover:text-foreground disabled:opacity-40 disabled:pointer-events-none transition-colors"
+                  title="Next Step"
+                >
+                  Next ▶
+                </button>
               </div>
             </div>
 
-            <div>
-              <label className="text-xs font-semibold text-foreground block mb-1.5">
-                Target Sources
-              </label>
+            {/* 1-by-1 Step Navigation Pills */}
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 text-[11px] pt-0.5">
+              {[
+                { step: 1, label: "1. Name", sub: "Target Role", isDone: isStep1Done },
+                { step: 2, label: "2. Sources", sub: "Portals", isDone: isStep2Done },
+                { step: 3, label: "3. Keywords", sub: "& Location", isDone: isStep3Done },
+                { step: 4, label: "4. Salary", sub: "Min/Max", isDone: isStep4Done },
+                { step: 5, label: "5. Save", sub: "Create Radar", isDone: false },
+              ].map((s) => {
+                const isActive = modalGlowStep === s.step;
+                const isCompleted = s.isDone && modalGlowStep > s.step;
+                return (
+                  <button
+                    type="button"
+                    key={s.step}
+                    onClick={() => setModalGlowStep(s.step)}
+                    className={`p-1.5 rounded-lg border text-center transition-all ${
+                      isActive
+                        ? "bg-primary text-primary-foreground border-primary shadow-sm scale-[1.03] ring-2 ring-primary/40"
+                        : isCompleted
+                        ? "bg-emerald-500/10 border-emerald-500/30 text-foreground hover:bg-emerald-500/15"
+                        : "bg-background border-border/60 hover:border-border text-muted-foreground hover:bg-muted/40"
+                    } ${s.step === 5 ? "col-span-2 sm:col-span-1" : ""}`}
+                  >
+                    <div className="flex items-center justify-center gap-1">
+                      {isCompleted && !isActive && <CheckCircle2 className="w-3 h-3 text-emerald-500 shrink-0" />}
+                      <span className={`font-bold block text-[10px] ${
+                        isActive
+                          ? "text-primary-foreground"
+                          : isCompleted
+                          ? "text-emerald-600 dark:text-emerald-400"
+                          : s.step === 5
+                          ? "text-primary"
+                          : "text-foreground"
+                      }`}>
+                        {s.label}
+                      </span>
+                    </div>
+                    <span className={`text-[10px] truncate block ${
+                      isActive
+                        ? "text-primary-foreground/90 font-medium"
+                        : isCompleted
+                        ? "text-emerald-600/80 dark:text-emerald-400/80"
+                        : "text-muted-foreground"
+                    }`}>
+                      {isCompleted && !isActive ? "Done" : s.sub}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <form onSubmit={handleCreateSearch} className="space-y-4 pt-1">
+            {/* Step 1: Search Name & Presets */}
+            <div
+              id="tour-form-name"
+              className={`p-3.5 rounded-xl border transition-all duration-300 space-y-2.5 ${
+                modalGlowStep === 1
+                  ? "tour-highlight-active ring-2 ring-primary border-primary bg-primary/5"
+                  : isStep1Done
+                  ? "border-emerald-500/30 bg-card/60 shadow-xs"
+                  : "border-border/80 bg-card/60"
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-semibold text-foreground flex items-center gap-2">
+                  <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold ${
+                    modalGlowStep === 1
+                      ? "bg-primary text-primary-foreground ring-2 ring-primary/50 animate-pulse"
+                      : isStep1Done
+                      ? "bg-emerald-600 text-white"
+                      : "bg-muted text-muted-foreground"
+                  }`}>
+                    {isStep1Done && modalGlowStep !== 1 ? "✓" : "1"}
+                  </span>
+                  <span>Search Name & Target Role</span>
+                </label>
+                {isStep1Done && modalGlowStep !== 1 ? (
+                  <span className="text-[10px] text-emerald-500 font-semibold flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3" /> Done
+                  </span>
+                ) : (
+                  <span className="text-[10px] text-muted-foreground font-mono">Required</span>
+                )}
+              </div>
+              <Input
+                value={formName}
+                onFocus={() => setModalGlowStep(1)}
+                onChange={(e) => setFormName(e.target.value)}
+                onBlur={() => {
+                  if (formName.trim()) {
+                    advanceNextStep(1);
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    if (formName.trim()) {
+                      advanceNextStep(1);
+                    }
+                  }
+                }}
+                placeholder="e.g. PH Remote Full Stack, Python Engineer, or Senior React Architect"
+                className="text-xs h-9"
+                required
+              />
+
+              {/* Quick role preset shortcuts */}
+              <div id="tour-form-presets" className="pt-1">
+                <span className="text-[11px] text-muted-foreground block mb-1.5 font-medium">
+                  ⚡ Quick Presets (Click to autofill):
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    { name: "PH Remote Full Stack", kw: "Laravel, React, TypeScript, PHP", label: "🇵🇭 PH Full Stack", loc: "Philippines, Remote" },
+                    { name: "BGC / Makati Tech Hub", kw: "Python, Golang, AWS, Node.js", label: "🇵🇭 BGC / Makati", loc: "Metro Manila, BGC, Taguig, Makati" },
+                    { name: "OnlineJobs.ph Remote Roles", kw: "Virtual Assistant, Customer Support, CSR", label: "🇵🇭 Remote VA / CSR", loc: "Remote (Philippines)" },
+                    { name: "Cebu Tech Park", kw: "React, Vue, Java, Spring", label: "🇵🇭 Cebu IT Park", loc: "Cebu City, Central Visayas" },
+                    { name: "Global Remote Engineer", kw: "Next.js, Tailwind, PostgreSQL", label: "🌐 Global Remote", loc: "Worldwide, Remote" },
+                  ].map((preset) => (
+                    <button
+                      type="button"
+                      key={preset.label}
+                      onClick={() => {
+                        setFormName(preset.name);
+                        setFormKeywords(preset.kw);
+                        setFormLocations(preset.loc);
+                        // Name, sources & keywords are filled -> step forward directly to Step 4 (Salary)
+                        setModalGlowStep(4);
+                      }}
+                      className="px-2 py-0.5 rounded-md border border-border/70 text-[11px] text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+                    >
+                      + {preset.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Inline Step 1 Footer */}
+              <div className="flex items-center justify-between pt-1 border-t border-border/40 text-[11px]">
+                {isStep1Done && modalGlowStep !== 1 ? (
+                  <>
+                    <span className="text-emerald-500 font-medium flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3" /> Role configured: {formName}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setModalGlowStep(1)}
+                      className="text-[11px] text-muted-foreground hover:text-foreground hover:underline"
+                    >
+                      Edit
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-muted-foreground">
+                      {isStep1Done ? "✓ Role Name entered" : "Step 1 of 5"}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => advanceNextStep(1)}
+                      className="text-[11px] font-semibold text-primary hover:underline flex items-center gap-1"
+                    >
+                      Next: {formSources.length > 0 ? "Keywords & Location ➔" : "Target Sources ➔"}
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Step 2: Target Sources */}
+            <div
+              id="tour-form-sources"
+              className={`p-3.5 rounded-xl border transition-all duration-300 space-y-2 ${
+                modalGlowStep === 2
+                  ? "tour-highlight-active ring-2 ring-primary border-primary bg-primary/5"
+                  : isStep2Done && modalGlowStep > 2
+                  ? "border-emerald-500/30 bg-card/60 shadow-xs"
+                  : "border-border/80 bg-card/60"
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-semibold text-foreground flex items-center gap-2">
+                  <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold ${
+                    modalGlowStep === 2
+                      ? "bg-primary text-primary-foreground ring-2 ring-primary/50 animate-pulse"
+                      : isStep2Done && modalGlowStep > 2
+                      ? "bg-emerald-600 text-white"
+                      : "bg-muted text-muted-foreground"
+                  }`}>
+                    {isStep2Done && modalGlowStep > 2 ? "✓" : "2"}
+                  </span>
+                  <span>Target Sources ({formSources.length} selected)</span>
+                </label>
+                {isStep2Done && modalGlowStep > 2 ? (
+                  <span className="text-[10px] text-emerald-500 font-semibold flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3" /> Done ({formSources.length} sources)
+                  </span>
+                ) : (
+                  <span className="text-[10px] text-muted-foreground">Select portals to crawl</span>
+                )}
+              </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {[
                   { id: "jobstreet", name: "JobStreet PH" },
@@ -494,7 +909,12 @@ export default function SearchesPage() {
                   <button
                     type="button"
                     key={src.id}
-                    onClick={() => toggleSource(src.id)}
+                    onClick={() => {
+                      toggleSource(src.id);
+                      if (formName.trim()) {
+                        advanceNextStep(2);
+                      }
+                    }}
                     className={`p-2.5 rounded-lg border text-xs font-medium text-left flex items-center justify-between transition-colors ${
                       formSources.includes(src.id)
                         ? "border-primary bg-primary/10 text-primary"
@@ -506,67 +926,205 @@ export default function SearchesPage() {
                   </button>
                 ))}
               </div>
-            </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-semibold text-foreground block mb-1">Keywords (comma-separated)</label>
-                <Input
-                  value={formKeywords}
-                  onChange={(e) => setFormKeywords(e.target.value)}
-                  placeholder="e.g. Laravel, PHP or React, Node.js"
-                  required
-                />
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-foreground block mb-1">Locations</label>
-                <Input
-                  value={formLocations}
-                  onChange={(e) => setFormLocations(e.target.value)}
-                  placeholder="Remote, Worldwide, or city"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-semibold text-foreground block mb-1">Work Arrangement</label>
-                <select
-                  value={formRemoteType}
-                  onChange={(e) => setFormRemoteType(e.target.value)}
-                  className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                >
-                  <option value="Remote">Remote</option>
-                  <option value="Hybrid">Hybrid</option>
-                  <option value="Onsite">Onsite</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-foreground block mb-1">Scan Frequency</label>
-                <select
-                  value={formFrequency}
-                  onChange={(e) => setFormFrequency(e.target.value as any)}
-                  className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                >
-                  <option value="MANUAL">Manual Only</option>
-                  <option value="HOURLY">Hourly</option>
-                  <option value="DAILY">Daily</option>
-                  <option value="WEEKLY">Weekly</option>
-                </select>
+              {/* Inline Step 2 Footer */}
+              <div className="flex items-center justify-between pt-1 border-t border-border/40 text-[11px]">
+                {isStep2Done && modalGlowStep > 2 ? (
+                  <>
+                    <span className="text-emerald-500 font-medium flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3" /> {formSources.length} job portals active
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setModalGlowStep(2)}
+                      className="text-[11px] text-muted-foreground hover:text-foreground hover:underline"
+                    >
+                      Edit
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-muted-foreground">
+                      {formSources.length} sources selected
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => advanceNextStep(2)}
+                      className="text-[11px] font-semibold text-primary hover:underline flex items-center gap-1"
+                    >
+                      Next: Keywords & Location ➔
+                    </button>
+                  </>
+                )}
               </div>
             </div>
 
-            {/* Compensation & Salary Range (High-Visibility Dedicated Section) */}
-            <div className="p-3.5 rounded-xl bg-muted/40 border border-border/70 space-y-2.5">
+            {/* Step 3: Keywords & Location */}
+            <div
+              id="tour-form-keywords-loc"
+              className={`p-3.5 rounded-xl border transition-all duration-300 space-y-3 ${
+                modalGlowStep === 3
+                  ? "tour-highlight-active ring-2 ring-primary border-primary bg-primary/5"
+                  : isStep3Done && modalGlowStep > 3
+                  ? "border-emerald-500/30 bg-card/60 shadow-xs"
+                  : "border-border/80 bg-card/60"
+              }`}
+            >
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                <label className="text-xs font-semibold text-foreground flex items-center gap-2">
+                  <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold ${
+                    modalGlowStep === 3
+                      ? "bg-primary text-primary-foreground ring-2 ring-primary/50 animate-pulse"
+                      : isStep3Done && modalGlowStep > 3
+                      ? "bg-emerald-600 text-white"
+                      : "bg-muted text-muted-foreground"
+                  }`}>
+                    {isStep3Done && modalGlowStep > 3 ? "✓" : "3"}
+                  </span>
+                  <span>Keywords & Location Filters</span>
+                </label>
+                {isStep3Done && modalGlowStep > 3 ? (
+                  <span className="text-[10px] text-emerald-500 font-semibold flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3" /> Done
+                  </span>
+                ) : (
+                  <span className="text-[10px] text-muted-foreground">Crawler search queries</span>
+                )}
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] font-medium text-muted-foreground block mb-1">Target Keywords (comma-separated)</label>
+                  <Input
+                    value={formKeywords}
+                    onFocus={() => setModalGlowStep(3)}
+                    onChange={(e) => setFormKeywords(e.target.value)}
+                    onBlur={() => {
+                      if (formKeywords.trim()) {
+                        advanceNextStep(3);
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        if (formKeywords.trim()) {
+                          advanceNextStep(3);
+                        }
+                      }
+                    }}
+                    placeholder="e.g. Laravel, PHP, React, TypeScript"
+                    className="text-xs h-9"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-medium text-muted-foreground block mb-1">Locations</label>
+                  <Input
+                    value={formLocations}
+                    onFocus={() => setModalGlowStep(3)}
+                    onChange={(e) => setFormLocations(e.target.value)}
+                    placeholder="Philippines, Remote, or Makati"
+                    className="text-xs h-9"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                <div>
+                  <label className="text-[11px] font-medium text-muted-foreground block mb-1">Work Arrangement</label>
+                  <select
+                    value={formRemoteType}
+                    onFocus={() => setModalGlowStep(3)}
+                    onChange={(e) => setFormRemoteType(e.target.value)}
+                    className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                  >
+                    <option value="Remote">Remote</option>
+                    <option value="Hybrid">Hybrid</option>
+                    <option value="Onsite">Onsite</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-medium text-muted-foreground block mb-1">Scan Frequency</label>
+                  <select
+                    value={formFrequency}
+                    onFocus={() => setModalGlowStep(3)}
+                    onChange={(e) => setFormFrequency(e.target.value as any)}
+                    className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                  >
+                    <option value="MANUAL">Manual Only</option>
+                    <option value="HOURLY">Hourly</option>
+                    <option value="DAILY">Daily (Recommended)</option>
+                    <option value="WEEKLY">Weekly</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Inline Step 3 Footer */}
+              <div className="flex items-center justify-between pt-1 border-t border-border/40 text-[11px]">
+                {isStep3Done && modalGlowStep > 3 ? (
+                  <>
+                    <span className="text-emerald-500 font-medium flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3" /> Queries: {formKeywords} ({formLocations})
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setModalGlowStep(3)}
+                      className="text-[11px] text-muted-foreground hover:text-foreground hover:underline"
+                    >
+                      Edit
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-muted-foreground">
+                      {formKeywords.trim() ? "✓ Keywords entered" : "Step 3 of 5"}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => advanceNextStep(3)}
+                      className="text-[11px] font-semibold text-primary hover:underline flex items-center gap-1"
+                    >
+                      Next: Salary Range ➔
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Step 4: Salary Range & Compensation */}
+            <div
+              id="tour-form-salary"
+              className={`p-3.5 rounded-xl border transition-all duration-300 space-y-2.5 ${
+                modalGlowStep === 4
+                  ? "tour-highlight-active ring-2 ring-primary border-primary bg-primary/5"
+                  : isStep4Done && modalGlowStep > 4
+                  ? "border-emerald-500/30 bg-card/60 shadow-xs"
+                  : "border-border/70 bg-muted/40"
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-foreground flex items-center gap-2">
+                  <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold ${
+                    modalGlowStep === 4
+                      ? "bg-primary text-primary-foreground ring-2 ring-primary/50 animate-pulse"
+                      : isStep4Done && modalGlowStep > 4
+                      ? "bg-emerald-600 text-white"
+                      : "bg-muted text-muted-foreground"
+                  }`}>
+                    {isStep4Done && modalGlowStep > 4 ? "✓" : "4"}
+                  </span>
                   <span>Salary Range & Currency</span>
                 </span>
-                <span className="text-xs font-mono font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded border border-emerald-500/20">
-                  {formatSalaryRange(formMinSalary, formMaxSalary, formCurrency, true)}
-                </span>
+                {isStep4Done && modalGlowStep > 4 ? (
+                  <span className="text-[10px] text-emerald-500 font-semibold flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3" /> Done: {formatSalaryRange(formMinSalary, formMaxSalary, formCurrency, true)}
+                  </span>
+                ) : (
+                  <span className="text-xs font-mono font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded border border-emerald-500/20">
+                    {formatSalaryRange(formMinSalary, formMaxSalary, formCurrency, true)}
+                  </span>
+                )}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-0.5">
@@ -576,6 +1134,7 @@ export default function SearchesPage() {
                   </label>
                   <select
                     value={formCurrency}
+                    onFocus={() => setModalGlowStep(4)}
                     onChange={(e) => setFormCurrency(e.target.value)}
                     className="w-full h-9 rounded-md border border-input bg-background px-2.5 py-1 text-xs font-medium shadow-sm focus:outline-none focus:ring-1 focus:ring-ring font-sans"
                   >
@@ -602,6 +1161,8 @@ export default function SearchesPage() {
                       type="number"
                       step="1000"
                       value={formMinSalary || ""}
+                      onFocus={() => setModalGlowStep(4)}
+                      onBlur={() => advanceNextStep(4)}
                       onChange={(e) => setFormMinSalary(parseInt(e.target.value) || 0)}
                       placeholder="50,000"
                       className="pl-7 pr-2 h-9 text-xs font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
@@ -621,6 +1182,8 @@ export default function SearchesPage() {
                       type="number"
                       step="1000"
                       value={formMaxSalary || ""}
+                      onFocus={() => setModalGlowStep(4)}
+                      onBlur={() => advanceNextStep(4)}
                       onChange={(e) => setFormMaxSalary(parseInt(e.target.value) || 0)}
                       placeholder="90,000"
                       className="pl-7 pr-2 h-9 text-xs font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
@@ -628,15 +1191,67 @@ export default function SearchesPage() {
                   </div>
                 </div>
               </div>
+
+              {/* Inline Step 4 Footer */}
+              <div className="flex items-center justify-between pt-1 border-t border-border/40 text-[11px]">
+                {isStep4Done && modalGlowStep > 4 ? (
+                  <>
+                    <span className="text-emerald-500 font-medium flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3" /> Salary configured
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setModalGlowStep(4)}
+                      className="text-[11px] text-muted-foreground hover:text-foreground hover:underline"
+                    >
+                      Edit
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-muted-foreground">
+                      ✓ Salary configured
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => advanceNextStep(4)}
+                      className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1"
+                    >
+                      Next: Save Configuration ➔
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
 
-
-            <DialogFooter className="pt-3">
-              <Button type="button" variant="outline" onClick={() => setCreateModalOpen(false)}>
+            {/* Step 5: Save Configuration */}
+            <DialogFooter className="pt-3 border-t border-border/60 flex items-center justify-between gap-2">
+              <Button type="button" variant="outline" size="sm" onClick={() => setCreateModalOpen(false)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={submitting || formSources.length === 0}>
-                {submitting ? "Saving..." : "Save Configuration"}
+              <Button
+                id="tour-form-submit"
+                type="submit"
+                size="sm"
+                onMouseEnter={() => setModalGlowStep(5)}
+                disabled={submitting || formSources.length === 0}
+                className={`font-semibold gap-1.5 shadow-sm transition-all duration-300 ${
+                  modalGlowStep === 5 && !submitting
+                    ? "tour-highlight-active ring-4 ring-emerald-500/80 bg-primary text-primary-foreground scale-105"
+                    : "bg-primary text-primary-foreground"
+                }`}
+              >
+                {submitting ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 mr-1 animate-spin" />
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>5. Save Configuration</span>
+                  </>
+                )}
               </Button>
             </DialogFooter>
           </form>
@@ -673,15 +1288,24 @@ export default function SearchesPage() {
 
           <DialogFooter>
             <Button
+              id="tour-view-discovered-jobs"
+              size="default"
+              className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-5 h-10 shadow-lg text-sm gap-2 cursor-pointer"
               onClick={() => {
                 const targetUrl = lastRunResult?.search_id
                   ? `/jobs?search_id=${lastRunResult.search_id}`
                   : "/jobs";
                 setResultModalOpen(false);
+                document.querySelectorAll(".tour-highlight-active").forEach((el) => {
+                  el.classList.remove("tour-highlight-active");
+                });
+                jumpToStep(3);
                 router.push(targetUrl);
               }}
             >
-              View Discovered Jobs
+              <Briefcase className="w-4 h-4 mr-1.5" />
+              <span>View Discovered Jobs</span>
+              <ArrowRight className="w-4 h-4 ml-1.5" />
             </Button>
           </DialogFooter>
         </DialogContent>

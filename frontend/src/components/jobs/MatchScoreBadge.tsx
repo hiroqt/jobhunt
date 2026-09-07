@@ -1,5 +1,9 @@
 import React from "react";
-import { CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
+import {
+  CheckmarkCircle02Icon as CheckCircle2,
+  Alert02Icon as AlertTriangle,
+  CancelCircleIcon as XCircle
+} from "hugeicons-react";
 import { cn } from "@/lib/utils";
 
 interface MatchScoreBadgeProps {

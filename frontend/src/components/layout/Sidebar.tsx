@@ -209,6 +209,20 @@ export const Sidebar: React.FC = () => {
           <ThemeToggle />
         </div>
 
+        {/* App Builders PH Embed */}
+        <div className="pt-2 border-t border-border/50 flex justify-center items-center">
+          <iframe
+            src="https://appbuildersph.com/embed/apps/sakto-ka"
+            title="Sakto Ka votes on App Builders PH"
+            width="320"
+            height="72"
+            style={{ border: 0 }}
+            className="w-full max-w-full rounded-md"
+            loading="lazy"
+            scrolling="no"
+          />
+        </div>
+
         {/* Creator Attribution */}
         <div className="pt-2 border-t border-border/50 text-center">
           <p className="text-[11px] text-muted-foreground">

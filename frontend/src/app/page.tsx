@@ -24,6 +24,7 @@ import { JobCaptureModal } from "@/components/jobs/JobCaptureModal";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { openCoverLetterStudio } from "@/lib/events";
 import { formatSalary } from "@/lib/utils";
 
 export default function DashboardPage() {
@@ -61,52 +62,144 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-200">
-      {/* Welcome Hero */}
-      <div className="rounded-2xl border border-border bg-gradient-to-br from-card via-card to-primary/5 p-4 sm:p-6 md:p-8 relative overflow-hidden shadow-xs">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-5 sm:gap-6 relative z-10">
-          <div className="space-y-2 max-w-2xl">
-            <div className="flex items-center gap-2 flex-wrap">
-              <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-primary/20 gap-1.5 py-0.5 px-2.5">
-                <Bot className="w-3.5 h-3.5" />
-                <span>Stateless AI Career Copilot</span>
-              </Badge>
-              <Badge variant="outline" className="text-xs text-emerald-600 dark:text-emerald-400 border-emerald-500/30 bg-emerald-500/10 gap-1 py-0.5 px-2">
-                <Lock className="w-3 h-3" />
-                <span>Zero Retention</span>
-              </Badge>
-            </div>
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground tracking-tight">
-              sakto ka Career Intelligence
-            </h1>
-            <p className="text-xs sm:text-sm md:text-base text-muted-foreground leading-relaxed">
-              Automated multi-source job discovery, ATS-compliant resume builder &amp; keyword gap optimizer, and AI-powered interview preparation.
-            </p>
-          </div>
-          <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2.5 sm:gap-3 shrink-0">
-            <Button asChild variant="default" size="default" className="text-xs sm:text-sm font-semibold gap-2 shadow-xs bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto h-9 sm:h-10">
-              <Link href="/resume">
-                <FileText className="w-4 h-4" />
-                <span>ATS Resume Studio</span>
-              </Link>
-            </Button>
-            <Button asChild variant="outline" size="default" className="text-xs sm:text-sm font-medium gap-2 w-full sm:w-auto h-9 sm:h-10">
-              <Link href="/searches">
-                <Radar className="w-4 h-4 text-primary" />
-                <span>Discover a Job</span>
-              </Link>
-            </Button>
-            <Button
-              onClick={() => setIsCaptureModalOpen(true)}
-              variant="outline"
-              size="default"
-              className="gap-2 font-medium text-xs sm:text-sm w-full sm:w-auto h-9 sm:h-10"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Capture Job URL</span>
-            </Button>
+      {/* Header: Designed Typographic Hero with Generous Spacing */}
+      <header className="relative space-y-5 pb-8 sm:pb-10 border-b border-border/60 mb-2 sm:mb-4">
+        {/* Subtle Ambient Radial Glow (Not a card, zero borders/boxes) */}
+        <div
+          aria-hidden="true"
+          className="absolute -top-10 -left-10 -z-10 w-96 h-72 bg-primary/[0.04] rounded-full blur-3xl pointer-events-none"
+        />
+
+        <div className="space-y-3 max-w-4xl">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-foreground leading-[1.15]">
+            sakto ka{" "}
+            <span className="bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent">
+              Career Intelligence System
+            </span>
+          </h1>
+          <p className="text-sm sm:text-base md:text-lg text-muted-foreground/90 leading-relaxed max-w-3xl">
+            A private career automation platform designed to assist every phase of your job search: aggregating verified job postings across multiple platforms, evaluating qualification fit and keyword gaps against your candidate profile, generating ATS-compliant single-column resumes, curating role-tailored cover letters from active jobs or external job links, and simulating technical STAR interview preparation.
+          </p>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground/70 font-mono pt-1">
+            <span>100% In-Session Privacy</span>
+            <span className="text-border">•</span>
+            <span>Zero Server-Side Retention</span>
+            <span className="text-border">•</span>
+            <span>ATS Format Guaranteed</span>
           </div>
         </div>
-      </div>
+
+        {/* Quick Action Feature Cards: Same Design as Curate Cover Letter */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 pt-4 sm:pt-6">
+          {/* Card 1: Cover Letter Studio */}
+          <button
+            type="button"
+            onClick={() => openCoverLetterStudio({ tab: "link" })}
+            className="p-3.5 sm:p-4 rounded-xl border border-primary/20 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent hover:border-primary/45 hover:from-primary/15 hover:via-primary/8 transition-all cursor-pointer group text-left shadow-xs flex flex-col justify-between"
+          >
+            <div className="flex items-start gap-3">
+              <div className="p-2.5 rounded-xl bg-primary text-primary-foreground shadow-xs shrink-0 group-hover:scale-105 transition-transform">
+                <FileText className="w-5 h-5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="text-sm sm:text-base font-bold text-foreground group-hover:text-primary transition-colors">
+                    Cover Letter Studio
+                  </h3>
+                  <Badge variant="outline" className="text-[10px] text-primary border-primary/30 font-medium py-0 px-1.5">
+                    Role &amp; Resume Tailored
+                  </Badge>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1 leading-relaxed line-clamp-2">
+                  Curate customized, ATS-aligned cover letters from active jobs or external links.
+                </p>
+              </div>
+            </div>
+          </button>
+
+          {/* Card 2: ATS Resume Studio */}
+          <Link
+            href="/resume"
+            className="p-3.5 sm:p-4 rounded-xl border border-primary/20 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent hover:border-primary/45 hover:from-primary/15 hover:via-primary/8 transition-all cursor-pointer group text-left shadow-xs flex flex-col justify-between"
+          >
+            <div className="flex items-start gap-3">
+              <div className="p-2.5 rounded-xl bg-primary text-primary-foreground shadow-xs shrink-0 group-hover:scale-105 transition-transform">
+                <Zap className="w-5 h-5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="text-sm sm:text-base font-bold text-foreground group-hover:text-primary transition-colors">
+                    ATS Resume Studio
+                  </h3>
+                  <Badge variant="outline" className="text-[10px] text-primary border-primary/30 font-medium py-0 px-1.5">
+                    90%+ ATS Score
+                  </Badge>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1 leading-relaxed line-clamp-2">
+                  Build single-column, keyword-optimized resumes engineered to pass ATS screeners.
+                </p>
+              </div>
+            </div>
+          </Link>
+
+          {/* Card 3: Discover Jobs */}
+          <Link
+            href="/searches"
+            className="p-3.5 sm:p-4 rounded-xl border border-primary/20 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent hover:border-primary/45 hover:from-primary/15 hover:via-primary/8 transition-all cursor-pointer group text-left shadow-xs flex flex-col justify-between"
+          >
+            <div className="flex items-start gap-3">
+              <div className="p-2.5 rounded-xl bg-primary text-primary-foreground shadow-xs shrink-0 group-hover:scale-105 transition-transform">
+                <Radar className="w-5 h-5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="text-sm sm:text-base font-bold text-foreground group-hover:text-primary transition-colors">
+                    Discover Jobs
+                  </h3>
+                  <Badge variant="outline" className="text-[10px] text-primary border-primary/30 font-medium py-0 px-1.5">
+                    5 Live Boards
+                  </Badge>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1 leading-relaxed line-clamp-2">
+                  Aggregates verified postings across LinkedIn, Indeed, JobStreet, and Google Jobs.
+                </p>
+              </div>
+            </div>
+          </Link>
+
+          {/* Card 4: Capture Job URL */}
+          <button
+            type="button"
+            onClick={() => setIsCaptureModalOpen(true)}
+            className="p-3.5 sm:p-4 rounded-xl border border-primary/20 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent hover:border-primary/45 hover:from-primary/15 hover:via-primary/8 transition-all cursor-pointer group text-left shadow-xs flex flex-col justify-between"
+          >
+            <div className="flex items-start gap-3">
+              <div className="p-2.5 rounded-xl bg-primary text-primary-foreground shadow-xs shrink-0 group-hover:scale-105 transition-transform">
+                <Plus className="w-5 h-5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="text-sm sm:text-base font-bold text-foreground group-hover:text-primary transition-colors">
+                    Capture Job URL
+                  </h3>
+                  <Badge variant="outline" className="text-[10px] text-primary border-primary/30 font-medium py-0 px-1.5">
+                    Instant Ingest
+                  </Badge>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1 leading-relaxed line-clamp-2">
+                  Paste any job link to auto-extract role requirements and evaluate skill match.
+                </p>
+              </div>
+            </div>
+          </button>
+        </div>
+
+        {/* Architectural Accent Anchor Line */}
+        <div
+          aria-hidden="true"
+          className="absolute -bottom-px left-0 h-[2px] w-24 sm:w-32 bg-primary rounded-full"
+        />
+      </header>
 
       {/* Primary KPI Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4">

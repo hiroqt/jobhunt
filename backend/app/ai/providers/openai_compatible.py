@@ -27,7 +27,9 @@ class OpenAICompatibleProvider(BaseAIProvider):
         self.client = AsyncOpenAI(
             api_key=self.api_key,
             base_url=self.base_url,
-            default_headers=default_headers
+            default_headers=default_headers,
+            timeout=15.0,
+            max_retries=1
         )
 
     @property

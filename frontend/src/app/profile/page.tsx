@@ -63,7 +63,7 @@ export default function ProfilePage() {
   // Resume Upload State
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [pastedResumeText, setPastedResumeText] = useState("");
-  const [resumeProvider, setResumeProvider] = useState("openrouter");
+  const [resumeProvider, setResumeProvider] = useState("nemotron-light");
   const [isParsingResume, setIsParsingResume] = useState(false);
   const [resumeParseSuccess, setResumeParseSuccess] = useState<string | null>(null);
   const [uploadMode, setUploadMode] = useState<"file" | "paste">("file");

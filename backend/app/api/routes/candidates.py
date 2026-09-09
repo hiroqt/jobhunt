@@ -162,7 +162,7 @@ async def delete_candidate_skill(
 async def upload_and_parse_resume(
     file: UploadFile = File(None),
     raw_text: Optional[str] = Form(None),
-    provider: Optional[str] = Form("fallback"),
+    provider: Optional[str] = Form("nemotron-light"),
     db: AsyncSession = Depends(get_db),
     candidate: CandidateProfile = Depends(get_current_candidate)
 ):
@@ -212,6 +212,10 @@ async def upload_and_parse_resume(
         candidate.github_url = parsed_data.github_url
     if parsed_data.linkedin_url:
         candidate.linkedin_url = parsed_data.linkedin_url
+    if parsed_data.portfolio_url:
+        candidate.portfolio_url = parsed_data.portfolio_url
+    if parsed_data.email and not candidate.email:
+        candidate.email = parsed_data.email
 
     await db.commit()
 

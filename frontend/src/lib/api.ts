@@ -99,7 +99,7 @@ export async function updateCandidateProfile(data: Partial<CandidateProfile>): P
 export async function uploadResume(
   file?: File | null,
   rawText?: string,
-  provider: string = "fallback"
+  provider: string = "nemotron-light"
 ): Promise<CandidateProfile> {
   const formData = new FormData();
   if (file) {

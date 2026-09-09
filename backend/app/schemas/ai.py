@@ -57,3 +57,34 @@ class FollowUpEmailGenResponse(BaseModel):
     subject: str
     body: str
     ai_provider_used: str
+
+
+class CoverLetterGenRequest(BaseModel):
+    job_id: Optional[str] = None
+    job_title: Optional[str] = None
+    company: Optional[str] = None
+    job_description: Optional[str] = None
+    resume_id: Optional[str] = None
+    resume_text: Optional[str] = None
+    tone: Optional[str] = Field(default="professional", description="professional, impactful, technical, startup")
+    length: Optional[str] = Field(default="standard", description="concise, standard, detailed")
+    focus_areas: Optional[List[str]] = Field(default_factory=list, description="List of focus areas or core competencies to emphasize")
+    custom_instructions: Optional[str] = Field(default=None, description="Candidate specific notes or achievements to include")
+    hiring_manager_name: Optional[str] = Field(default=None, description="Name of hiring manager or recruiter if known")
+    provider: Optional[str] = None
+
+
+class CoverLetterGenResponse(BaseModel):
+    job_title: str
+    company: str
+    subject_line: str
+    salutation: str
+    cover_letter: str
+    body_paragraphs: List[str] = Field(default_factory=list)
+    sign_off: str
+    candidate_name: str
+    matched_skills_highlighted: List[str] = Field(default_factory=list)
+    key_strengths_featured: List[str] = Field(default_factory=list)
+    word_count: int = 0
+    ai_provider_used: str
+

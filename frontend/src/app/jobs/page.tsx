@@ -35,10 +35,12 @@ import { getJobs, deleteJob, saveJob, unsaveJob, verifyJobLink } from "@/lib/api
 import { Job, LinkVerificationResponse } from "@/types";
 import { MatchScoreBadge } from "@/components/jobs/MatchScoreBadge";
 import { JobCaptureModal } from "@/components/jobs/JobCaptureModal";
+import { CoverLetterGenerator } from "@/components/jobs/CoverLetterGenerator";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { cn, formatSalaryRange } from "@/lib/utils";
 
 function formatRelativeTime(dateStr?: string): string {
@@ -75,6 +77,8 @@ function JobsContent() {
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
   const [isCaptureModalOpen, setIsCaptureModalOpen] = useState(false);
+  const [isCoverLetterModalOpen, setIsCoverLetterModalOpen] = useState(false);
+  const [isCoverLetterExpanded, setIsCoverLetterExpanded] = useState(false);
   const [verifyingLinkId, setVerifyingLinkId] = useState<string | null>(null);
   const [linkCheckResult, setLinkCheckResult] = useState<LinkVerificationResponse | null>(null);
 
@@ -236,7 +240,7 @@ function JobsContent() {
   };
 
   const getLocationDisplayName = (loc: string) => {
-    if (loc === "PH_ONLY") return "🇵🇭 Philippines Only";
+    if (loc === "PH_ONLY") return "Philippines Only";
     if (loc === "NCR") return "Metro Manila (NCR)";
     if (loc === "Cebu") return "Central Visayas (Cebu)";
     if (loc === "Clark") return "Central Luzon (Clark)";
@@ -355,15 +359,15 @@ function JobsContent() {
                 className="w-full sm:w-auto bg-background border border-border rounded-md px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring font-medium h-8"
               >
                 <option value="">All Locations</option>
-                <option value="PH_ONLY">🇵🇭 Philippines Only</option>
-                <option value="NCR">📍 Metro Manila (NCR / BGC / Makati / Taguig / QC)</option>
-                <option value="Cebu">📍 Central Visayas (Cebu IT Park / Mandaue)</option>
-                <option value="Clark">📍 Central Luzon (Clark / Pampanga / Angeles / Subic)</option>
-                <option value="CALABARZON">📍 CALABARZON (Laguna / Cavite / Batangas / Rizal)</option>
-                <option value="Davao">📍 Mindanao (Davao / CDO / GenSan)</option>
-                <option value="Iloilo">📍 Western Visayas (Iloilo / Bacolod)</option>
-                <option value="CAR">📍 Northern Luzon / Cordillera (Baguio)</option>
-                <option value="Remote">🌐 Worldwide Remote / Work from Home</option>
+                <option value="PH_ONLY">Philippines Only</option>
+                <option value="NCR">Metro Manila (NCR / BGC / Makati / Taguig / QC)</option>
+                <option value="Cebu">Central Visayas (Cebu IT Park / Mandaue)</option>
+                <option value="Clark">Central Luzon (Clark / Pampanga / Angeles / Subic)</option>
+                <option value="CALABARZON">CALABARZON (Laguna / Cavite / Batangas / Rizal)</option>
+                <option value="Davao">Mindanao (Davao / CDO / GenSan)</option>
+                <option value="Iloilo">Western Visayas (Iloilo / Bacolod)</option>
+                <option value="CAR">Northern Luzon / Cordillera (Baguio)</option>
+                <option value="Remote">Worldwide Remote / Work from Home</option>
               </select>
 
               {/* Source Filter */}
@@ -682,10 +686,24 @@ function JobsContent() {
                         size="sm"
                         className="h-7 px-2 text-[11px] text-muted-foreground hover:text-foreground"
                       >
-                        <Link href="/prep">
+                        <Link href={`/prep?job_id=${job.id}`}>
                           <Bot className="w-3 h-3 mr-1 text-muted-foreground" />
                           <span>AI Prep</span>
                         </Link>
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedJob(job);
+                          setIsCoverLetterModalOpen(true);
+                        }}
+                        className="h-7 px-2 text-[11px] text-primary hover:text-primary hover:bg-primary/10 gap-1 font-medium"
+                      >
+                        <FileText className="w-3 h-3 text-primary" />
+                        <span>Cover Letter</span>
                       </Button>
                     </div>
 
@@ -973,46 +991,132 @@ function JobsContent() {
               )}
 
               {/* Action Buttons Below the Job */}
-              <div className="pt-4 border-t border-border space-y-3">
-                <div className="flex flex-col sm:flex-row items-center gap-2.5">
+              <div className="pt-4 border-t border-border space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2.5">
                   <Button
                     asChild
                     variant="default"
-                    className="w-full sm:flex-1 h-10 font-semibold gap-2 text-sm bg-primary hover:bg-primary/90 text-primary-foreground shadow-xs"
+                    className="w-full h-10 px-3 font-semibold gap-2 text-xs sm:text-sm bg-primary hover:bg-primary/90 text-primary-foreground shadow-xs rounded-xl"
                   >
-                    <Link href={`/resume?job_id=${selectedJob.id}`}>
-                      <Sliders className="w-4 h-4" />
-                      <span>Optimize Resume for this Role</span>
+                    <Link href={`/resume?job_id=${selectedJob.id}`} className="flex items-center justify-center min-w-0">
+                      <Sliders className="w-4 h-4 shrink-0" />
+                      <span className="truncate">Optimize Resume</span>
                     </Link>
+                  </Button>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setIsCoverLetterExpanded((prev) => {
+                        const next = !prev;
+                        if (next) {
+                          setTimeout(() => {
+                            const el = document.getElementById("curated-cover-letter-studio");
+                            if (el) el.scrollIntoView({ behavior: "smooth" });
+                          }, 100);
+                        }
+                        return next;
+                      });
+                    }}
+                    className={cn(
+                      "w-full h-10 px-3 font-semibold gap-2 text-xs sm:text-sm rounded-xl transition-all",
+                      isCoverLetterExpanded
+                        ? "bg-primary/15 text-primary border-primary/40 shadow-xs"
+                        : "border-primary/30 text-primary hover:bg-primary/10"
+                    )}
+                  >
+                    <FileText className="w-4 h-4 shrink-0 text-primary" />
+                    <span className="truncate">{isCoverLetterExpanded ? "Hide Cover Letter" : "Curate Cover Letter"}</span>
                   </Button>
 
                   <Button
                     asChild
                     variant="secondary"
-                    className="w-full sm:w-auto h-10 font-semibold gap-2 text-sm px-4"
+                    className="w-full h-10 px-3 font-semibold gap-2 text-xs sm:text-sm rounded-xl border border-border/60 hover:bg-secondary/80"
                   >
-                    <Link href="/prep">
-                      <Bot className="w-4 h-4 text-primary" />
-                      <span>AI Interview Prep</span>
+                    <Link href={`/prep?job_id=${selectedJob.id}`} className="flex items-center justify-center min-w-0">
+                      <Bot className="w-4 h-4 shrink-0 text-primary" />
+                      <span className="truncate">AI Interview Prep</span>
                     </Link>
                   </Button>
 
-                  {selectedJob.url && (
+                  {selectedJob.url ? (
                     <Button
                       asChild
                       variant="outline"
-                      className="w-full sm:w-auto h-10 px-3.5 text-xs font-semibold gap-1.5"
+                      className="w-full h-10 px-3 font-semibold gap-2 text-xs sm:text-sm rounded-xl border-border/80 hover:bg-accent hover:text-accent-foreground"
                     >
                       <a
                         href={selectedJob.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5"
+                        className="flex items-center justify-center min-w-0"
                       >
-                        <ExternalLink className="w-3.5 h-3.5 text-muted-foreground" />
-                        <span>Apply on {getSourceDisplayName(selectedJob.source)}</span>
+                        <ExternalLink className="w-4 h-4 shrink-0 text-muted-foreground" />
+                        <span className="truncate">Apply on {getSourceDisplayName(selectedJob.source)}</span>
                       </a>
                     </Button>
+                  ) : (
+                    <Button
+                      disabled
+                      variant="outline"
+                      className="w-full h-10 px-3 font-medium gap-2 text-xs sm:text-sm rounded-xl border-border/40 opacity-50 cursor-not-allowed"
+                    >
+                      <ExternalLink className="w-4 h-4 shrink-0 text-muted-foreground" />
+                      <span className="truncate">Direct Apply Unavailable</span>
+                    </Button>
+                  )}
+                </div>
+
+                {/* Curated Custom Cover Letter Studio Module */}
+                <div id="curated-cover-letter-studio" className="pt-2 border-t border-border">
+                  {isCoverLetterExpanded ? (
+                    <div className="animate-in fade-in slide-in-from-top-2 duration-200">
+                      <CoverLetterGenerator
+                        job={selectedJob}
+                        onFullscreen={() => setIsCoverLetterModalOpen(true)}
+                        onClose={() => setIsCoverLetterExpanded(false)}
+                      />
+                    </div>
+                  ) : (
+                    <div
+                      onClick={() => {
+                        setIsCoverLetterExpanded(true);
+                        setTimeout(() => {
+                          const el = document.getElementById("curated-cover-letter-studio");
+                          if (el) el.scrollIntoView({ behavior: "smooth" });
+                        }, 50);
+                      }}
+                      className="p-3.5 rounded-xl border border-dashed border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors cursor-pointer flex items-center justify-between text-xs group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-primary/10 text-primary shrink-0 group-hover:scale-105 transition-transform">
+                          <FileText className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-foreground">Curated Cover Letter Studio</span>
+                            <Badge variant="outline" className="text-[10px] py-0 px-1.5 font-mono text-primary border-primary/30">
+                              ATS Tailored
+                            </Badge>
+                          </div>
+                          <p className="text-muted-foreground text-[11px] mt-0.5">
+                            Synthesizes <span className="font-medium text-foreground">{selectedJob.title}</span> requirements at <span className="font-medium text-foreground">{selectedJob.company}</span> with your resume highlights.
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0 ml-3">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-7 px-2.5 text-xs font-semibold text-primary border-primary/30 group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
+                        >
+                          <span>Open Studio &rarr;</span>
+                        </Button>
+                      </div>
+                    </div>
                   )}
                 </div>
 
@@ -1040,6 +1144,18 @@ function JobsContent() {
           setSelectedJob(newJob);
         }}
       />
+
+      {selectedJob && (
+        <Dialog open={isCoverLetterModalOpen} onOpenChange={setIsCoverLetterModalOpen}>
+          <DialogContent className="sm:max-w-[760px] max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+            <CoverLetterGenerator
+              job={selectedJob}
+              isModal={true}
+              onClose={() => setIsCoverLetterModalOpen(false)}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

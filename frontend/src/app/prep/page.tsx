@@ -35,7 +35,13 @@ export default function PrepPage() {
         const data = await getJobs();
         setJobs(data);
         if (data.length > 0) {
-          setSelectedJobId(data[0].id);
+          const urlParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+          const initialJobId = urlParams?.get("job_id");
+          if (initialJobId && data.some((j) => j.id === initialJobId)) {
+            setSelectedJobId(initialJobId);
+          } else {
+            setSelectedJobId(data[0].id);
+          }
         }
       } catch (err) {
         console.error("Error loading jobs for prep:", err);

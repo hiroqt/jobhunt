@@ -24,6 +24,7 @@ router = APIRouter(prefix="/applications", tags=["Applications"])
 @router.get("", response_model=List[ApplicationResponse])
 async def list_applications(
     status_filter: Optional[str] = None,
+    job_id: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
     candidate: CandidateProfile = Depends(get_current_candidate)
 ):
@@ -38,6 +39,8 @@ async def list_applications(
     )
     if status_filter:
         query = query.where(Application.status == status_filter.upper())
+    if job_id:
+        query = query.where(Application.job_id == job_id)
 
     result = await db.execute(query)
     return result.scalars().all()

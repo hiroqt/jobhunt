@@ -392,3 +392,37 @@ export interface NotificationListResponse {
   unread_count: number;
   total_count: number;
 }
+
+export type CoverLetterTone = "professional" | "impactful" | "technical" | "startup";
+export type CoverLetterLength = "concise" | "standard" | "detailed";
+
+export interface CoverLetterGenRequest {
+  job_id?: string;
+  job_title?: string;
+  company?: string;
+  job_description?: string;
+  resume_id?: string;
+  resume_text?: string;
+  tone?: CoverLetterTone;
+  length?: CoverLetterLength;
+  focus_areas?: string[];
+  custom_instructions?: string;
+  hiring_manager_name?: string;
+  provider?: string;
+}
+
+export interface CoverLetterGenResponse {
+  job_title: string;
+  company: string;
+  subject_line: string;
+  salutation: string;
+  cover_letter: string;
+  body_paragraphs: string[];
+  sign_off: string;
+  candidate_name: string;
+  matched_skills_highlighted: string[];
+  key_strengths_featured: string[];
+  word_count: number;
+  ai_provider_used: string;
+}
+

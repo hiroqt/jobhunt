@@ -17,6 +17,8 @@ import {
   SourceInfo,
   Notification,
   NotificationListResponse,
+  CoverLetterGenRequest,
+  CoverLetterGenResponse,
 } from "@/types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
@@ -311,8 +313,17 @@ export async function deleteNotification(notificationId: string): Promise<void> 
 }
 
 // Application APIs
-export async function getApplications(statusFilter?: string): Promise<Application[]> {
-  const query = statusFilter ? `?status_filter=${encodeURIComponent(statusFilter)}` : "";
+export async function getApplications(
+  options?: { statusFilter?: string; jobId?: string } | string
+): Promise<Application[]> {
+  const params = new URLSearchParams();
+  if (typeof options === "string") {
+    if (options) params.set("status_filter", options);
+  } else if (options) {
+    if (options.statusFilter) params.set("status_filter", options.statusFilter);
+    if (options.jobId) params.set("job_id", options.jobId);
+  }
+  const query = params.toString() ? `?${params.toString()}` : "";
   return fetchJSON<Application[]>(`/applications${query}`);
 }
 
@@ -428,6 +439,35 @@ export async function generateFollowUpEmail(params: {
     body: JSON.stringify(params),
   });
 }
+
+export async function generateCoverLetter(
+  params: CoverLetterGenRequest
+): Promise<CoverLetterGenResponse> {
+  return fetchJSON<CoverLetterGenResponse>("/ai/cover-letter", {
+    method: "POST",
+    body: JSON.stringify(params),
+  });
+}
+
+export async function saveCoverLetterForJob(
+  jobId: string,
+  coverLetter: string
+): Promise<Application> {
+  const existingApps = await getApplications({ jobId });
+  if (existingApps && existingApps.length > 0) {
+    return updateApplication(existingApps[0].id, {
+      custom_cover_letter: coverLetter,
+    });
+  } else {
+    return createApplication({
+      job_id: jobId,
+      status: "SAVED",
+      custom_cover_letter: coverLetter,
+      notes: "Cover letter curated and saved.",
+    });
+  }
+}
+
 
 // Analytics APIs
 export async function getDashboardOverview(): Promise<DashboardOverview> {

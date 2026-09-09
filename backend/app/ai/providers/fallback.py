@@ -3,7 +3,13 @@ from datetime import datetime
 from typing import Optional, List, Dict, Tuple, Set
 from backend.app.ai.base import BaseAIProvider
 from backend.app.schemas.job import JobCreate, JobSkillInfo
-from backend.app.schemas.ai import InterviewPrepResponse, QuestionAndStarGuide, ResumeTailorResponse, FollowUpEmailGenResponse
+from backend.app.schemas.ai import (
+    InterviewPrepResponse,
+    QuestionAndStarGuide,
+    ResumeTailorResponse,
+    FollowUpEmailGenResponse,
+    CoverLetterGenResponse
+)
 from backend.app.schemas.candidate import ParsedResumeProfile, ParsedResumeSkill
 from backend.app.processing.normalizer import (
     SYNONYM_MAP,
@@ -861,6 +867,138 @@ class FallbackHeuristicProvider(BaseAIProvider):
             cover_letter_draft=f"Dear Hiring Team at {company},\n\nI am writing to express my strong enthusiasm for the {job_title} position. With a solid foundation in {', '.join(highlight_skills[:3])} and a dedication to clean code and high software reliability, I am excited about the opportunity to contribute immediately to {company}'s engineering team.\n\nThank you for your time and consideration. I welcome the opportunity to discuss how my skill set aligns with your goals.\n\nSincerely,\nCandidate",
             ai_provider_used="Deterministic Heuristic Fallback Engine"
         )
+
+    # =========================================================================
+    # COVER LETTER HEURISTIC
+    # =========================================================================
+
+    async def generate_cover_letter(
+        self,
+        job_title: str,
+        company: str,
+        job_description: str,
+        candidate_name: str,
+        candidate_summary: str,
+        candidate_skills: List[str],
+        resume_text: str,
+        tone: str = "professional",
+        length: str = "standard",
+        focus_areas: Optional[List[str]] = None,
+        custom_instructions: Optional[str] = None,
+        hiring_manager_name: Optional[str] = None
+    ) -> CoverLetterGenResponse:
+        job_skills = extract_skills_from_text(job_description)
+        normalized_job_skills = [s.lower() for s in job_skills]
+
+        # Calculate matched skills between resume and job
+        matched = []
+        for s in (candidate_skills or []):
+            if s.lower() in normalized_job_skills or any(njs in s.lower() for njs in normalized_job_skills):
+                matched.append(s)
+
+        if not matched and candidate_skills:
+            matched = candidate_skills[:4]
+        elif not matched and job_skills:
+            matched = job_skills[:4]
+        elif not matched:
+            matched = ["Full-Stack Development", "REST APIs", "System Architecture", "Modern Web Engineering"]
+
+        top_skills_str = ", ".join(matched[:3])
+        recipient = hiring_manager_name or f"Hiring Team at {company}"
+        c_name = candidate_name.strip() if candidate_name and candidate_name.strip() != "Candidate" else "Candidate"
+        salutation = f"Dear {recipient},"
+
+        # Dynamic intro based on selected tone
+        tone_lower = (tone or "professional").lower()
+        if tone_lower == "impactful":
+            p1 = (
+                f"With a proven track record of architecting scalable solutions and delivering high-impact business outcomes, "
+                f"I am excited to submit my candidacy for the {job_title} role at {company}. "
+                f"Having specialized in {top_skills_str}, I have consistently focused on driving engineering velocity, "
+                f"reducing operational latency, and shipping dependable features that move key company metrics."
+            )
+        elif tone_lower == "technical":
+            p1 = (
+                f"I am writing to express my strong enthusiasm for the {job_title} opening at {company}. "
+                f"My engineering background is deeply rooted in {top_skills_str}, and I am especially drawn to "
+                f"{company}'s commitment to architectural rigor, clean code standards, and reliable distributed systems."
+            )
+        elif tone_lower == "startup":
+            p1 = (
+                f"I have been closely following {company}'s growth and product trajectory, and I am thrilled to apply for the "
+                f"{job_title} role. As an engineer who thrives in fast-paced environments with high autonomy and ownership, "
+                f"my hands-on experience in {top_skills_str} prepares me to dive in on day one and accelerate your roadmap."
+            )
+        else: # professional
+            p1 = (
+                f"I am writing to formally submit my application for the {job_title} position at {company}. "
+                f"With comprehensive experience across {top_skills_str} and a strong history of cross-functional collaboration, "
+                f"I am confident that my technical skill set and engineering mindset make me an exceptional fit for your team."
+            )
+
+        # Body paragraph based on resume experience & summary
+        clean_summary = candidate_summary.strip() if candidate_summary else ""
+        if clean_summary:
+            p2_background = f"{clean_summary} "
+        else:
+            p2_background = (
+                f"Throughout my professional experience, I have developed a strong competency in building resilient applications, "
+                f"optimizing database schemas, and creating high-performance user interfaces. "
+            )
+
+        p2 = (
+            f"{p2_background}In reviewing the key responsibilities for the {job_title} role at {company}, "
+            f"I recognized an immediate alignment with my work designing robust pipelines and leveraging {matched[0] if matched else 'modern tools'}. "
+            f"I place high emphasis on automated testing, observability, and code maintainability to ensure platforms remain dependable at scale."
+        )
+
+        # Optional custom note injection
+        if custom_instructions and custom_instructions.strip():
+            p2 += f" Furthermore, {custom_instructions.strip()}."
+
+        # Closing paragraph
+        p3 = (
+            f"I would welcome the opportunity to discuss how my technical expertise in {top_skills_str} "
+            f"can contribute directly to {company}'s upcoming milestones. Thank you for your time, consideration, "
+            f"and review of my credentials."
+        )
+
+        length_lower = (length or "standard").lower()
+        if length_lower == "concise":
+            # 2 condensed paragraphs
+            combined_p1 = f"{p1} {p2_background}"
+            body_paragraphs = [combined_p1, p3]
+        elif length_lower == "detailed":
+            # 4 paragraphs with bullet achievements
+            bullet_p = (
+                f"Key highlights from my recent background that directly align with your requirements include:\n"
+                f"• Built and deployed scalable services utilizing {matched[0] if len(matched) > 0 else 'cloud technologies'}, significantly improving system uptime and developer productivity.\n"
+                f"• Standardized CI/CD workflows and automated test coverage across production environments, reducing regression defects by over 30%.\n"
+                f"• Partnered closely with cross-functional stakeholders to translate complex business needs into clean, maintainable architecture."
+            )
+            body_paragraphs = [p1, p2, bullet_p, p3]
+        else: # standard
+            body_paragraphs = [p1, p2, p3]
+
+        sign_off = f"Sincerely,\n{c_name}"
+        full_letter = f"{salutation}\n\n" + "\n\n".join(body_paragraphs) + f"\n\n{sign_off}"
+        word_count = len(full_letter.split())
+
+        return CoverLetterGenResponse(
+            job_title=job_title,
+            company=company,
+            subject_line=f"Application for {job_title} - {c_name}",
+            salutation=salutation,
+            cover_letter=full_letter,
+            body_paragraphs=body_paragraphs,
+            sign_off=sign_off,
+            candidate_name=c_name,
+            matched_skills_highlighted=matched[:5],
+            key_strengths_featured=[f"{job_title} domain expertise", "System scalability", "Cross-functional execution"],
+            word_count=word_count,
+            ai_provider_used="Deterministic Heuristic Fallback Engine"
+        )
+
 
     # =========================================================================
     # FOLLOW-UP EMAIL HEURISTIC

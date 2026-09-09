@@ -4,7 +4,13 @@ from typing import Optional, List, Dict, Any
 from openai import AsyncOpenAI
 from backend.app.ai.base import BaseAIProvider
 from backend.app.schemas.job import JobCreate, JobSkillInfo
-from backend.app.schemas.ai import InterviewPrepResponse, QuestionAndStarGuide, ResumeTailorResponse, FollowUpEmailGenResponse
+from backend.app.schemas.ai import (
+    InterviewPrepResponse,
+    QuestionAndStarGuide,
+    ResumeTailorResponse,
+    FollowUpEmailGenResponse,
+    CoverLetterGenResponse
+)
 from backend.app.processing.normalizer import normalize_skill_name, get_skill_category, normalize_currency
 from backend.app.processing.source_detector import detect_job_source
 from backend.app.core.logging import logger
@@ -242,6 +248,135 @@ Return pure JSON matching:
             logger.warning(f"AI resume tailoring failed on {self._name}: {e}. Using fallback.")
             from backend.app.ai.providers.fallback import FallbackHeuristicProvider
             return await FallbackHeuristicProvider().tailor_resume(job_title, company, job_description, candidate_resume_text)
+
+    async def generate_cover_letter(
+        self,
+        job_title: str,
+        company: str,
+        job_description: str,
+        candidate_name: str,
+        candidate_summary: str,
+        candidate_skills: List[str],
+        resume_text: str,
+        tone: str = "professional",
+        length: str = "standard",
+        focus_areas: Optional[List[str]] = None,
+        custom_instructions: Optional[str] = None,
+        hiring_manager_name: Optional[str] = None
+    ) -> CoverLetterGenResponse:
+        tone_directives = {
+            "professional": "Authoritative, polished, executive, and balanced. Project quiet confidence and competence.",
+            "impactful": "Dynamic, high-energy, and metrics-driven. Spotlight business outcomes, ROI, and engineering throughput.",
+            "technical": "Architectural, rigorous, and deep. Discuss tech stack, system reliability, scaling challenges, and clean code principles.",
+            "startup": "Agile, passionate, scrappy, and entrepreneurial. Highlight high ownership, rapid execution, and product-minded thinking."
+        }
+        chosen_tone_dir = tone_directives.get(tone.lower(), tone_directives["professional"])
+
+        length_directives = {
+            "concise": "2 tight, high-signal paragraphs (approx 200-250 words total). Recruiter friendly, no fluff.",
+            "standard": "3 well-structured paragraphs (approx 300-380 words total). Opening hook, concrete achievements proof, forward-looking close.",
+            "detailed": "4 comprehensive paragraphs with 2-3 bulleted metric highlights (approx 420-500 words total)."
+        }
+        chosen_length_dir = length_directives.get(length.lower(), length_directives["standard"])
+
+        focus_text = f"Emphasize these key areas: {', '.join(focus_areas)}." if focus_areas else ""
+        custom_text = f"Additional candidate instructions to weave in: {custom_instructions}" if custom_instructions else ""
+
+        system_prompt = f"""You are an elite Silicon Valley executive career coach and specialized cover letter copywriter.
+Craft a bespoke, high-converting cover letter tailored to the specific target job description and the candidate's verified resume.
+
+GUIDELINES:
+1. Tone Style: {chosen_tone_dir}
+2. Length & Structure: {chosen_length_dir}
+3. {focus_text}
+4. {custom_text}
+5. Avoid generic AI cliches ("I am writing to express my enthusiasm...", "I believe I am the ideal candidate..."). Start with a strong, tailored hook that demonstrates understanding of the company's domain, challenges, and goals.
+6. Connect the candidate's actual projects, skills, and metrics directly to the requirements in the job description.
+7. Return pure JSON matching this exact schema:
+{{
+  "subject_line": "Application for [Job Title] - [Candidate Name]",
+  "salutation": "Dear [Hiring Manager Name or Hiring Team at Company],",
+  "body_paragraphs": [
+    "Paragraph 1 text...",
+    "Paragraph 2 text...",
+    "Paragraph 3 text..."
+  ],
+  "sign_off": "Sincerely,\\n[Candidate Name]",
+  "matched_skills_highlighted": ["Skill1", "Skill2", "Skill3"],
+  "key_strengths_featured": ["Specific strength 1", "Specific strength 2"]
+}}"""
+
+        recipient = hiring_manager_name or f"Hiring Team at {company}"
+        user_prompt = f"""TARGET OPPORTUNITY:
+Title: {job_title}
+Company: {company}
+Addressed to: {recipient}
+Job Description:
+{job_description[:4500]}
+
+CANDIDATE BACKGROUND:
+Name: {candidate_name or "Candidate"}
+Summary: {candidate_summary or "Experienced professional"}
+Key Skills: {', '.join(candidate_skills[:15]) if candidate_skills else 'Software Engineering'}
+Resume Experience Details:
+{resume_text[:4500] if resume_text else 'Experience in software engineering, modern web technologies, and scalable systems.'}
+"""
+
+        try:
+            response = await self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                temperature=0.35
+            )
+            content = response.choices[0].message.content or "{}"
+            cleaned_json = re.sub(r"^```json\s*", "", content.strip(), flags=re.MULTILINE)
+            cleaned_json = re.sub(r"```$", "", cleaned_json.strip(), flags=re.MULTILINE)
+            data = json.loads(cleaned_json)
+
+            salutation = data.get("salutation") or f"Dear Hiring Team at {company},"
+            body_paragraphs = data.get("body_paragraphs", [])
+            if not body_paragraphs and "cover_letter" in data:
+                body_paragraphs = [p.strip() for p in data["cover_letter"].split("\n\n") if p.strip()]
+
+            sign_off = data.get("sign_off") or f"Sincerely,\n{candidate_name or 'Candidate'}"
+            full_letter = f"{salutation}\n\n" + "\n\n".join(body_paragraphs) + f"\n\n{sign_off}"
+            word_count = len(full_letter.split())
+
+            return CoverLetterGenResponse(
+                job_title=job_title,
+                company=company,
+                subject_line=data.get("subject_line") or f"Application for {job_title} - {candidate_name or 'Candidate'}",
+                salutation=salutation,
+                cover_letter=full_letter,
+                body_paragraphs=body_paragraphs,
+                sign_off=sign_off,
+                candidate_name=candidate_name or "Candidate",
+                matched_skills_highlighted=data.get("matched_skills_highlighted", candidate_skills[:4]),
+                key_strengths_featured=data.get("key_strengths_featured", [f"{job_title} domain expertise", "Technical execution"]),
+                word_count=word_count,
+                ai_provider_used=f"{self._name} ({self.model})"
+            )
+        except Exception as e:
+            logger.warning(f"AI cover letter generation failed on {self._name}: {e}. Using heuristic fallback.")
+            from backend.app.ai.providers.fallback import FallbackHeuristicProvider
+            return await FallbackHeuristicProvider().generate_cover_letter(
+                job_title=job_title,
+                company=company,
+                job_description=job_description,
+                candidate_name=candidate_name,
+                candidate_summary=candidate_summary,
+                candidate_skills=candidate_skills,
+                resume_text=resume_text,
+                tone=tone,
+                length=length,
+                focus_areas=focus_areas,
+                custom_instructions=custom_instructions,
+                hiring_manager_name=hiring_manager_name
+            )
+
 
     async def generate_follow_up_email(
         self,

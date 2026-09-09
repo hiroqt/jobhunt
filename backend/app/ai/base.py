@@ -1,7 +1,12 @@
 from abc import ABC, abstractmethod
 from typing import Dict, Any, List, Optional
 from backend.app.schemas.job import JobCreate
-from backend.app.schemas.ai import InterviewPrepResponse, ResumeTailorResponse, FollowUpEmailGenResponse
+from backend.app.schemas.ai import (
+    InterviewPrepResponse,
+    ResumeTailorResponse,
+    FollowUpEmailGenResponse,
+    CoverLetterGenResponse
+)
 
 
 class BaseAIProvider(ABC):
@@ -36,6 +41,25 @@ class BaseAIProvider(ABC):
         candidate_resume_text: str
     ) -> ResumeTailorResponse:
         """Generates tailored resume bullet points and cover letter draft"""
+        pass
+
+    @abstractmethod
+    async def generate_cover_letter(
+        self,
+        job_title: str,
+        company: str,
+        job_description: str,
+        candidate_name: str,
+        candidate_summary: str,
+        candidate_skills: List[str],
+        resume_text: str,
+        tone: str = "professional",
+        length: str = "standard",
+        focus_areas: Optional[List[str]] = None,
+        custom_instructions: Optional[str] = None,
+        hiring_manager_name: Optional[str] = None
+    ) -> CoverLetterGenResponse:
+        """Generates a curated, custom, ATS-optimized cover letter tailored to the job description and candidate resume"""
         pass
 
     @abstractmethod

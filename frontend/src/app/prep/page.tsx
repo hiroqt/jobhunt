@@ -118,12 +118,12 @@ export default function PrepPage() {
               className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring font-medium h-10"
             >
               <option value="openrouter">OpenRouter Free (Nemotron 3 Ultra)</option>
-              <option value="fallback">Local Heuristic (Offline)</option>
+              <option value="nemotron-light">OpenRouter Free (Nemotron 3.5 Lightning)</option>
               <option value="nvidia">NVIDIA NIM (Llama 3.3)</option>
               <option value="glm">Zhipu GLM (GLM-4-Flash)</option>
               <option value="groq">Groq (Llama 3.3)</option>
               <option value="gemini">Google Gemini (Gemini 2.5 Flash)</option>
-              <option value="openai">OpenAI (GPT-4o-mini)</option>
+              <option value="fallback">Local Heuristic (Offline)</option>
             </select>
           </div>
 

@@ -26,11 +26,12 @@ from backend.app.processing.psoc_classifier import (
     get_psoc_group_keywords,
 )
 from backend.app.core.logging import logger
+from backend.app.core.rate_limiter import ai_rate_limiter
 
 router = APIRouter(prefix="/jobs", tags=["Jobs"])
 
 
-@router.post("/extract", response_model=JobResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/extract", response_model=JobResponse, status_code=status.HTTP_201_CREATED, dependencies=[Depends(ai_rate_limiter)])
 async def extract_and_analyze_job(
     request: JobExtractRequest,
     db: AsyncSession = Depends(get_db),

@@ -1,0 +1,46 @@
+# sakto ka
+
+> Personal career intelligence, job search pipeline, and interview preparation platform.
+
+sakto ka is an open, privacy-first career management operating system designed for software engineers and knowledge professionals. It provides end-to-end tooling for capturing job postings, calculating semantic fit scores, managing an active Kanban application pipeline, tailoring resumes to job descriptions, and generating structured technical and behavioral interview preparation kits.
+
+## Core Features
+
+- **Guest / Ephemeral Session Mode**: Zero mandatory registration; candidate data is stored locally in ephemeral guest sessions with zero tracking.
+- **AI-Powered Job Qualification**: Parses job posting descriptions from URLs or pasted text, extracts structured requirements, and evaluates compatibility against candidate profiles.
+- **Multimodel AI Architecture**: Integrates free-tier cloud models (OpenRouter Nemotron 3 Ultra, OpenRouter Nemotron 3.5 Lightning, NVIDIA NIM Llama 3.3, Google Gemini Flash, Zhipu GLM, Groq Llama 3.3) with a deterministic offline heuristic rule engine.
+- **STAR Behavioral & Technical Prep**: Generates scenario-based technical questions and STAR (Situation, Task, Action, Result) interview responses tailored to the target company and role.
+- **Resume Tailoring**: Analyzes candidate skill sets against specific job postings to generate ATS-friendly resume revisions and high-converting cover letters.
+- **Application Pipeline Kanban**: Visual application tracking through Review, Applied, Screening, Technical Interview, Final Round, Offer, and Closed stages.
+
+## Core Navigation & Pages
+
+- [Dashboard](/) : High-level metrics, application stages summary, and active job search pipeline.
+- [Jobs Pipeline](/jobs) : Database of qualified job opportunities with fit scores, compensation benchmarks, and status badges.
+- [Interview Prep Kit](/prep) : Role-specific technical questions, STAR behavioral frameworks, and reverse interviewer questions.
+- [Candidate Profile](/profile) : Master profile containing career headline, target compensation, seniority, and categorized skills inventory.
+- [Resume Studio](/resume) : ATS resume parsing, keyword alignment, and customized cover letters.
+- [Saved Searches](/searches) : Pre-configured boolean search queries for top platforms (LinkedIn, Indeed, Wellfound, JobStreet).
+
+## Technical Architecture
+
+- **Frontend**: Next.js 14 (App Router), TypeScript, Tailwind CSS, Lucide / Hugeicons, Radix UI primitives.
+- **Backend**: Python 3.11+, FastAPI, SQLAlchemy 2.0 (async), SQLite / PostgreSQL support.
+- **AI / LLM Integration**: Multi-provider OpenAI-compatible client interface with client-side rate limiting (20 req/min) and zero client-exposed API keys.
+- **Heuristic Engine**: Deterministic regex-based fallback extractor for fully offline operation without external API dependencies.
+
+## API Documentation
+
+The backend exposes an OpenAPI 3.1 compatible schema:
+- Health Check: `GET /health`
+- Job Extraction & Qualification: `POST /api/jobs/extract`
+- Candidate Profile Management: `GET /api/candidate`, `PUT /api/candidate`
+- AI Interview Prep: `POST /api/ai/interview-prep`
+- AI Resume Tailoring: `POST /api/ai/tailor-resume`
+- AI Follow-up Email Generator: `POST /api/ai/follow-up-email`
+
+## Privacy & Security
+
+- No user passwords or sensitive credentials are required.
+- API keys reside solely in backend server configurations and are never sent to the client.
+- In-memory rate limiting prevents abuse and preserves free-tier quotas.

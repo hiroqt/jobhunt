@@ -49,6 +49,17 @@ export const Sidebar: React.FC = () => {
       .catch(() => {});
   }, [pathname]);
 
+  // Re-fetch profile when saved from the profile page
+  useEffect(() => {
+    const handleProfileUpdate = () => {
+      getCandidateProfile()
+        .then(setProfile)
+        .catch(() => {});
+    };
+    window.addEventListener("profile-updated", handleProfileUpdate);
+    return () => window.removeEventListener("profile-updated", handleProfileUpdate);
+  }, []);
+
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname]);

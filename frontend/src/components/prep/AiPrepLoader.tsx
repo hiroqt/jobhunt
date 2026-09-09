@@ -12,13 +12,12 @@ interface AiPrepLoaderProps {
 }
 
 const PROVIDER_LABELS: Record<string, string> = {
-  openrouter: "OpenRouter",
+  openrouter: "OpenRouter (Nemotron 3 Ultra)",
+  "nemotron-light": "OpenRouter (Nemotron 3.5)",
   gemini: "Google Gemini",
   nvidia: "NVIDIA NIM",
   glm: "Zhipu GLM",
   groq: "Groq",
-  openai: "OpenAI",
-  ollama: "Local Ollama",
   fallback: "Local Heuristic",
 };
 

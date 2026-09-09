@@ -128,6 +128,7 @@ export default function ProfilePage() {
       });
       setProfile(updated);
       setSavedSuccess(true);
+      window.dispatchEvent(new CustomEvent("profile-updated"));
       setTimeout(() => setSavedSuccess(false), 4000);
     } catch (err) {
       console.error("Error saving profile:", err);
@@ -374,12 +375,12 @@ export default function ProfilePage() {
                     className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring font-medium h-10"
                   >
                     <option value="openrouter">OpenRouter Free (Nemotron 3 Ultra)</option>
-                    <option value="fallback">Local Heuristic (Offline)</option>
+                    <option value="nemotron-light">OpenRouter Free (Nemotron 3.5 Lightning)</option>
                     <option value="nvidia">NVIDIA NIM (Llama 3.3)</option>
                     <option value="glm">Zhipu GLM (GLM-4-Flash)</option>
                     <option value="groq">Groq (Llama 3.3)</option>
                     <option value="gemini">Google Gemini (Gemini 2.5 Flash)</option>
-                    <option value="openai">OpenAI (GPT-4o-mini)</option>
+                    <option value="fallback">Local Heuristic (Offline)</option>
                   </select>
                 </div>
 
@@ -607,12 +608,28 @@ export default function ProfilePage() {
               <div className="flex justify-end pt-3 border-t border-border">
                 <Button
                   type="submit"
-                  disabled={saving}
-                  variant="default"
-                  className="gap-2 font-semibold text-sm h-10 px-5"
+                  disabled={saving || savedSuccess}
+                  variant={savedSuccess ? "success" : "default"}
+                  className={`gap-2 font-semibold text-sm h-10 px-5 transition-all duration-300 ${
+                    savedSuccess ? "scale-[1.02]" : ""
+                  }`}
                 >
-                  <Save className="w-4 h-4" />
-                  <span>{saving ? "Saving..." : "Save Master Profile"}</span>
+                  {saving ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Saving...</span>
+                    </>
+                  ) : savedSuccess ? (
+                    <>
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>Profile Saved!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4" />
+                      <span>Save Master Profile</span>
+                    </>
+                  )}
                 </Button>
               </div>
             </form>

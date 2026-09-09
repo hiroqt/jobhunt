@@ -1,0 +1,31 @@
+# robots.txt for sakto ka — Career Application & Interview Management Platform
+# Website: https://sakto-ka.vercel.app / http://localhost:3000
+
+User-agent: *
+Allow: /
+Disallow: /api/
+
+# Friendly AI & Search Crawlers
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Anthropic-ai
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+# LLM Documentation Standard
+# See /llms.txt for AI agent and LLM-friendly documentation (https://llmstxt.org)

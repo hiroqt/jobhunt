@@ -16,8 +16,9 @@ from backend.app.schemas.ai import (
 )
 from backend.app.api.dependencies import get_current_candidate
 from backend.app.ai.factory import get_ai_provider
+from backend.app.core.rate_limiter import ai_rate_limiter
 
-router = APIRouter(prefix="/ai", tags=["AI Career Intelligence"])
+router = APIRouter(prefix="/ai", tags=["AI Career Intelligence"], dependencies=[Depends(ai_rate_limiter)])
 
 
 @router.post("/interview-prep", response_model=InterviewPrepResponse)

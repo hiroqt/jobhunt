@@ -74,7 +74,7 @@ export const GuidelinesModal: React.FC<GuidelinesModalProps> = ({
               </Button>
             )}
           </TooltipTrigger>
-          <TooltipContent side="bottom" align="center" className="max-w-xs text-center font-normal">
+          <TooltipContent side="left" align="center" collisionPadding={12} className="max-w-xs text-center font-normal">
             <p className="font-semibold text-foreground">Guidelines & Best Practices</p>
             <p className="text-[11px] text-muted-foreground">Click to open user guide.</p>
           </TooltipContent>
@@ -82,7 +82,7 @@ export const GuidelinesModal: React.FC<GuidelinesModalProps> = ({
       </TooltipProvider>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="max-w-2xl sm:max-w-3xl w-[calc(100vw-1.5rem)] max-h-[90vh] sm:max-h-[85vh] flex flex-col p-4 sm:p-6 overflow-hidden rounded-2xl border border-border shadow-2xl bg-card">
+        <DialogContent className="max-w-2xl sm:max-w-3xl w-[calc(100vw-1.5rem)] max-h-[85dvh] sm:max-h-[80dvh] flex flex-col p-4 sm:p-6 overflow-hidden rounded-2xl border border-border shadow-2xl bg-card">
           <DialogHeader className="border-b border-border/70 pb-3 space-y-2.5 shrink-0">
             <div className="flex items-center gap-2.5 sm:gap-3">
               <div className="p-1.5 sm:p-2 rounded-xl bg-primary/10 border border-primary/20 text-primary shrink-0">

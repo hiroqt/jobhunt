@@ -11,6 +11,7 @@ from backend.app.schemas.candidate import CandidateProfileResponse, CandidatePro
 from backend.app.schemas.skill import CandidateSkillCreate, CandidateSkillResponse, SkillResponse
 from backend.app.api.dependencies import get_current_candidate
 from backend.app.processing.normalizer import normalize_skill_name, get_skill_category, normalize_currency
+from backend.app.core.rate_limiter import ai_rate_limiter
 
 router = APIRouter(prefix="/candidate", tags=["Candidate"])
 
@@ -157,7 +158,7 @@ async def delete_candidate_skill(
     await db.commit()
 
 
-@router.post("/resume/upload", response_model=CandidateProfileResponse)
+@router.post("/resume/upload", response_model=CandidateProfileResponse, dependencies=[Depends(ai_rate_limiter)])
 async def upload_and_parse_resume(
     file: UploadFile = File(None),
     raw_text: Optional[str] = Form(None),

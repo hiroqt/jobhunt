@@ -28,37 +28,40 @@ class Settings(BaseSettings):
     )
     
     # AI Provider Settings
-    DEFAULT_AI_PROVIDER: str = Field(default="fallback", description="Default AI provider: gemini, nvidia, glm, groq, openai, ollama, fallback")
+    DEFAULT_AI_PROVIDER: str = Field(
+        default="openrouter",
+        description="Default AI provider: openrouter, nemotron-light, nvidia, glm, groq, gemini, fallback"
+    )
     
-    # Google Gemini
-    GEMINI_API_KEY: Optional[str] = None
-    GEMINI_MODEL: str = "gemini-2.5-flash"
-    
-    # NVIDIA NIM (Free tier API keys)
-    NVIDIA_API_KEY: Optional[str] = None
-    NVIDIA_BASE_URL: str = "https://integrate.api.nvidia.com/v1"
-    NVIDIA_MODEL: str = "meta/llama-3.3-70b-instruct"
-    
-    # Zhipu AI / GLM (Free/Low-cost)
-    GLM_API_KEY: Optional[str] = None
-    GLM_BASE_URL: str = "https://open.bigmodel.cn/api/paas/v4"
-    GLM_MODEL: str = "glm-4-flash"
-    
-    # OpenRouter (Supports nvidia/nemotron-3-ultra-550b-a55b:free, meta-llama, deepseek, etc.)
+    # Rate Limiting
+    AI_RATE_LIMIT_PER_MINUTE: int = Field(default=20, description="Max AI requests allowed per minute per client")
+
+    # OpenRouter — Nemotron 3 Ultra (primary, free)
     OPENROUTER_API_KEY: Optional[str] = None
     OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
     OPENROUTER_MODEL: str = "nvidia/nemotron-3-ultra-550b-a55b:free"
 
-    # OpenAI / Groq / Ollama (OpenAI-compatible generic provider)
-    OPENAI_API_KEY: Optional[str] = None
-    OPENAI_BASE_URL: Optional[str] = None
-    OPENAI_MODEL: str = "gpt-4o-mini"
-    
+    # OpenRouter — Nemotron 3.5 Lightning (secondary, free)
+    OPENROUTER_LIGHT_API_KEY: Optional[str] = None
+    OPENROUTER_LIGHT_MODEL: str = "nvidia/nemotron-3.5-lightning:free"
+
+    # Google Gemini (Free Tier)
+    GEMINI_API_KEY: Optional[str] = None
+    GEMINI_MODEL: str = "gemini-2.5-flash"
+
+    # NVIDIA NIM (Free Tier)
+    NVIDIA_API_KEY: Optional[str] = None
+    NVIDIA_BASE_URL: str = "https://integrate.api.nvidia.com/v1"
+    NVIDIA_MODEL: str = "meta/llama-3.3-70b-instruct"
+
+    # Zhipu AI / GLM (Free Tier GLM-4-Flash)
+    GLM_API_KEY: Optional[str] = None
+    GLM_BASE_URL: str = "https://open.bigmodel.cn/api/paas/v4"
+    GLM_MODEL: str = "glm-4-flash"
+
+    # Groq (Fast Free Tier Llama 3.3)
     GROQ_API_KEY: Optional[str] = None
     GROQ_MODEL: str = "llama-3.3-70b-versatile"
-    
-    OLLAMA_BASE_URL: str = "http://localhost:11434/v1"
-    OLLAMA_MODEL: str = "llama3.2"
 
     model_config = SettingsConfigDict(
         env_file=[".env", "backend/.env", "../backend/.env"],

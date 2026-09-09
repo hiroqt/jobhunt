@@ -2,7 +2,7 @@ import json
 import re
 from typing import Optional, List, Dict, Any
 from openai import AsyncOpenAI
-from backend.app.ai.base import BaseAIProvider
+from backend.app.ai.base import BaseAIProvider, strip_emojis
 from backend.app.schemas.job import JobCreate, JobSkillInfo
 from backend.app.schemas.ai import (
     InterviewPrepResponse,
@@ -292,7 +292,8 @@ GUIDELINES:
 4. {custom_text}
 5. Avoid generic AI cliches ("I am writing to express my enthusiasm...", "I believe I am the ideal candidate..."). Start with a strong, tailored hook that demonstrates understanding of the company's domain, challenges, and goals.
 6. Connect the candidate's actual projects, skills, and metrics directly to the requirements in the job description.
-7. Return pure JSON matching this exact schema:
+7. STRICT ZERO-EMOJI MANDATE: NEVER include any emojis, emoticons, or decorative symbols anywhere in the cover letter (no emojis in subject_line, salutation, body_paragraphs, bullet points, sign_off, or skills). Use 100% clean, professional executive English typography only.
+8. Return pure JSON matching this exact schema:
 {{
   "subject_line": "Application for [Job Title] - [Candidate Name]",
   "salutation": "Dear [Hiring Manager Name or Hiring Team at Company],",
@@ -336,26 +337,32 @@ Resume Experience Details:
             cleaned_json = re.sub(r"```$", "", cleaned_json.strip(), flags=re.MULTILINE)
             data = json.loads(cleaned_json)
 
-            salutation = data.get("salutation") or f"Dear Hiring Team at {company},"
+            raw_salutation = data.get("salutation") or f"Dear Hiring Team at {company},"
+            salutation = strip_emojis(raw_salutation)
             body_paragraphs = data.get("body_paragraphs", [])
             if not body_paragraphs and "cover_letter" in data:
                 body_paragraphs = [p.strip() for p in data["cover_letter"].split("\n\n") if p.strip()]
+            body_paragraphs = [strip_emojis(p) for p in body_paragraphs if strip_emojis(p)]
 
-            sign_off = data.get("sign_off") or f"Sincerely,\n{candidate_name or 'Candidate'}"
-            full_letter = f"{salutation}\n\n" + "\n\n".join(body_paragraphs) + f"\n\n{sign_off}"
+            raw_sign_off = data.get("sign_off") or f"Sincerely,\n{candidate_name or 'Candidate'}"
+            sign_off = strip_emojis(raw_sign_off)
+            full_letter = strip_emojis(f"{salutation}\n\n" + "\n\n".join(body_paragraphs) + f"\n\n{sign_off}")
             word_count = len(full_letter.split())
+            subject_line = strip_emojis(data.get("subject_line") or f"Application for {job_title} - {candidate_name or 'Candidate'}")
+            matched_skills = [strip_emojis(s) for s in data.get("matched_skills_highlighted", candidate_skills[:4]) if strip_emojis(s)]
+            key_strengths = [strip_emojis(s) for s in data.get("key_strengths_featured", [f"{job_title} domain expertise", "Technical execution"]) if strip_emojis(s)]
 
             return CoverLetterGenResponse(
                 job_title=job_title,
                 company=company,
-                subject_line=data.get("subject_line") or f"Application for {job_title} - {candidate_name or 'Candidate'}",
+                subject_line=subject_line,
                 salutation=salutation,
                 cover_letter=full_letter,
                 body_paragraphs=body_paragraphs,
                 sign_off=sign_off,
                 candidate_name=candidate_name or "Candidate",
-                matched_skills_highlighted=data.get("matched_skills_highlighted", candidate_skills[:4]),
-                key_strengths_featured=data.get("key_strengths_featured", [f"{job_title} domain expertise", "Technical execution"]),
+                matched_skills_highlighted=matched_skills,
+                key_strengths_featured=key_strengths,
                 word_count=word_count,
                 ai_provider_used=f"{self._name} ({self.model})"
             )

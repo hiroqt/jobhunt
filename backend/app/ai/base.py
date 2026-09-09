@@ -1,3 +1,4 @@
+import re
 from abc import ABC, abstractmethod
 from typing import Dict, Any, List, Optional
 from backend.app.schemas.job import JobCreate
@@ -7,6 +8,36 @@ from backend.app.schemas.ai import (
     FollowUpEmailGenResponse,
     CoverLetterGenResponse
 )
+
+EMOJI_PATTERN = re.compile(
+    "["
+    "\U0001F600-\U0001F64F"  # emoticons
+    "\U0001F300-\U0001F5FF"  # symbols & pictographs
+    "\U0001F680-\U0001F6FF"  # transport & map symbols
+    "\U0001F1E0-\U0001F1FF"  # flags
+    "\U00002702-\U000027B0"  # dingbats
+    "\U0001F900-\U0001F9FF"  # supplemental symbols and pictographs
+    "\U0001FA70-\U0001FAFF"  # symbols and pictographs extended-a
+    "\U00002600-\U000026FF"  # miscellaneous symbols
+    "\U0000FE00-\U0000FE0F"  # variation selectors
+    "\U00002300-\U000023FF"  # miscellaneous technical
+    "\U00002B50-\U00002B55"  # stars & shapes
+    "]+",
+    flags=re.UNICODE
+)
+
+
+def strip_emojis(text: str) -> str:
+    """Removes any emojis, emoticons, and decorative pictographs from text."""
+    if not text:
+        return ""
+    cleaned = EMOJI_PATTERN.sub("", text)
+    cleaned = re.sub(r"[ \t]+", " ", cleaned)
+    cleaned = re.sub(r"[ \t]+\n", "\n", cleaned)
+    cleaned = re.sub(r"\n[ \t]+", "\n", cleaned)
+    cleaned = re.sub(r" ([,\.!\?:;])", r"\1", cleaned)
+    return cleaned.strip()
+
 
 
 class BaseAIProvider(ABC):

@@ -85,3 +85,41 @@ async def test_fallback_cover_letter_custom_instructions():
 
     assert "Marcus Vance" in response.salutation
     assert custom_note in response.cover_letter
+
+
+@pytest.mark.asyncio
+async def test_cover_letter_zero_emoji_guarantee():
+    from backend.app.ai.base import strip_emojis, EMOJI_PATTERN
+
+    # 1. Direct regex and strip_emojis verification
+    dirty_text = "Hello! 🚀 We built high-throughput systems 💼 with 99.99% uptime ✨. Ready to contribute! 🎯"
+    clean_text = strip_emojis(dirty_text)
+    assert not EMOJI_PATTERN.search(clean_text)
+    assert clean_text == "Hello! We built high-throughput systems with 99.99% uptime. Ready to contribute!"
+
+    # 2. Generator emoji stripping when inputs contain emojis
+    provider = FallbackHeuristicProvider()
+    response = await provider.generate_cover_letter(
+        job_title="Senior AI Engineer 🚀",
+        company="NextGen AI 🤖",
+        job_description="Looking for visionary engineers 🔥 to build scalable LLM pipelines ⚡.",
+        candidate_name="Alex Doe ✨",
+        candidate_summary="Passionate builder 💼",
+        candidate_skills=["Python 🐍", "PyTorch 🧠", "FastAPI ⚡"],
+        resume_text="Led AI deployments 🚀 with zero downtime.",
+        custom_instructions="Feature our hackathon win 🏆 and 40% latency reduction ⏱️",
+        hiring_manager_name="Dr. Taylor 🤝"
+    )
+
+    # Assert no emojis anywhere in response fields
+    assert not EMOJI_PATTERN.search(response.cover_letter)
+    assert not EMOJI_PATTERN.search(response.subject_line)
+    assert not EMOJI_PATTERN.search(response.salutation)
+    assert not EMOJI_PATTERN.search(response.sign_off)
+    for paragraph in response.body_paragraphs:
+        assert not EMOJI_PATTERN.search(paragraph)
+    for skill in response.matched_skills_highlighted:
+        assert not EMOJI_PATTERN.search(skill)
+    for strength in response.key_strengths_featured:
+        assert not EMOJI_PATTERN.search(strength)
+

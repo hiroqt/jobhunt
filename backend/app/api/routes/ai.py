@@ -21,6 +21,7 @@ from backend.app.schemas.ai import (
 )
 from backend.app.api.dependencies import get_current_candidate
 from backend.app.ai.factory import get_ai_provider
+from backend.app.ai.base import strip_emojis
 from backend.app.core.rate_limiter import ai_rate_limiter
 
 router = APIRouter(prefix="/ai", tags=["AI Career Intelligence"], dependencies=[Depends(ai_rate_limiter)])
@@ -87,7 +88,7 @@ async def generate_custom_cover_letter(
         )
 
     ai_provider = get_ai_provider(request.provider)
-    return await ai_provider.generate_cover_letter(
+    result = await ai_provider.generate_cover_letter(
         job_title=job_title,
         company=company,
         job_description=description,
@@ -101,6 +102,17 @@ async def generate_custom_cover_letter(
         custom_instructions=request.custom_instructions,
         hiring_manager_name=hiring_manager
     )
+
+    # Strict zero-emoji guarantee: strip any stray emojis from all text fields
+    result.cover_letter = strip_emojis(result.cover_letter)
+    result.subject_line = strip_emojis(result.subject_line)
+    result.salutation = strip_emojis(result.salutation)
+    result.sign_off = strip_emojis(result.sign_off)
+    result.body_paragraphs = [strip_emojis(p) for p in result.body_paragraphs if strip_emojis(p)]
+    result.matched_skills_highlighted = [strip_emojis(s) for s in result.matched_skills_highlighted if strip_emojis(s)]
+    result.key_strengths_featured = [strip_emojis(s) for s in result.key_strengths_featured if strip_emojis(s)]
+    result.word_count = len(result.cover_letter.split())
+    return result
 
 
 

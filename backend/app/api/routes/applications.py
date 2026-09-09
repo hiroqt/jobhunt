@@ -17,6 +17,7 @@ from backend.app.schemas.application import (
     ApplicationStatusUpdate
 )
 from backend.app.api.dependencies import get_current_candidate
+from backend.app.ai.base import strip_emojis
 
 router = APIRouter(prefix="/applications", tags=["Applications"])
 
@@ -82,7 +83,7 @@ async def create_application(
         recruiter_name=app_data.recruiter_name,
         recruiter_email=app_data.recruiter_email,
         notes=app_data.notes,
-        custom_cover_letter=app_data.custom_cover_letter
+        custom_cover_letter=strip_emojis(app_data.custom_cover_letter) if app_data.custom_cover_letter else None
     )
     db.add(application)
     await db.flush()
@@ -208,6 +209,9 @@ async def update_application(
         raise HTTPException(status_code=404, detail="Application not found")
 
     update_dict = update_data.model_dump(exclude_unset=True)
+    if "custom_cover_letter" in update_dict and update_dict["custom_cover_letter"]:
+        update_dict["custom_cover_letter"] = strip_emojis(update_dict["custom_cover_letter"])
+
     if "status" in update_dict and update_dict["status"]:
         new_status = update_dict["status"].upper()
         if app.status != new_status:

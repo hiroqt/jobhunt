@@ -1,7 +1,7 @@
 import re
 from datetime import datetime
 from typing import Optional, List, Dict, Tuple, Set
-from backend.app.ai.base import BaseAIProvider
+from backend.app.ai.base import BaseAIProvider, strip_emojis
 from backend.app.schemas.job import JobCreate, JobSkillInfo
 from backend.app.schemas.ai import (
     InterviewPrepResponse,
@@ -980,21 +980,26 @@ class FallbackHeuristicProvider(BaseAIProvider):
         else: # standard
             body_paragraphs = [p1, p2, p3]
 
-        sign_off = f"Sincerely,\n{c_name}"
-        full_letter = f"{salutation}\n\n" + "\n\n".join(body_paragraphs) + f"\n\n{sign_off}"
+        sign_off = strip_emojis(f"Sincerely,\n{c_name}")
+        body_paragraphs = [strip_emojis(p) for p in body_paragraphs if strip_emojis(p)]
+        salutation = strip_emojis(salutation)
+        full_letter = strip_emojis(f"{salutation}\n\n" + "\n\n".join(body_paragraphs) + f"\n\n{sign_off}")
         word_count = len(full_letter.split())
+        subject_line = strip_emojis(f"Application for {job_title} - {c_name}")
+        clean_matched = [strip_emojis(s) for s in matched[:5] if strip_emojis(s)]
+        clean_strengths = [strip_emojis(s) for s in [f"{job_title} domain expertise", "System scalability", "Cross-functional execution"] if strip_emojis(s)]
 
         return CoverLetterGenResponse(
             job_title=job_title,
             company=company,
-            subject_line=f"Application for {job_title} - {c_name}",
+            subject_line=subject_line,
             salutation=salutation,
             cover_letter=full_letter,
             body_paragraphs=body_paragraphs,
             sign_off=sign_off,
             candidate_name=c_name,
-            matched_skills_highlighted=matched[:5],
-            key_strengths_featured=[f"{job_title} domain expertise", "System scalability", "Cross-functional execution"],
+            matched_skills_highlighted=clean_matched,
+            key_strengths_featured=clean_strengths,
             word_count=word_count,
             ai_provider_used="Deterministic Heuristic Fallback Engine"
         )

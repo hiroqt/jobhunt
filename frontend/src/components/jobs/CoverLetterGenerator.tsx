@@ -60,6 +60,20 @@ const LENGTH_OPTIONS: { id: CoverLetterLength; label: string; desc: string }[] =
   { id: "detailed", label: "Detailed", desc: "~480w (With bullet wins)" },
 ];
 
+/**
+ * Strictly strips all emojis, emoticons, and decorative pictographs from text.
+ */
+export function stripEmojis(text: string): string {
+  if (!text) return "";
+  return text
+    .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2702}-\u{27B0}\u{1F900}-\u{1F9FF}\u{1FA70}-\u{1FAFF}\u{2600}-\u{26FF}\u{FE00}-\u{FE0F}\u{2300}-\u{23FF}\u{2B50}-\u{2B55}]/gu, "")
+    .replace(/[ \t]+/g, " ")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n[ \t]+/g, "\n")
+    .replace(/ ([,\.!\?:;])/g, "$1")
+    .trim();
+}
+
 export function CoverLetterGenerator({ job, isModal = false, onClose, onFullscreen, onSaved }: CoverLetterGeneratorProps) {
   const [tone, setTone] = useState<CoverLetterTone>("professional");
   const [length, setLength] = useState<CoverLetterLength>("standard");
@@ -86,9 +100,10 @@ export function CoverLetterGenerator({ job, isModal = false, onClose, onFullscre
       try {
         const apps = await getApplications({ jobId: job.id });
         if (isMounted && apps && apps.length > 0 && apps[0].custom_cover_letter) {
-          setExistingCoverLetter(apps[0].custom_cover_letter);
+          const cleaned = stripEmojis(apps[0].custom_cover_letter);
+          setExistingCoverLetter(cleaned);
           if (!result) {
-            setEditableLetter(apps[0].custom_cover_letter);
+            setEditableLetter(cleaned);
           }
         } else if (isMounted) {
           setExistingCoverLetter(null);
@@ -114,12 +129,26 @@ export function CoverLetterGenerator({ job, isModal = false, onClose, onFullscre
         job_description: job.raw_description || job.summary || "",
         tone,
         length,
-        custom_instructions: customInstructions.trim() || undefined,
-        hiring_manager_name: hiringManager.trim() || undefined,
+        custom_instructions: customInstructions.trim() ? stripEmojis(customInstructions.trim()) : undefined,
+        hiring_manager_name: hiringManager.trim() ? stripEmojis(hiringManager.trim()) : undefined,
         provider,
       });
-      setResult(data);
-      setEditableLetter(data.cover_letter);
+
+      // Strict zero-emoji guarantee on frontend
+      const cleanedData: CoverLetterGenResponse = {
+        ...data,
+        cover_letter: stripEmojis(data.cover_letter),
+        subject_line: stripEmojis(data.subject_line),
+        salutation: stripEmojis(data.salutation),
+        sign_off: stripEmojis(data.sign_off),
+        body_paragraphs: data.body_paragraphs.map(stripEmojis),
+        matched_skills_highlighted: data.matched_skills_highlighted.map(stripEmojis),
+        key_strengths_featured: data.key_strengths_featured.map(stripEmojis),
+        word_count: stripEmojis(data.cover_letter).split(/\s+/).length,
+      };
+
+      setResult(cleanedData);
+      setEditableLetter(cleanedData.cover_letter);
       setViewMode("formatted");
     } catch (err: any) {
       alert(err.message || "Failed to generate cover letter. Please try again or switch provider.");
@@ -129,7 +158,7 @@ export function CoverLetterGenerator({ job, isModal = false, onClose, onFullscre
   };
 
   const handleCopyBody = () => {
-    const textToCopy = editableLetter || result?.cover_letter || "";
+    const textToCopy = stripEmojis(editableLetter || result?.cover_letter || "");
     if (!textToCopy) return;
     navigator.clipboard.writeText(textToCopy);
     setCopiedBody(true);
@@ -137,14 +166,15 @@ export function CoverLetterGenerator({ job, isModal = false, onClose, onFullscre
   };
 
   const handleCopySubject = () => {
-    const subject = result?.subject_line || `Application for ${job.title} - Candidate`;
+    const rawSubject = result?.subject_line || `Application for ${job.title} - Candidate`;
+    const subject = stripEmojis(rawSubject);
     navigator.clipboard.writeText(subject);
     setCopiedSubject(true);
     setTimeout(() => setCopiedSubject(false), 2000);
   };
 
   const handleSaveToApplication = async () => {
-    const textToSave = editableLetter || result?.cover_letter || "";
+    const textToSave = stripEmojis(editableLetter || result?.cover_letter || "");
     if (!textToSave) return;
     setSaving(true);
     setSaveSuccess(false);
@@ -162,7 +192,7 @@ export function CoverLetterGenerator({ job, isModal = false, onClose, onFullscre
   };
 
   const handleDownload = (format: "txt" | "md") => {
-    const text = editableLetter || result?.cover_letter || "";
+    const text = stripEmojis(editableLetter || result?.cover_letter || "");
     if (!text) return;
     const filename = `Cover_Letter_${job.company.replace(/\s+/g, "_")}_${job.title.replace(/\s+/g, "_")}.${format}`;
     const element = document.createElement("a");
@@ -497,13 +527,13 @@ export function CoverLetterGenerator({ job, isModal = false, onClose, onFullscre
             <div className="space-y-1.5">
               <Textarea
                 value={editableLetter}
-                onChange={(e) => setEditableLetter(e.target.value)}
+                onChange={(e) => setEditableLetter(stripEmojis(e.target.value))}
                 rows={16}
                 className="font-mono text-xs leading-relaxed resize-y bg-background/90"
                 placeholder="Curated cover letter text..."
               />
               <span className="text-[10px] text-muted-foreground block text-right">
-                Direct editing is automatically captured when saving or downloading.
+                Direct editing is automatically captured and guaranteed emoji-free when saving or downloading.
               </span>
             </div>
           )}

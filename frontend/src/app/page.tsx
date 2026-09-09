@@ -1,69 +1,82 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import {
-  Compass01Icon as Compass,
-  ChartRadarIcon as Radar,
   File01Icon as FileText,
-  AiChat01Icon as Bot,
-  SecurityCheckIcon as ShieldCheck,
-  Add01Icon as Plus,
-  ArrowRight01Icon as ArrowRight,
-  Target01Icon as Target,
-  CheckmarkCircle02Icon as CheckCircle2,
-  LinkSquare01Icon as ExternalLink,
   FlashIcon as Zap,
-  LockPasswordIcon as Lock,
-  Download01Icon as Download,
-  Building02Icon as Building2
+  ChartRadarIcon as Radar,
+  Add01Icon as Plus,
+  HelpCircleIcon as HelpCircle
 } from "hugeicons-react";
-import { getDashboardOverview, getCandidateProfile, getSearches, getJobs } from "@/lib/api";
-import { DashboardOverview, CandidateProfile, JobSearch, Job } from "@/types";
 import { JobCaptureModal } from "@/components/jobs/JobCaptureModal";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { openCoverLetterStudio } from "@/lib/events";
-import { formatSalary } from "@/lib/utils";
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent
+} from "@/components/ui/accordion";
 
 export default function DashboardPage() {
-  const [overview, setOverview] = useState<DashboardOverview | null>(null);
-  const [candidate, setCandidate] = useState<CandidateProfile | null>(null);
-  const [searches, setSearches] = useState<JobSearch[]>([]);
-  const [recentJobs, setRecentJobs] = useState<Job[]>([]);
-  const [loading, setLoading] = useState(true);
   const [isCaptureModalOpen, setIsCaptureModalOpen] = useState(false);
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const [dashData, candData, searchData, jobsData] = await Promise.all([
-          getDashboardOverview().catch(() => null),
-          getCandidateProfile().catch(() => null),
-          getSearches().catch(() => []),
-          getJobs({}).catch(() => []),
-        ]);
-        setOverview(dashData);
-        setCandidate(candData);
-        setSearches(searchData);
-        setRecentJobs(jobsData.slice(0, 4));
-      } catch (err) {
-        console.error("Error loading dashboard data:", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadData();
-  }, []);
-
-  const hasSkills = candidate?.skills && candidate.skills.length > 0;
-  const highMatchJobs = recentJobs.filter((j) => (j.match_score || 0) >= 80);
+  const faqs = [
+    {
+      id: "faq-1",
+      question: "What is the sakto ka Career Intelligence System?",
+      answer:
+        "sakto ka is an end-to-end, privacy-first career automation platform designed to assist every phase of your job search. It aggregates and normalizes verified job postings across major platforms, evaluates qualification fit and keyword gaps against your candidate profile, builds ATS-compliant single-column resumes, curates role-tailored cover letters, and generates technical STAR interview preparation drills. All operations run in-session with zero server-side data retention.",
+    },
+    {
+      id: "faq-2",
+      question: "How does the Curated Cover Letter Studio tailor letters to job postings?",
+      answer:
+        "The Cover Letter Studio synthesizes target role qualifications, mandatory skills, and company background with your verified candidate profile. You can curate a letter from an active pipeline opportunity or paste any external job posting link. You can customize the tone (Professional, High-Impact, Technical, Startup) and length (Concise, Standard, Detailed), then copy the result, download it as markdown/text, or attach it directly to your job application.",
+    },
+    {
+      id: "faq-3",
+      question: "What makes the ATS Resume Studio different from generic resume builders?",
+      answer:
+        "Many popular templates use multi-column layouts, tables, text frames, or complex icons that break Applicant Tracking System (ATS) parsers like Workday, Taleo, Greenhouse, and Lever. Our studio strictly generates single-column hierarchy resumes with standard headers, converts generic tasks into quantified XYZ achievement bullets, benchmarks keyword density against target job descriptions, and exports clean, selectable vector PDFs.",
+    },
+    {
+      id: "faq-4",
+      question: "Where does Discover Jobs source opportunities and how are links cleaned?",
+      answer:
+        "The discovery engine queries 5 major job boards: LinkedIn, Indeed, JobStreet, Kalibrr, and Google Jobs. Ingested links pass through an automated tracking stripper that removes tracking tokens, referral codes, and redirect wrappers (like utm_* parameters). The system also runs automated HTTP status validation to alert you if a job posting has expired or closed.",
+    },
+    {
+      id: "faq-5",
+      question: "How does the AI Interview Prep Coach help me prepare?",
+      answer:
+        "When you select a job for preparation, the coach generates targeted technical drills, system design scenarios, and behavioral questions specific to that role. It provides response frameworks using the STAR methodology (Situation, Task, Action, Result) alongside interview cheat sheets and role-specific question banks.",
+    },
+    {
+      id: "faq-6",
+      question: "What is the Zero Data Retention and Stateless Privacy Guarantee?",
+      answer:
+        "Privacy is central to sakto ka. Your uploaded resumes, parsed links, AI prompts, and generated drafts are processed entirely in-session and volatile memory. We never sell or persistently store candidate resumes, contact information, or application history on remote servers.",
+    },
+    {
+      id: "faq-7",
+      question: "Which AI model providers can I use, and does it work offline?",
+      answer:
+        "You can connect cloud AI providers including OpenRouter (featuring Nemotron 3 Ultra and 3.5 Lightning), Google Gemini, NVIDIA NIM, or Groq. If no API key is provided, the platform automatically utilizes our deterministic, zero-key offline heuristic engine so you can continue working without interruptions.",
+    },
+    {
+      id: "faq-8",
+      question: "How do I capture and evaluate a job from an external site?",
+      answer:
+        "Click the 'Capture Job URL' card in the header, paste any job link or raw description text, and choose your extraction provider. The platform extracts the job title, company, requirements, workplace type, and salary range, automatically evaluating the posting against your candidate profile to provide an instant match score and skill breakdown.",
+    },
+  ];
 
   return (
-    <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-200">
-      {/* Header: Designed Typographic Hero with Generous Spacing */}
-      <header className="relative space-y-5 pb-8 sm:pb-10 border-b border-border/60 mb-2 sm:mb-4">
+    <div className="space-y-8 sm:space-y-10 animate-in fade-in duration-200 pb-12">
+      {/* Header: Designed Typographic Hero with Feature Cards */}
+      <header className="relative space-y-5 pb-8 sm:pb-10 border-b border-border/60">
         {/* Subtle Ambient Radial Glow (Not a card, zero borders/boxes) */}
         <div
           aria-hidden="true"
@@ -201,381 +214,41 @@ export default function DashboardPage() {
         />
       </header>
 
-      {/* Primary KPI Stats Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4">
-        <Link href="/jobs" className="block group">
-          <Card className="border-border bg-card hover:border-primary/40 transition-colors h-full">
-            <CardContent className="p-3.5 sm:p-5 space-y-1.5 sm:space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] sm:text-xs font-semibold text-muted-foreground uppercase tracking-wider truncate mr-1">
-                  Discovered Jobs
-                </span>
-                <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10 text-primary group-hover:scale-105 transition-transform shrink-0">
-                  <Compass className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                </div>
-              </div>
-              <div className="flex items-baseline gap-1.5 sm:gap-2 pt-0.5 sm:pt-1">
-                <span className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground">
-                  {recentJobs.length}
-                </span>
-                <span className="text-[10px] sm:text-xs text-muted-foreground font-mono">
-                  qualified
-                </span>
-              </div>
-              <p className="text-[11px] sm:text-xs text-muted-foreground line-clamp-1">
-                Live across 5 sources
-              </p>
-            </CardContent>
-          </Card>
-        </Link>
-
-        <Link href="/resume" className="block group">
-          <Card className="border-border bg-card hover:border-primary/40 transition-colors h-full">
-            <CardContent className="p-3.5 sm:p-5 space-y-1.5 sm:space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] sm:text-xs font-semibold text-muted-foreground uppercase tracking-wider truncate mr-1">
-                  ATS Resume Studio
-                </span>
-                <div className="p-1.5 sm:p-2 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 group-hover:scale-105 transition-transform shrink-0">
-                  <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                </div>
-              </div>
-              <div className="flex items-baseline gap-1.5 sm:gap-2 pt-0.5 sm:pt-1">
-                <span className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground">
-                  100%
-                </span>
-                <Badge variant="outline" className="text-[9px] sm:text-[10px] font-mono text-emerald-600 border-emerald-500/30 px-1 py-0">
-                  ATS Score
-                </Badge>
-              </div>
-              <p className="text-[11px] sm:text-xs text-muted-foreground line-clamp-1">
-                Vector PDF export
-              </p>
-            </CardContent>
-          </Card>
-        </Link>
-
-        <Link href="/searches" className="block group">
-          <Card className="border-border bg-card hover:border-primary/40 transition-colors h-full">
-            <CardContent className="p-3.5 sm:p-5 space-y-1.5 sm:space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] sm:text-xs font-semibold text-muted-foreground uppercase tracking-wider truncate mr-1">
-                  Automated Feeds
-                </span>
-                <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10 text-primary group-hover:scale-105 transition-transform shrink-0">
-                  <Radar className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                </div>
-              </div>
-              <div className="flex items-baseline gap-1.5 sm:gap-2 pt-0.5 sm:pt-1">
-                <span className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground">
-                  {searches.length}
-                </span>
-                <Badge variant="outline" className="text-[9px] sm:text-[10px] font-mono text-primary border-primary/30 px-1 py-0">
-                  Active
-                </Badge>
-              </div>
-              <p className="text-[11px] sm:text-xs text-muted-foreground line-clamp-1">
-                Continuous scraping runs
-              </p>
-            </CardContent>
-          </Card>
-        </Link>
-
-        <Link href="/prep" className="block group">
-          <Card className="border-border bg-card hover:border-primary/40 transition-colors h-full">
-            <CardContent className="p-3.5 sm:p-5 space-y-1.5 sm:space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] sm:text-xs font-semibold text-muted-foreground uppercase tracking-wider truncate mr-1">
-                  AI Interview Prep
-                </span>
-                <div className="p-1.5 sm:p-2 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 group-hover:scale-105 transition-transform shrink-0">
-                  <Bot className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                </div>
-              </div>
-              <div className="flex items-baseline gap-1.5 sm:gap-2 pt-0.5 sm:pt-1">
-                <span className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground">
-                  STAR
-                </span>
-                <span className="text-[10px] sm:text-xs text-muted-foreground font-mono">
-                  Method
-                </span>
-              </div>
-              <p className="text-[11px] sm:text-xs text-muted-foreground line-clamp-1">
-                Simulated AI questions
-              </p>
-            </CardContent>
-          </Card>
-        </Link>
-      </div>
-
-      {/* Main Two-Column Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left 7 Cols: ATS Resume Feature Showcase & Skill Gaps */}
-        <div className="lg:col-span-7 space-y-6">
-          {/* ATS Resume Showcase Card */}
-          <Card className="border-border bg-card overflow-hidden">
-            <CardHeader className="p-4 sm:p-6 pb-3 sm:pb-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                      <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
-                      ATS-Standard Resume Studio
-                    </CardTitle>
-                    <Badge variant="secondary" className="text-[10px] bg-primary/10 text-primary border-primary/20">
-                      Standard Compliant
-                    </Badge>
-                  </div>
-                  <CardDescription className="text-xs sm:text-sm text-muted-foreground">
-                    Engineered to score 90%+ on Workday, Greenhouse, Lever, and Taleo parsers.
-                  </CardDescription>
-                </div>
-                <Button asChild size="sm" variant="default" className="text-xs font-semibold gap-1.5 h-8 self-start sm:self-auto shrink-0">
-                  <Link href="/resume">
-                    <span>Open Studio</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
-                </Button>
-              </div>
-            </CardHeader>
-
-            <CardContent className="p-4 sm:p-6 pt-0 space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                <div className="p-3.5 rounded-xl border border-border bg-muted/30 space-y-1.5">
-                  <div className="flex items-center gap-2 text-foreground font-semibold text-xs">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                    <span>Single-Column Hierarchy</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    Zero multi-column tables, graphics, or complex frames that break ATS OCR parsers.
-                  </p>
-                </div>
-
-                <div className="p-3.5 rounded-xl border border-border bg-muted/30 space-y-1.5">
-                  <div className="flex items-center gap-2 text-foreground font-semibold text-xs">
-                    <Zap className="w-4 h-4 text-primary" />
-                    <span>AI Bullet-Point Enhancer</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    Instantly transforms generic duty bullets into metric-driven XYZ achievement statements.
-                  </p>
-                </div>
-
-                <div className="p-3.5 rounded-xl border border-border bg-muted/30 space-y-1.5">
-                  <div className="flex items-center gap-2 text-foreground font-semibold text-xs">
-                    <Target className="w-4 h-4 text-amber-500" />
-                    <span>1-Click Role Keyword Tailoring</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    Pre-load any target job posting to automatically analyze and fill missing keyword gaps.
-                  </p>
-                </div>
-
-                <div className="p-3.5 rounded-xl border border-border bg-muted/30 space-y-1.5">
-                  <div className="flex items-center gap-2 text-foreground font-semibold text-xs">
-                    <Download className="w-4 h-4 text-cyan-500" />
-                    <span>Printable Vector PDF</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    Generates clean, selectable vector PDF documents directly from your browser.
-                  </p>
-                </div>
-              </div>
-
-              <div className="pt-2 flex flex-wrap items-center justify-between gap-3 border-t border-border/50 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1.5">
-                  <Zap className="w-3.5 h-3.5 text-amber-500" />
-                  <span>3 ATS Templates: Modern Clean, Classic Corporate, Tech &amp; Engineering</span>
-                </span>
-                <Link href="/resume" className="text-primary font-semibold hover:underline inline-flex items-center gap-1">
-                  <span>Build Resume Now</span>
-                  <ArrowRight className="w-3 h-3" />
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Top Skill Gaps Card */}
-          <Card className="border-border bg-card">
-            <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-6 pb-3 sm:pb-4 gap-2">
-              <div>
-                <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                  <Target className="w-4 h-4 sm:w-5 sm:h-5 text-foreground" />
-                  Market Skill Gap Intelligence
-                </CardTitle>
-                <CardDescription className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-                  Frequently required capabilities identified across your search queries
-                </CardDescription>
-              </div>
-              <Button asChild variant="ghost" size="sm" className="text-foreground hover:bg-accent gap-1 text-xs font-medium self-start sm:self-auto">
-                <Link href="/jobs">
-                  <span>Explore Jobs</span>
-                  <Compass className="w-3.5 h-3.5 text-primary" />
-                </Link>
-              </Button>
-            </CardHeader>
-
-            <CardContent className="p-4 sm:p-6 pt-0 sm:pt-2 space-y-3">
-              {overview?.top_skill_gaps && overview.top_skill_gaps.length > 0 ? (
-                overview.top_skill_gaps.slice(0, 4).map((gap) => (
-                  <div
-                    key={gap.skill_name}
-                    className="bg-muted/40 border border-border p-3 sm:p-3.5 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3"
-                  >
-                    <div className="space-y-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-semibold text-foreground">
-                          {gap.skill_name}
-                        </span>
-                        <Badge variant="outline" className="text-[10px] font-mono">
-                          {gap.category}
-                        </Badge>
-                      </div>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {gap.learning_recommendation}
-                      </p>
-                    </div>
-                    <Badge variant="destructive" className="font-mono text-xs shrink-0 self-start sm:self-auto">
-                      {gap.missing_count} Jobs
-                    </Badge>
-                  </div>
-                ))
-              ) : (
-                <div className="p-6 rounded-xl bg-muted/20 border border-border text-center text-sm text-muted-foreground space-y-2">
-                  <CheckCircle2 className="w-6 h-6 text-emerald-500 mx-auto" />
-                  <p className="font-medium text-foreground">Complete Candidate Alignment</p>
-                  <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-                    Your candidate profile keywords match well with the currently captured opportunities.
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+      {/* Frequently Asked Questions: Accordion Section */}
+      <section className="space-y-5">
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2">
+            <HelpCircle className="w-5 h-5 text-primary" />
+            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+              Frequently Asked Questions
+            </h2>
+          </div>
+          <p className="text-xs sm:text-sm text-muted-foreground max-w-2xl leading-relaxed">
+            Everything you need to know about job discovery, ATS resume compliance, custom cover letter curation, and our stateless privacy architecture.
+          </p>
         </div>
 
-        {/* Right 5 Cols: AI Prep Studio & Zero Retention Privacy */}
-        <div className="lg:col-span-5 space-y-6">
-          {/* AI Prep Studio Card */}
-          <Card className="border-border bg-card">
-            <CardHeader className="p-4 sm:p-6 pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base font-semibold flex items-center gap-2">
-                  <Bot className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-500" />
-                  AI Interview Prep Coach
-                </CardTitle>
-                <Badge variant="secondary" className="text-[10px] bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/30">
-                  STAR Method
-                </Badge>
-              </div>
-              <CardDescription className="text-xs text-muted-foreground mt-1">
-                Simulate role-specific technical questions and structured behavioral answer outlines.
-              </CardDescription>
-            </CardHeader>
-
-            <CardContent className="p-4 sm:p-6 pt-0 sm:pt-2 space-y-4">
-              <div className="space-y-2 text-xs text-muted-foreground">
-                <div className="flex items-start gap-2 p-2.5 rounded-lg bg-muted/30 border border-border/60">
-                  <span className="font-bold text-foreground">S</span>
-                  <span><strong>Situation:</strong> Set the context and business challenge.</span>
-                </div>
-                <div className="flex items-start gap-2 p-2.5 rounded-lg bg-muted/30 border border-border/60">
-                  <span className="font-bold text-foreground">T</span>
-                  <span><strong>Task:</strong> Explain your specific role and responsibility.</span>
-                </div>
-                <div className="flex items-start gap-2 p-2.5 rounded-lg bg-muted/30 border border-border/60">
-                  <span className="font-bold text-foreground">A</span>
-                  <span><strong>Action:</strong> Describe the engineering steps and decisions taken.</span>
-                </div>
-                <div className="flex items-start gap-2 p-2.5 rounded-lg bg-muted/30 border border-border/60">
-                  <span className="font-bold text-foreground">R</span>
-                  <span><strong>Result:</strong> Quantify the outcome, metrics, and business impact.</span>
-                </div>
-              </div>
-
-              <Button asChild variant="secondary" className="w-full text-xs font-semibold h-10 gap-2">
-                <Link href="/prep">
-                  <Bot className="w-4 h-4 text-primary" />
-                  <span>Launch Interview Prep Studio</span>
-                  <ArrowRight className="w-3.5 h-3.5 ml-auto" />
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* High Fit Opportunities Preview */}
-          <Card className="border-border bg-card">
-            <CardHeader className="p-6 pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base font-semibold flex items-center gap-2">
-                  <Target className="w-4 h-4 text-primary" />
-                  High Match Opportunities
-                </CardTitle>
-                <Badge variant="outline" className="text-[10px] font-mono text-primary border-primary/30">
-                  80%+ Fit
-                </Badge>
-              </div>
-            </CardHeader>
-
-            <CardContent className="p-6 pt-2 space-y-3">
-              {recentJobs.length > 0 ? (
-                recentJobs.slice(0, 3).map((job) => (
-                  <div
-                    key={job.id}
-                    className="p-3 bg-muted/30 border border-border rounded-lg flex items-center justify-between gap-3"
-                  >
-                    <div className="min-w-0">
-                      <p className="text-xs font-semibold text-foreground truncate">
-                        {job.title}
-                      </p>
-                      <p className="text-[11px] text-muted-foreground truncate">
-                        {job.company} • {job.workplace_type}
-                      </p>
-                    </div>
-                    <Button asChild size="sm" variant="outline" className="h-7 px-2 text-[10px] font-semibold shrink-0 gap-1 text-primary border-primary/30">
-                      <Link href={`/resume?job_id=${job.id}`}>
-                        <Target className="w-2.5 h-2.5" />
-                        <span>Tailor</span>
-                      </Link>
-                    </Button>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-6 text-xs text-muted-foreground">
-                  No jobs qualified yet. Run an automated discovery search to populate opportunities.
-                </div>
-              )}
-              <Button asChild variant="ghost" size="sm" className="w-full text-xs text-muted-foreground hover:text-foreground h-7">
-                <Link href="/jobs">
-                  <span>View All Opportunities</span>
-                  <ArrowRight className="w-3 h-3 ml-1" />
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Zero Data Retention Card */}
-          <Card className="border-border bg-card/60">
-            <CardContent className="p-5 space-y-2 text-xs">
-              <div className="flex items-center gap-2 text-foreground font-semibold">
-                <ShieldCheck className="w-4 h-4 text-emerald-500" />
-                <span>Zero Data Retention Architecture</span>
-              </div>
-              <p className="text-muted-foreground leading-relaxed text-[11px]">
-                sakto ka operates on a strictly in-session, stateless model. Your uploaded resumes, queries, and interview preparation drafts are processed locally and in volatile memory with zero persistent tracking.
-              </p>
-            </CardContent>
-          </Card>
+        <div className="rounded-2xl border border-border/80 bg-card p-4 sm:p-6 shadow-xs">
+          <Accordion type="single" defaultValue="faq-1">
+            {faqs.map((faq) => (
+              <AccordionItem key={faq.id} value={faq.id} className="border-border/60">
+                <AccordionTrigger className="text-base sm:text-[17px] py-4 sm:py-5 font-semibold text-foreground hover:text-primary transition-colors">
+                  {faq.question}
+                </AccordionTrigger>
+                <AccordionContent className="text-sm sm:text-[15px] text-muted-foreground leading-relaxed pb-5 pt-1">
+                  {faq.answer}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
         </div>
-      </div>
+      </section>
 
       {/* Quick Job Capture Modal */}
       <JobCaptureModal
         isOpen={isCaptureModalOpen}
         onClose={() => setIsCaptureModalOpen(false)}
-        onJobCreated={() => {
-          getDashboardOverview().then(setOverview).catch(() => {});
-          getJobs({}).then((data) => setRecentJobs(data.slice(0, 4))).catch(() => {});
-        }}
+        onJobCreated={() => setIsCaptureModalOpen(false)}
       />
     </div>
   );

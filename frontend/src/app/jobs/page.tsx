@@ -42,6 +42,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { cn, formatSalaryRange } from "@/lib/utils";
+import { openCoverLetterStudio } from "@/lib/events";
 
 function formatRelativeTime(dateStr?: string): string {
   if (!dateStr) return "Within 1w";
@@ -264,7 +265,17 @@ function JobsContent() {
             Discover, bookmark, and evaluate jobs across all connected platforms against your profile.
           </p>
         </div>
-        <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
+        <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto flex-wrap">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => openCoverLetterStudio({ tab: "link" })}
+            className="gap-2 h-9 sm:h-10 px-3 sm:px-3.5 text-xs font-semibold border-primary/30 text-primary hover:bg-primary/10 flex-1 sm:flex-initial shadow-xs"
+          >
+            <FileText className="w-4 h-4 text-primary" />
+            <span>Curate from Link</span>
+          </Button>
           <Button asChild variant="outline" size="sm" className="gap-2 h-9 sm:h-10 px-3 sm:px-3.5 text-xs font-semibold flex-1 sm:flex-initial">
             <Link href="/searches">
               <Radar className="w-4 h-4 text-primary" />
@@ -698,7 +709,7 @@ function JobsContent() {
                         onClick={(e) => {
                           e.stopPropagation();
                           setSelectedJob(job);
-                          setIsCoverLetterModalOpen(true);
+                          openCoverLetterStudio({ job });
                         }}
                         className="h-7 px-2 text-[11px] text-primary hover:text-primary hover:bg-primary/10 gap-1 font-medium"
                       >
@@ -1007,27 +1018,11 @@ function JobsContent() {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => {
-                      setIsCoverLetterExpanded((prev) => {
-                        const next = !prev;
-                        if (next) {
-                          setTimeout(() => {
-                            const el = document.getElementById("curated-cover-letter-studio");
-                            if (el) el.scrollIntoView({ behavior: "smooth" });
-                          }, 100);
-                        }
-                        return next;
-                      });
-                    }}
-                    className={cn(
-                      "w-full h-10 px-3 font-semibold gap-2 text-xs sm:text-sm rounded-xl transition-all",
-                      isCoverLetterExpanded
-                        ? "bg-primary/15 text-primary border-primary/40 shadow-xs"
-                        : "border-primary/30 text-primary hover:bg-primary/10"
-                    )}
+                    onClick={() => openCoverLetterStudio({ job: selectedJob })}
+                    className="w-full h-10 px-3 font-semibold gap-2 text-xs sm:text-sm rounded-xl border-primary/30 text-primary hover:bg-primary/10 shadow-xs transition-all"
                   >
                     <FileText className="w-4 h-4 shrink-0 text-primary" />
-                    <span className="truncate">{isCoverLetterExpanded ? "Hide Cover Letter" : "Curate Cover Letter"}</span>
+                    <span className="truncate">Curate Cover Letter</span>
                   </Button>
 
                   <Button
@@ -1081,13 +1076,7 @@ function JobsContent() {
                     </div>
                   ) : (
                     <div
-                      onClick={() => {
-                        setIsCoverLetterExpanded(true);
-                        setTimeout(() => {
-                          const el = document.getElementById("curated-cover-letter-studio");
-                          if (el) el.scrollIntoView({ behavior: "smooth" });
-                        }, 50);
-                      }}
+                      onClick={() => openCoverLetterStudio({ job: selectedJob })}
                       className="p-3.5 rounded-xl border border-dashed border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors cursor-pointer flex items-center justify-between text-xs group"
                     >
                       <div className="flex items-center gap-3">
@@ -1113,7 +1102,7 @@ function JobsContent() {
                           size="sm"
                           className="h-7 px-2.5 text-xs font-semibold text-primary border-primary/30 group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
                         >
-                          <span>Open Studio &rarr;</span>
+                          <span>Open Sidebar &rarr;</span>
                         </Button>
                       </div>
                     </div>

@@ -17,8 +17,9 @@ import {
   Shield01Icon as Shield,
   BookOpen01Icon as BookOpen
 } from "hugeicons-react";
-import { CandidateProfile, DashboardOverview } from "@/types";
+import { CandidateProfile, DashboardOverview, Job } from "@/types";
 import { getCandidateProfile, getDashboardOverview } from "@/lib/api";
+import { CoverLetterSidebar } from "@/components/jobs/CoverLetterSidebar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
@@ -36,6 +37,22 @@ export const Sidebar: React.FC = () => {
   const [overview, setOverview] = useState<DashboardOverview | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [privacyOpen, setPrivacyOpen] = useState(false);
+
+  // Curated Cover Letter Studio Drawer State
+  const [coverLetterSidebarOpen, setCoverLetterSidebarOpen] = useState(false);
+  const [coverLetterJob, setCoverLetterJob] = useState<Job | null>(null);
+  const [coverLetterUrl, setCoverLetterUrl] = useState<string>("");
+
+  useEffect(() => {
+    const handleOpenStudio = (e: any) => {
+      const detail = e.detail || {};
+      if (detail.job) setCoverLetterJob(detail.job);
+      if (detail.url) setCoverLetterUrl(detail.url);
+      setCoverLetterSidebarOpen(true);
+    };
+    window.addEventListener("open-cover-letter-studio", handleOpenStudio);
+    return () => window.removeEventListener("open-cover-letter-studio", handleOpenStudio);
+  }, []);
 
   useEffect(() => {
     // Load candidate profile
@@ -87,7 +104,7 @@ export const Sidebar: React.FC = () => {
       name: "ATS Resume Studio",
       href: "/resume",
       icon: FileText,
-      badge: "NEW",
+      badge: null,
     },
     {
       name: "AI Prep Studio",
@@ -173,6 +190,27 @@ export const Sidebar: React.FC = () => {
             </Link>
           );
         })}
+
+        {/* Curated Cover Letter Studio Trigger */}
+        <button
+          type="button"
+          onClick={() => {
+            setCoverLetterSidebarOpen(true);
+            setMobileOpen(false);
+          }}
+          className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors group text-left cursor-pointer"
+        >
+          <div className="flex items-center gap-3">
+            <FileText className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+            <span>Cover Letter Studio</span>
+          </div>
+          <Badge
+            variant="secondary"
+            className="text-xs px-2 py-0 font-mono"
+          >
+            NEW
+          </Badge>
+        </button>
       </nav>
 
       {/* Bottom Profile / Quick Status Footer */}
@@ -322,6 +360,14 @@ export const Sidebar: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Slide-Over Curated Cover Letter Studio Drawer */}
+      <CoverLetterSidebar
+        isOpen={coverLetterSidebarOpen}
+        onClose={() => setCoverLetterSidebarOpen(false)}
+        initialJob={coverLetterJob}
+        initialUrl={coverLetterUrl}
+      />
     </>
   );
 };

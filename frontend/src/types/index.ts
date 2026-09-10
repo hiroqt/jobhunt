@@ -58,6 +58,7 @@ export interface Job {
   search_id?: string;
   title: string;
   company: string;
+  contact_email?: string;
   location?: string;
   workplace_type: string;
   employment_type: string;

@@ -48,6 +48,7 @@ Analyze the provided job posting text and extract structured information in JSON
 {
   "title": "Exact job title",
   "company": "Company name",
+  "contact_email": "Recruiter/company application email if explicitly mentioned in posting (e.g. careers@company.com), or null",
   "location": "Job location or 'Remote'",
   "workplace_type": "Remote | Hybrid | Onsite",
   "employment_type": "Full-time | Contract | Part-time | Internship",
@@ -105,6 +106,10 @@ Return ONLY pure JSON without markdown code fences or conversational filler."""
                     ))
 
             source = detect_job_source(source_url) if source_url else "Manual"
+            contact_email = data.get("contact_email")
+            if not contact_email or not isinstance(contact_email, str) or "@" not in contact_email:
+                from backend.app.processing.content_extractor import extract_contact_email
+                contact_email = extract_contact_email(None, raw_text, data.get("company"))
 
             return JobCreate(
                 url=source_url,
@@ -112,6 +117,7 @@ Return ONLY pure JSON without markdown code fences or conversational filler."""
                 source=source,
                 title=data.get("title", "Software Engineer"),
                 company=data.get("company", "Company"),
+                contact_email=contact_email,
                 location=data.get("location", "Remote"),
                 workplace_type=data.get("workplace_type", "Remote"),
                 employment_type=data.get("employment_type", "Full-time"),

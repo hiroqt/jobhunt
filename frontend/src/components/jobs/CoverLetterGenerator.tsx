@@ -23,10 +23,12 @@ import {
   SourceCodeIcon as Code2,
   Rocket01Icon as Rocket,
   LinkSquare01Icon as ExternalLink,
-  ArrowUp01Icon as ArrowUp
+  ArrowUp01Icon as ArrowUp,
+  Mail01Icon as Mail
 } from "hugeicons-react";
 import { Job, CoverLetterGenResponse, CoverLetterTone, CoverLetterLength } from "@/types";
 import { generateCoverLetter, saveCoverLetterForJob, getApplications } from "@/lib/api";
+import { buildGmailComposeUrl, buildMailtoUrl, isUrlLengthSafe } from "@/lib/gmail";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -93,17 +95,31 @@ export function CoverLetterGenerator({ job, isModal = false, onClose, onFullscre
   const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
   const [existingCoverLetter, setExistingCoverLetter] = useState<string | null>(null);
 
+  // Email & Gmail Dispatch State
+  const [recipientEmail, setRecipientEmail] = useState<string>(job.contact_email || "");
+  const [emailSubject, setEmailSubject] = useState<string>(`Application for ${job.title} - ${job.company}`);
+  const [emailDetectionSource, setEmailDetectionSource] = useState<"job_post" | "application" | "manual" | null>(
+    job.contact_email ? "job_post" : null
+  );
+  const [copiedEmailAndSubject, setCopiedEmailAndSubject] = useState<boolean>(false);
+
   // Check if job already has a saved cover letter in an Application
   useEffect(() => {
     let isMounted = true;
     async function checkExisting() {
       try {
         const apps = await getApplications({ jobId: job.id });
-        if (isMounted && apps && apps.length > 0 && apps[0].custom_cover_letter) {
-          const cleaned = stripEmojis(apps[0].custom_cover_letter);
-          setExistingCoverLetter(cleaned);
-          if (!result) {
-            setEditableLetter(cleaned);
+        if (isMounted && apps && apps.length > 0) {
+          if (apps[0].recruiter_email && !job.contact_email) {
+            setRecipientEmail(apps[0].recruiter_email);
+            setEmailDetectionSource("application");
+          }
+          if (apps[0].custom_cover_letter) {
+            const cleaned = stripEmojis(apps[0].custom_cover_letter);
+            setExistingCoverLetter(cleaned);
+            if (!result) {
+              setEditableLetter(cleaned);
+            }
           }
         } else if (isMounted) {
           setExistingCoverLetter(null);
@@ -116,7 +132,14 @@ export function CoverLetterGenerator({ job, isModal = false, onClose, onFullscre
     return () => {
       isMounted = false;
     };
-  }, [job.id]);
+  }, [job.id, job.contact_email]);
+
+  useEffect(() => {
+    if (job.contact_email) {
+      setRecipientEmail(job.contact_email);
+      setEmailDetectionSource("job_post");
+    }
+  }, [job.contact_email]);
 
   const handleGenerate = async () => {
     setLoading(true);
@@ -149,6 +172,9 @@ export function CoverLetterGenerator({ job, isModal = false, onClose, onFullscre
 
       setResult(cleanedData);
       setEditableLetter(cleanedData.cover_letter);
+      if (cleanedData.subject_line) {
+        setEmailSubject(stripEmojis(cleanedData.subject_line));
+      }
       setViewMode("formatted");
     } catch (err: any) {
       alert(err.message || "Failed to generate cover letter. Please try again or switch provider.");
@@ -166,11 +192,59 @@ export function CoverLetterGenerator({ job, isModal = false, onClose, onFullscre
   };
 
   const handleCopySubject = () => {
-    const rawSubject = result?.subject_line || `Application for ${job.title} - Candidate`;
+    const rawSubject = emailSubject || result?.subject_line || `Application for ${job.title} - Candidate`;
     const subject = stripEmojis(rawSubject);
     navigator.clipboard.writeText(subject);
     setCopiedSubject(true);
     setTimeout(() => setCopiedSubject(false), 2000);
+  };
+
+  const handleDraftInGmail = () => {
+    const textBody = stripEmojis(editableLetter || result?.cover_letter || "");
+    const subject = stripEmojis(emailSubject || `Application for ${job.title} - ${job.company}`);
+    const to = recipientEmail.trim();
+
+    const gmailUrl = buildGmailComposeUrl({
+      to,
+      subject,
+      body: textBody,
+    });
+
+    if (!isUrlLengthSafe(gmailUrl)) {
+      navigator.clipboard.writeText(textBody);
+      const safeUrl = buildGmailComposeUrl({
+        to,
+        subject,
+        body: "Cover letter text has been copied to your clipboard! Paste directly here (Ctrl+V / Cmd+V).",
+      });
+      window.open(safeUrl, "_blank", "noopener,noreferrer");
+      alert("Your detailed cover letter was copied to your clipboard! You can paste it directly into the Gmail compose body.");
+    } else {
+      window.open(gmailUrl, "_blank", "noopener,noreferrer");
+    }
+  };
+
+  const handleOpenMailto = () => {
+    const textBody = stripEmojis(editableLetter || result?.cover_letter || "");
+    const subject = stripEmojis(emailSubject || `Application for ${job.title} - ${job.company}`);
+    const to = recipientEmail.trim();
+
+    const mailtoUrl = buildMailtoUrl({
+      to,
+      subject,
+      body: textBody,
+    });
+
+    window.location.href = mailtoUrl;
+  };
+
+  const handleCopyEmailAndSubject = () => {
+    const to = recipientEmail.trim() || "No recipient email specified";
+    const subject = stripEmojis(emailSubject || `Application for ${job.title} - ${job.company}`);
+    const content = `To: ${to}\nSubject: ${subject}`;
+    navigator.clipboard.writeText(content);
+    setCopiedEmailAndSubject(true);
+    setTimeout(() => setCopiedEmailAndSubject(false), 2000);
   };
 
   const handleSaveToApplication = async () => {
@@ -179,7 +253,7 @@ export function CoverLetterGenerator({ job, isModal = false, onClose, onFullscre
     setSaving(true);
     setSaveSuccess(false);
     try {
-      await saveCoverLetterForJob(job.id, textToSave);
+      await saveCoverLetterForJob(job.id, textToSave, recipientEmail.trim() || undefined);
       setSaveSuccess(true);
       setExistingCoverLetter(textToSave);
       if (onSaved) onSaved();
@@ -537,6 +611,135 @@ export function CoverLetterGenerator({ job, isModal = false, onClose, onFullscre
               </span>
             </div>
           )}
+
+          {/* Email & Gmail Dispatcher Card */}
+          <div className="rounded-xl border border-primary/25 bg-gradient-to-br from-primary/5 via-card to-card p-4 space-y-3.5 shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-lg bg-primary/10 text-primary shrink-0">
+                  <Mail className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                    <span>Email &amp; Gmail Dispatch</span>
+                  </h4>
+                  <p className="text-[11px] text-muted-foreground">Draft or send this cover letter directly to the employer</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {recipientEmail && emailDetectionSource === "job_post" && (
+                  <Badge variant="secondary" className="text-[10px] bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 gap-1">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                    Auto-detected from job post
+                  </Badge>
+                )}
+                {recipientEmail && emailDetectionSource === "application" && (
+                  <Badge variant="secondary" className="text-[10px] bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30 gap-1">
+                    <BookmarkCheck className="w-3 h-3 text-blue-500" />
+                    From saved application
+                  </Badge>
+                )}
+                {!recipientEmail && (
+                  <Badge variant="outline" className="text-[10px] text-muted-foreground border-border">
+                    Enter recipient email
+                  </Badge>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-semibold text-foreground flex items-center justify-between">
+                  <span>Recipient Email</span>
+                  <span className="text-[10px] font-normal text-muted-foreground">Company / Recruiter</span>
+                </label>
+                <Input
+                  value={recipientEmail}
+                  onChange={(e) => {
+                    setRecipientEmail(e.target.value);
+                    setEmailDetectionSource("manual");
+                  }}
+                  placeholder="careers@company.com or hiring@..."
+                  className="h-8 text-xs font-mono bg-background"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-semibold text-foreground flex items-center justify-between">
+                  <span>Subject Line</span>
+                  <span className="text-[10px] font-normal text-muted-foreground">Role tailored</span>
+                </label>
+                <Input
+                  value={emailSubject}
+                  onChange={(e) => setEmailSubject(stripEmojis(e.target.value))}
+                  placeholder="Application for..."
+                  className="h-8 text-xs bg-background"
+                />
+              </div>
+            </div>
+
+            {/* Email Dispatch Actions */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pt-2.5 border-t border-border/70">
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* Draft in Gmail Button */}
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={handleDraftInGmail}
+                  className="h-8 px-3 text-xs font-semibold gap-1.5 bg-[#EA4335] hover:bg-[#D93025] text-white shadow-xs"
+                  title="Open draft in Gmail in a new tab"
+                >
+                  <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                    <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
+                  </svg>
+                  <span>Draft in Gmail</span>
+                  <ExternalLink className="w-3 h-3 opacity-80" />
+                </Button>
+
+                {/* Default Mail App */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleOpenMailto}
+                  className="h-8 px-3 text-xs font-medium gap-1.5 border-border hover:bg-muted"
+                  title="Open in system default email client (Apple Mail, Outlook, etc.)"
+                >
+                  <Mail className="w-3.5 h-3.5 text-muted-foreground" />
+                  <span>Default Mail App</span>
+                </Button>
+
+                {/* Copy Email & Subject */}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleCopyEmailAndSubject}
+                  className="h-8 px-2.5 text-xs text-muted-foreground hover:text-foreground gap-1"
+                  title="Copy recipient email and subject line to clipboard"
+                >
+                  {copiedEmailAndSubject ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-primary" />
+                      <span>Copied!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5" />
+                      <span>Copy Recipient &amp; Subject</span>
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {/* Resume PDF Attachment Reminder */}
+              <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground bg-background/80 px-2.5 py-1 rounded-md border border-border/60">
+                <FileText className="w-3.5 h-3.5 text-primary shrink-0" />
+                <span>Remember to attach your resume PDF in Gmail!</span>
+              </div>
+            </div>
+          </div>
 
           {/* Action Toolbar */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-border">

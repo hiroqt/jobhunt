@@ -23,6 +23,7 @@ class JobBase(BaseModel):
     group_id: Optional[str] = None
     title: str = Field(..., min_length=1, max_length=200)
     company: str = Field(..., min_length=1, max_length=200)
+    contact_email: Optional[str] = None
     location: Optional[str] = None
     workplace_type: str = "Remote"
     employment_type: str = "Full-time"
@@ -66,6 +67,7 @@ class JobCreate(JobBase):
 class JobUpdate(BaseModel):
     title: Optional[str] = None
     company: Optional[str] = None
+    contact_email: Optional[str] = None
     location: Optional[str] = None
     workplace_type: Optional[str] = None
     employment_type: Optional[str] = None

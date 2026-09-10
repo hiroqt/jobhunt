@@ -138,3 +138,101 @@ def extract_readable_job_text(html: str) -> str:
         text = re.sub(r"<[^>]+>", " ", html)
         return re.sub(r"\s+", " ", text)[:12000].strip()
 
+
+EMAIL_REGEX = re.compile(r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+")
+HR_PREFIXES = (
+    "careers", "jobs", "recruiting", "talent", "apply", "hr",
+    "hiring", "work", "join", "team", "people", "recruiter", "cv"
+)
+BLACKLIST_DOMAINS = {
+    "linkedin.com", "jobstreet.com", "indeed.com", "facebook.com", "fb.com",
+    "google.com", "w3.org", "sentry.io", "github.com", "example.com",
+    "schema.org", "w3schools.com", "apple.com", "microsoft.com"
+}
+BLACKLIST_PREFIXES = (
+    "noreply", "no-reply", "donotreply", "mailer-daemon", "abuse",
+    "postmaster", "privacy", "unsubscribe"
+)
+
+
+def extract_contact_email(
+    html: Optional[str] = None,
+    text: Optional[str] = None,
+    company: Optional[str] = None
+) -> Optional[str]:
+    """
+    Extracts the most probable recruiter/application contact email from HTML and/or raw text,
+    prioritizing mailto links, HR/recruiting prefixes, and company domain matches while
+    filtering platform boilerplate and notification emails.
+    """
+    candidates: List[str] = []
+
+    # 1. Harvest mailto links from HTML
+    if html:
+        try:
+            soup = BeautifulSoup(html, "html.parser")
+            for a in soup.find_all("a", href=True):
+                href = a["href"].strip()
+                if href.lower().startswith("mailto:"):
+                    clean = href[7:].split("?")[0].strip()
+                    if clean and EMAIL_REGEX.match(clean):
+                        candidates.append(clean)
+        except Exception:
+            pass
+
+    # 2. Extract emails from raw text and HTML text
+    if text:
+        candidates.extend(EMAIL_REGEX.findall(text))
+    if html and not text:
+        candidates.extend(EMAIL_REGEX.findall(html))
+
+    if not candidates:
+        return None
+
+    # Filter out invalid, blacklisted, and non-hiring emails
+    valid: List[str] = []
+    seen = set()
+    for raw_email in candidates:
+        clean_email = raw_email.strip().lower().rstrip(".,:;!?)")
+        if not clean_email or clean_email in seen or not EMAIL_REGEX.match(clean_email):
+            continue
+        seen.add(clean_email)
+
+        if any(clean_email.startswith(p) for p in BLACKLIST_PREFIXES):
+            continue
+
+        parts = clean_email.split("@")
+        if len(parts) != 2:
+            continue
+        local_part, domain = parts
+
+        if domain in BLACKLIST_DOMAINS or any(domain.endswith("." + bl) for bl in BLACKLIST_DOMAINS):
+            continue
+
+        valid.append(clean_email)
+
+    if not valid:
+        return None
+
+    # Score candidates
+    def score_email(e: str) -> int:
+        score = 10
+        local, domain = e.split("@")
+        # Strong boost for hiring / careers / application prefixes
+        if any(local.startswith(p) or local == p for p in HR_PREFIXES):
+            score += 50
+        # Boost if domain contains company name
+        if company:
+            clean_comp = re.sub(r"[^a-z0-9]", "", company.lower())
+            clean_dom = domain.replace("-", "").replace(".", "")
+            if clean_comp and len(clean_comp) >= 3 and clean_comp in clean_dom:
+                score += 35
+        # Slight penalty for generic info/contact/hello if a careers/jobs email is also present
+        if local in ("info", "contact", "hello", "inquiry", "support"):
+            score -= 5
+        return score
+
+    valid.sort(key=score_email, reverse=True)
+    return valid[0]
+
+

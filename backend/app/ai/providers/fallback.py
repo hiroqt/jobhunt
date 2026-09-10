@@ -19,6 +19,7 @@ from backend.app.processing.normalizer import (
     extract_skills_from_text,
 )
 from backend.app.processing.source_detector import detect_job_source
+from backend.app.processing.content_extractor import extract_contact_email
 
 
 # Common non-name keywords that shouldn't be picked up as candidate names
@@ -224,6 +225,7 @@ class FallbackHeuristicProvider(BaseAIProvider):
 
         source = detect_job_source(source_url) if source_url else "Manual"
         skill_names = list(detected_skills.keys())
+        contact_email = extract_contact_email(None, raw_text, company)
 
         return JobCreate(
             url=source_url,
@@ -231,6 +233,7 @@ class FallbackHeuristicProvider(BaseAIProvider):
             source=source,
             title=title,
             company=company,
+            contact_email=contact_email,
             location=location,
             workplace_type=workplace_type,
             employment_type="Full-time",

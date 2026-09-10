@@ -451,18 +451,24 @@ export async function generateCoverLetter(
 
 export async function saveCoverLetterForJob(
   jobId: string,
-  coverLetter: string
+  coverLetter: string,
+  recruiterEmail?: string
 ): Promise<Application> {
   const existingApps = await getApplications({ jobId });
   if (existingApps && existingApps.length > 0) {
-    return updateApplication(existingApps[0].id, {
+    const updatePayload: Partial<Application> = {
       custom_cover_letter: coverLetter,
-    });
+    };
+    if (recruiterEmail && recruiterEmail.trim()) {
+      updatePayload.recruiter_email = recruiterEmail.trim();
+    }
+    return updateApplication(existingApps[0].id, updatePayload);
   } else {
     return createApplication({
       job_id: jobId,
       status: "SAVED",
       custom_cover_letter: coverLetter,
+      recruiter_email: recruiterEmail && recruiterEmail.trim() ? recruiterEmail.trim() : undefined,
       notes: "Cover letter curated and saved.",
     });
   }

@@ -35,6 +35,7 @@ class Job(Base, UUIDMixin, TimestampMixin):
     
     title: Mapped[str] = mapped_column(String(200), index=True, nullable=False)
     company: Mapped[str] = mapped_column(String(200), index=True, nullable=False)
+    contact_email: Mapped[Optional[str]] = mapped_column(String(200), index=True, nullable=True)
     location: Mapped[Optional[str]] = mapped_column(String(150), nullable=True, default=None)
     workplace_type: Mapped[str] = mapped_column(String(50), default="Remote") # Remote, Hybrid, Onsite
     employment_type: Mapped[str] = mapped_column(String(50), default="Full-time") # Full-time, Contract, Part-time, Internship

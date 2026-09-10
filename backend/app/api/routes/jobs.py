@@ -131,6 +131,7 @@ async def extract_and_analyze_job(
         source=job_create.source,
         title=job_create.title,
         company=job_create.company,
+        contact_email=job_create.contact_email,
         location=job_create.location,
         workplace_type=job_create.workplace_type,
         employment_type=job_create.employment_type,

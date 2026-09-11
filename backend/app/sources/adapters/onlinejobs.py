@@ -88,19 +88,40 @@ class OnlineJobsAdapter(JobSourceAdapter):
                         m_id = re.search(r"/job/(\d+)", job_url)
                         job_id = m_id.group(1) if m_id else f"{abs(hash(job_url)) % 1000000}"
 
-                        title = link_el.get_text(strip=True) or kw
-                        
-                        # Company or employer
-                        comp_el = card.select_one(".employer-name, .posted-by, h4, .text-muted")
-                        comp_name = comp_el.get_text(strip=True) if comp_el else "OnlineJobs Employer"
+                        # Extract title from heading (h4/h3/h2), removing badge spans
+                        heading = card.select_one("h4, h3, h2, .jobpost-cat-box-title")
+                        badge_type = ""
+                        if heading:
+                            heading_copy = BeautifulSoup(str(heading), "html.parser")
+                            for b in heading_copy.select(".badge, span"):
+                                badge_type = b.get_text(strip=True)
+                                b.decompose()
+                            title = heading_copy.get_text(strip=True)
+                        else:
+                            title = link_el.get_text(strip=True)
+
+                        # Clean fallback if title is a generic button label
+                        if not title or title.lower() in ("see more", "read more", "view job", "apply now", "view details"):
+                            slug_match = re.search(r"/job/([^/?#]+)", raw_href)
+                            if slug_match:
+                                slug = slug_match.group(1)
+                                slug = re.sub(r"-\d+$", "", slug)
+                                title = slug.replace("-", " ").title()
+                            else:
+                                title = kw
+
+                        # Employer name (avoid selecting title heading)
+                        comp_el = card.select_one(".employer-name, .posted-by, .company-name")
+                        comp_name = comp_el.get_text(strip=True) if comp_el else "OnlineJobs Verified Client"
                         if "posted" in comp_name.lower() or "by" in comp_name.lower():
                             comp_name = "OnlineJobs Verified Client"
 
-                        desc_el = card.select_one(".desc, .job-desc, p, .snippet")
+                        desc_el = card.select_one(".desc, .job-desc, p.desc, .snippet")
                         desc_text = desc_el.get_text(strip=True) if desc_el else ""
 
-                        # Salary extraction if present (e.g. $1000/month or ₱50,000)
-                        sal_text = card.get_text()
+                        # Salary extraction from dd element or text
+                        sal_el = card.select_one("dd")
+                        sal_text = (sal_el.get_text(strip=True) if sal_el else "") or card.get_text()
                         sal_min, sal_max = None, None
                         curr = "PHP"
                         if "$" in sal_text or "usd" in sal_text.lower():
@@ -115,6 +136,17 @@ class OnlineJobsAdapter(JobSourceAdapter):
                                 sal_min = php_nums[0]
                                 sal_max = php_nums[1] if len(php_nums) > 1 else int(sal_min * 1.3)
 
+                        # Date extraction
+                        date_p = card.select_one("p[data-temp]")
+                        posted_at = None
+                        if date_p and date_p.get("data-temp"):
+                            try:
+                                posted_at = datetime.fromisoformat(date_p["data-temp"].replace(" ", "T")).replace(tzinfo=timezone.utc)
+                            except Exception:
+                                pass
+                        if not posted_at:
+                            posted_at = now - timedelta(days=(len(results) % 3) + 1)
+
                         disc_skills = extract_skills_from_text(f"{title} {desc_text} {' '.join(query.keywords)}")
                         if not disc_skills:
                             disc_skills = [normalize_skill_name(k) for k in query.keywords if k] or ["Remote Contracting"]
@@ -128,14 +160,14 @@ class OnlineJobsAdapter(JobSourceAdapter):
                                 location=loc,
                                 url=job_url,
                                 workplace_type="Remote",
-                                employment_type=query.employment_types[0] if query.employment_types else "Full-time",
+                                employment_type="Part-time" if "part" in badge_type.lower() else (query.employment_types[0] if query.employment_types else "Full-time"),
                                 experience_level=query.experience_levels[0] if query.experience_levels else "Junior",
                                 salary_min=sal_min or (1000 if curr == "USD" else 50000),
                                 salary_max=sal_max or (1800 if curr == "USD" else 85000),
                                 currency=curr,
                                 description=desc_text or f"Remote Philippine opportunity for {title} via OnlineJobs.ph.",
                                 skills=disc_skills,
-                                posted_at=now - timedelta(days=(len(results) % 3) + 1),
+                                posted_at=posted_at,
                                 raw_data={"source_origin": "onlinejobs_live_search", "job_id": job_id}
                             )
                         )

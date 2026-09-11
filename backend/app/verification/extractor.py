@@ -17,6 +17,8 @@ ALLOWED_DOMAINS = {
     "jobstreet.co.id",
     "jobstreet.com",
     "seek.com.au",
+    "seek.co.nz",
+    "jobsdb.com",
     "remoteok.com",
     "remoteok.io",
     "jobicy.com",

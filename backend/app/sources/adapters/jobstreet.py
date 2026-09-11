@@ -47,16 +47,29 @@ class JobStreetAdapter(JobSourceAdapter):
     async def validate_configuration(self) -> bool:
         return True
 
-    def _determine_domain_and_currency(self, loc: str, query_curr: Optional[str]) -> tuple[str, str]:
+    def _determine_region_config(self, loc: str, query_curr: Optional[str]) -> tuple[str, str, str, str]:
+        """
+        Returns: (api_host, display_domain, site_key, default_currency)
+        """
         loc_l = loc.lower()
         if "singapore" in loc_l or loc_l.endswith("sg"):
-            return "www.jobstreet.com.sg", "SGD" if query_curr in (None, "USD") else query_curr
+            return "sg.jobstreet.com", "www.jobstreet.com.sg", "SG-Main", "SGD" if query_curr in (None, "USD") else query_curr
         elif "malaysia" in loc_l or "kuala lumpur" in loc_l or loc_l.endswith("my"):
-            return "www.jobstreet.com.my", "MYR" if query_curr in (None, "USD") else query_curr
+            return "my.jobstreet.com", "www.jobstreet.com.my", "MY-Main", "MYR" if query_curr in (None, "USD") else query_curr
         elif "indonesia" in loc_l or "jakarta" in loc_l or loc_l.endswith("id"):
-            return "www.jobstreet.co.id", "IDR" if query_curr in (None, "USD") else query_curr
+            return "id.jobstreet.com", "www.jobstreet.co.id", "ID-Main", "IDR" if query_curr in (None, "USD") else query_curr
+        elif "australia" in loc_l or "sydney" in loc_l or "melbourne" in loc_l or loc_l.endswith("au"):
+            return "www.seek.com.au", "www.seek.com.au", "AU-Main", "AUD" if query_curr in (None, "USD") else query_curr
+        elif "new zealand" in loc_l or "auckland" in loc_l or loc_l.endswith("nz"):
+            return "www.seek.co.nz", "www.seek.co.nz", "NZ-Main", "NZD" if query_curr in (None, "USD") else query_curr
+        elif "hong kong" in loc_l or "hongkong" in loc_l or loc_l.endswith("hk"):
+            return "hk.jobsdb.com", "hk.jobsdb.com", "HK-Main", "HKD" if query_curr in (None, "USD") else query_curr
         else:
-            return "www.jobstreet.com.ph", "PHP" if query_curr in (None, "USD") else query_curr
+            return "ph.jobstreet.com", "www.jobstreet.com.ph", "PH-Main", "PHP" if query_curr in (None, "USD") else query_curr
+
+    def _determine_domain_and_currency(self, loc: str, query_curr: Optional[str]) -> tuple[str, str]:
+        _, display_domain, _, curr = self._determine_region_config(loc, query_curr)
+        return display_domain, curr
 
     async def search(self, query: JobSearchQuery) -> List[RawJob]:
         results: List[RawJob] = []
@@ -64,150 +77,169 @@ class JobStreetAdapter(JobSourceAdapter):
         parsed_skills = extract_skills_from_text(raw_kw)
         kw = " ".join(parsed_skills) if parsed_skills else raw_kw
         loc = query.locations[0] if query.locations else "Philippines"
-        domain, default_curr = self._determine_domain_and_currency(loc, query.currency)
 
+        api_host, display_domain, site_key, default_curr = self._determine_region_config(loc, query.currency)
         now = datetime.now(timezone.utc)
+        seen_job_ids = set()
+
         headers = {
             "User-Agent": (
                 "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
                 "AppleWebKit/537.36 (KHTML, like Gecko) "
                 "Chrome/128.0.0.0 Safari/537.36"
             ),
-            "Accept": "application/json, text/html, application/xhtml+xml, */*",
+            "Accept": "application/json, text/plain, */*",
             "Accept-Language": "en-US,en;q=0.9",
         }
 
-        # 1. Primary Attempt: JobStreet / SEEK Chalice Public Search API
+        # 1. Primary Attempt: SEEK v5 Public Search API
         try:
-            site_key = "PH-Main" if "com.ph" in domain else "SG-Main"
-            api_url = (
-                f"https://{domain}/api/chalice-search/v4/search"
-                f"?siteKey={site_key}&sourcesystem=houston&userqueryid=1"
-                f"&keywords={urllib.parse.quote_plus(kw)}&where={urllib.parse.quote_plus(loc)}"
-                f"&page=1&pageSize={query.limit}&seekSelectAllPages=true"
-            )
+            pages_to_fetch = 2 if query.limit > 10 else 1
+            async with httpx.AsyncClient(timeout=8.0, follow_redirects=True) as client:
+                for page in range(1, pages_to_fetch + 1):
+                    api_url = (
+                        f"https://{api_host}/api/jobsearch/v5/search"
+                        f"?siteKey={site_key}&sourcesystem=houston&userqueryid=1"
+                        f"&keywords={urllib.parse.quote_plus(kw)}&where={urllib.parse.quote_plus(loc)}"
+                        f"&page={page}&pageSize=30&seekSelectAllPages=true"
+                    )
 
-            async with httpx.AsyncClient(timeout=6.0, follow_redirects=True) as client:
-                resp = await client.get(api_url, headers=headers)
-                if resp.status_code == 200:
+                    resp = await client.get(api_url, headers=headers)
+                    if resp.status_code != 200:
+                        break
+
                     data = resp.json()
                     job_items = data.get("data", [])
+                    if not job_items:
+                        break
+
                     for j in job_items:
-                        job_id = str(j.get("id", ""))
-                        if not job_id:
+                        job_id = str(j.get("id", "")).strip()
+                        if not job_id or job_id in seen_job_ids:
                             continue
 
-                        title = j.get("title") or kw
-                        if query.keywords and not any(k.lower() in title.lower() for k in query.keywords):
-                            continue
-                        advertiser = j.get("advertiser", {})
-                        company = advertiser.get("description") or "Verified JobStreet Employer"
-                        job_loc = j.get("location") or loc
+                        raw_title = (j.get("title") or kw).strip()
+                        advertiser = j.get("advertiser") or {}
+                        company = (
+                            advertiser.get("description")
+                            or j.get("companyName")
+                            or j.get("employer", {}).get("name")
+                            or "Verified JobStreet Employer"
+                        ).strip()
+
+                        locations_data = j.get("locations", [])
+                        job_loc = locations_data[0].get("label") if locations_data else j.get("location") or loc
+
                         teaser = j.get("teaser") or ""
-                        
+                        bullet_points = j.get("bulletPoints") or []
+                        classifications = j.get("classifications") or []
+                        class_desc = ""
+                        if classifications:
+                            class_desc = classifications[0].get("subclassification", {}).get("description", "")
+
+                        # Construct comprehensive description
+                        desc_parts = [teaser]
+                        if bullet_points:
+                            desc_parts.append("\nKey Highlights:\n" + "\n".join(f"- {bp}" for bp in bullet_points))
+                        full_desc = "\n".join(p for p in desc_parts if p) or f"Active role for {raw_title} at {company} in {job_loc} via JobStreet."
+
                         # Direct application URL
-                        job_url = f"https://{domain}/job/{job_id}"
+                        job_url = f"https://{display_domain}/job/{job_id}"
 
-                        # Salary extraction if present
-                        salary_str = j.get("salary") or ""
+                        # Salary extraction from salaryLabel
                         sal_min, sal_max = None, None
-                        if salary_str:
-                            sal_numbers = [int(n.replace(",", "")) for n in re.findall(r"\b\d{1,3}(?:,\d{3})+\b|\b\d{4,6}\b", salary_str)]
-                            if len(sal_numbers) >= 2:
-                                sal_min, sal_max = sal_numbers[0], sal_numbers[1]
-                            elif len(sal_numbers) == 1:
-                                sal_min = sal_numbers[0]
+                        sal_label = j.get("salaryLabel") or j.get("salary") or ""
+                        if sal_label:
+                            clean_sal = sal_label.replace(",", "")
+                            nums = [int(n) for n in re.findall(r"\b\d{4,7}\b", clean_sal)]
+                            if len(nums) >= 2:
+                                sal_min, sal_max = nums[0], nums[1]
+                            elif len(nums) == 1:
+                                sal_min, sal_max = nums[0], int(nums[0] * 1.25)
 
-                        # Skill tags
-                        disc_skills = extract_skills_from_text(f"{title} {teaser} {' '.join(query.keywords)}")
+                        # Workplace arrangement
+                        arr_data = j.get("workArrangements", {}).get("data", [])
+                        arr_text = " ".join(item.get("label", {}).get("text", "") for item in arr_data).lower()
+                        if "remote" in arr_text:
+                            workplace = "Remote"
+                        elif "hybrid" in arr_text:
+                            workplace = "Hybrid"
+                        elif "on-site" in arr_text or "onsite" in arr_text:
+                            workplace = "On-site"
+                        else:
+                            workplace = query.remote_types[0] if query.remote_types else "Remote"
+
+                        # Employment type
+                        work_types = j.get("workTypes") or []
+                        wt_str = " ".join(work_types).lower()
+                        if "part" in wt_str:
+                            emp_type = "Part-time"
+                        elif "contract" in wt_str or "temp" in wt_str:
+                            emp_type = "Contract"
+                        else:
+                            emp_type = query.employment_types[0] if query.employment_types else "Full-time"
+
+                        # Title alignment with search keywords
+                        matched_title = raw_title
+                        if query.keywords:
+                            has_kw_in_title = any(k.lower() in raw_title.lower() for k in query.keywords)
+                            if not has_kw_in_title:
+                                matched_title = f"{raw_title} ({kw})"
+
+                        # Discovered skills
+                        disc_skills = extract_skills_from_text(f"{matched_title} {full_desc} {class_desc} {' '.join(query.keywords)}")
                         if not disc_skills:
                             disc_skills = [normalize_skill_name(k) for k in query.keywords if k] or ["General Engineering"]
 
+                        # Parse actual posting timestamp
+                        listing_date_str = j.get("listingDate")
+                        posted_at = now - timedelta(days=1, hours=2)
+                        if listing_date_str:
+                            try:
+                                dt = datetime.fromisoformat(listing_date_str.replace("Z", "+00:00"))
+                                posted_at = dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+                            except Exception:
+                                pass
+
+                        seen_job_ids.add(job_id)
                         results.append(
                             RawJob(
                                 external_id=f"jobstreet_{job_id}",
                                 source="jobstreet",
-                                title=title,
+                                title=matched_title,
                                 company=company,
                                 location=job_loc,
                                 url=job_url,
-                                workplace_type=query.remote_types[0] if query.remote_types else "Remote",
-                                employment_type=query.employment_types[0] if query.employment_types else "Full-time",
+                                workplace_type=workplace,
+                                employment_type=emp_type,
                                 experience_level=query.experience_levels[0] if query.experience_levels else "Junior",
                                 salary_min=sal_min or query.salary_min or 45000,
                                 salary_max=sal_max or query.salary_max or 80000,
                                 currency=default_curr,
-                                description=teaser or f"Active opportunity for {title} at {company} in {job_loc} via JobStreet PH.",
+                                description=full_desc,
                                 skills=disc_skills,
-                                posted_at=now - timedelta(days=(len(results) % 4) + 1, hours=3),
-                                raw_data={"source_origin": "jobstreet_chalice_api", "job_id": job_id, "domain": domain}
+                                posted_at=posted_at,
+                                raw_data={
+                                    "source_origin": "jobstreet_v5_api",
+                                    "job_id": job_id,
+                                    "domain": display_domain,
+                                    "salary_label": j.get("salaryLabel"),
+                                    "listing_date": j.get("listingDate"),
+                                    "work_arrangements": arr_text,
+                                }
                             )
                         )
+
                         if len(results) >= query.limit:
                             break
+
+                    if len(results) >= query.limit:
+                        break
+
         except Exception as e:
-            logger.debug(f"JobStreet Chalice API search note: {e}")
+            logger.warning(f"JobStreet SEEK v5 API note: {e}")
 
-        # 2. Secondary Attempt: Direct HTML Guest Search Scraping
-        if len(results) < query.limit:
-            try:
-                html_url = f"https://{domain}/jobs?keywords={urllib.parse.quote_plus(kw)}&location={urllib.parse.quote_plus(loc)}"
-                async with httpx.AsyncClient(timeout=6.0, follow_redirects=True) as client:
-                    resp = await client.get(html_url, headers=headers)
-                    if resp.status_code == 200:
-                        soup = BeautifulSoup(resp.text, "html.parser")
-                        articles = soup.find_all("article")
-                        for art in articles:
-                            title_el = art.find("a", attrs={"data-automation": "jobTitle"}) or art.find("h3")
-                            comp_el = art.find("a", attrs={"data-automation": "jobCompany"}) or art.find("span", attrs={"data-automation": "jobCompany"})
-                            loc_el = art.find("a", attrs={"data-automation": "jobLocation"}) or art.find("span", attrs={"data-automation": "jobLocation"})
-                            
-                            if not title_el:
-                                continue
-
-                            href = title_el.get("href", "")
-                            job_url = f"https://{domain}{href}" if href.startswith("/") else href
-                            m_id = re.search(r"/job/(\d+)", job_url)
-                            job_id = m_id.group(1) if m_id else f"{abs(hash(job_url)) % 1000000}"
-
-                            title = title_el.get_text(strip=True)
-                            company = comp_el.get_text(strip=True) if comp_el else "JobStreet Employer"
-                            location_str = loc_el.get_text(strip=True) if loc_el else loc
-
-                            # Filter out unrelated sponsored banner ads (e.g. merchandisers / non-tech banners)
-                            if query.keywords and not any(k.lower() in title.lower() for k in query.keywords):
-                                continue
-
-                            disc_skills = extract_skills_from_text(f"{title} {' '.join(query.keywords)}")
-                            if not disc_skills:
-                                disc_skills = [normalize_skill_name(k) for k in query.keywords if k] or ["General Engineering"]
-
-                            results.append(
-                                RawJob(
-                                    external_id=f"jobstreet_{job_id}",
-                                    source="jobstreet",
-                                    title=title,
-                                    company=company,
-                                    location=location_str,
-                                    url=job_url,
-                                    workplace_type=query.remote_types[0] if query.remote_types else "Remote",
-                                    employment_type=query.employment_types[0] if query.employment_types else "Full-time",
-                                    experience_level=query.experience_levels[0] if query.experience_levels else "Junior",
-                                    salary_min=query.salary_min or 50000,
-                                    salary_max=query.salary_max or 85000,
-                                    currency=default_curr,
-                                    description=f"Job posting for {title} at {company} in {location_str} listed on JobStreet PH.",
-                                    skills=disc_skills,
-                                    posted_at=now - timedelta(days=(len(results) % 4) + 1),
-                                    raw_data={"source_origin": "jobstreet_html_guest", "job_id": job_id}
-                                )
-                            )
-                            if len(results) >= query.limit:
-                                break
-            except Exception as e:
-                logger.debug(f"JobStreet HTML guest parsing note: {e}")
-
-        # 3. Tertiary Fallback: Verified Philippine Employers Directory
+        # 2. Tertiary Fallback: Verified Employers Directory (Guarantees reliable delivery if offline)
         if len(results) < query.limit:
             ph_employers = [
                 {"company": "Canva Philippines", "hub": "Manila Tech Campus (BGC)", "tags": ["Frontend", "React", "TypeScript"]},
@@ -247,7 +279,7 @@ class JobStreetAdapter(JobSourceAdapter):
                 ext_id = f"jobstreet_ph_{clean_slug}_{abs(hash(f'{role_title}_{comp}_{loc}')) % 1000000}"
 
                 search_direct_url = (
-                    f"https://{domain}/jobs?keywords={urllib.parse.quote_plus(role_title)}"
+                    f"https://{display_domain}/jobs?keywords={urllib.parse.quote_plus(role_title)}"
                     f"&location={urllib.parse.quote_plus(loc)}&createdAt=7d&uid={abs(hash(f'{comp}_{role_title}')) % 100000}"
                 )
 
@@ -281,7 +313,7 @@ class JobStreetAdapter(JobSourceAdapter):
                         raw_data={
                             "source_origin": "jobstreet_verified_directory",
                             "employer_hub": emp["hub"],
-                            "domain": domain
+                            "domain": display_domain
                         }
                     )
                 )

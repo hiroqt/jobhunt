@@ -21,7 +21,14 @@ import html
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
-from selectolax.parser import HTMLParser
+try:
+    from selectolax.lexbor import LexborHTMLParser as HTMLParser
+except ImportError:
+    try:
+        from selectolax.parser import HTMLParser
+    except (ImportError, Exception):
+        HTMLParser = None  # Handled gracefully with BeautifulSoup fallback in extraction
+
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
@@ -319,25 +326,43 @@ async def extract_job_url(url: str) -> Dict[str, Any]:
             "error": error_msg or "Failed to fetch webpage content.",
         }
 
-    # 1. Parse HTML via selectolax
-    tree = HTMLParser(raw_html)
+    # 1. Parse HTML via selectolax Lexbor (or BeautifulSoup fallback)
+    meta_title = ""
+    raw_body_text = ""
 
-    # Decompose noisy script/style/nav/header/footer tags
-    for tag in tree.css("script, style, nav, footer, header, noscript, svg, iframe, form"):
-        tag.decompose()
+    if HTMLParser is not None:
+        try:
+            tree = HTMLParser(raw_html)
+            for tag in tree.css("script, style, nav, footer, header, noscript, svg, iframe, form"):
+                tag.decompose()
 
-    # Extract meta title & description
-    title_node = tree.css_first("title")
-    meta_title = title_node.text(strip=True) if title_node else ""
+            title_node = tree.css_first("title")
+            meta_title = title_node.text(strip=True) if title_node else ""
 
-    og_title_node = tree.css_first("meta[property='og:title'], meta[name='twitter:title']")
-    if og_title_node and og_title_node.attributes.get("content"):
-        meta_title = og_title_node.attributes["content"].strip()
+            og_title_node = tree.css_first("meta[property='og:title'], meta[name='twitter:title']")
+            if og_title_node and og_title_node.attributes.get("content"):
+                meta_title = og_title_node.attributes["content"].strip()
 
-    body_node = tree.body
-    raw_body_text = body_node.text(separator="\n", strip=True) if body_node else ""
+            body_node = tree.body
+            raw_body_text = body_node.text(separator="\n", strip=True) if body_node else ""
+        except Exception as parse_err:
+            logger.warning(f"selectolax parse error: {parse_err}, using BeautifulSoup fallback")
+            HTMLParser_failed = True
+        else:
+            HTMLParser_failed = False
+    else:
+        HTMLParser_failed = True
 
-    combined_text = f"{meta_title}\n\n{raw_body_text}"
+    if HTMLParser_failed:
+        from bs4 import BeautifulSoup
+        soup = BeautifulSoup(raw_html, "html.parser")
+        for tag in soup(["script", "style", "nav", "footer", "header", "noscript", "svg", "iframe", "form"]):
+            tag.decompose()
+        if soup.title:
+            meta_title = soup.title.get_text(strip=True)
+        raw_body_text = soup.get_text(separator="\n", strip=True)
+
+    combined_text = f"{meta_title}\n\n{raw_body_text}".strip()
 
     # 2. Run PromptInjectionGuardrail
     sanitized_text = PromptInjectionGuardrail.sanitize_untrusted_content(combined_text)

@@ -10,7 +10,8 @@ import {
   ViewOffSlashIcon as EyeOff,
   Key01Icon as Key,
   CheckmarkCircle01Icon as CheckCircle,
-  HelpCircleIcon as HelpCircle
+  HelpCircleIcon as HelpCircle,
+  BotIcon as Bot
 } from "hugeicons-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -310,6 +311,19 @@ Please confirm your readiness by introducing yourself as my Sakto Ka Job Assista
                   </Button>
                 </div>
               </div>
+
+              {/* Install Permanently in Claude Web */}
+              <div className="p-4 rounded-xl border border-border bg-background space-y-2">
+                <h4 className="font-semibold text-xs text-foreground flex items-center gap-1.5">
+                  <Bot className="w-4 h-4 text-primary" />
+                  Install Permanently in Claude Web (Projects)
+                </h4>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  To keep Sakto Ka permanently in your Claude Web sidebar like an installed plugin: go to{" "}
+                  <span className="font-medium text-foreground">claude.ai ➔ Projects ➔ Create Project</span> ("Sakto Ka"), and paste the setup prompt above into{" "}
+                  <span className="font-medium text-foreground">Project Instructions</span>. Every chat created inside that project will automatically act as your Job Search Assistant without pasting prompts again!
+                </p>
+              </div>
             </TabsContent>
 
             {/* CHATGPT & CODEX TAB */}
@@ -408,6 +422,17 @@ Please confirm your readiness by introducing yourself as my Sakto Ka Job Assista
                     )}
                   </Button>
                 </div>
+              </div>
+
+              {/* Install Permanently in ChatGPT Web */}
+              <div className="p-4 rounded-xl border border-border bg-background space-y-2">
+                <h4 className="font-semibold text-xs text-foreground flex items-center gap-1.5">
+                  <Bot className="w-4 h-4 text-primary" />
+                  Install Permanently in ChatGPT Web (Custom GPT)
+                </h4>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Once you import the action above (<code className="font-mono text-primary font-medium">https://saktoka.click/openapi.json</code>) and save your Custom GPT, it permanently appears in your ChatGPT left sidebar like an installed app. You can also share the link so anyone can click and use it with zero setup!
+                </p>
               </div>
             </TabsContent>
           </Tabs>

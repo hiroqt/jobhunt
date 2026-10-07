@@ -1,0 +1,17 @@
+{
+  "schema_version": "v1",
+  "name_for_human": "Sakto Ka Job Hunt",
+  "name_for_model": "sakto_ka_job_hunt",
+  "description_for_human": "Search remote jobs, score qualifications against your resume, prepare interview answers, and manage your job hunt pipeline.",
+  "description_for_model": "Plugin for searching job listings, calculating qualification match scores against candidate resumes, extracting job postings from URLs, preparing technical and STAR interview answers, and tracking job applications in the pipeline.",
+  "auth": {
+    "type": "none"
+  },
+  "api": {
+    "type": "openapi",
+    "url": "https://saktoka.click/openapi.json"
+  },
+  "logo_url": "https://saktoka.click/icon.png",
+  "contact_email": "support@saktoka.click",
+  "legal_info_url": "https://saktoka.click"
+}

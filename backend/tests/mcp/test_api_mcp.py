@@ -67,6 +67,16 @@ async def test_mcp_info_endpoint_async():
         assert payload["guardrail_policies"]["qualification_threshold"]["enabled"] is True
 
 
+def test_mcp_messages_routes_exist():
+    """Verify that /mcp/messages, /api/mcp/messages, and root /messages routes are active and not 404."""
+    client = TestClient(app)
+    # Testing with invalid session ID returns 400 from MCP transport handler (not 404 Not Found)
+    for path in ["/mcp/messages/?session_id=invalid", f"{settings.API_V1_STR}/mcp/messages/?session_id=invalid", "/messages/?session_id=invalid"]:
+        res = client.post(path, json={})
+        assert res.status_code == 400, f"Expected 400 from MCP transport on {path}, got {res.status_code}: {res.text}"
+        assert "Invalid session ID" in res.text
+
+
 def test_claude_desktop_config_valid_json(project_root: Path):
     """Verify docs/mcp/claude_desktop_config.json is valid and properly structured."""
     config_path = project_root / "docs" / "mcp" / "claude_desktop_config.json"

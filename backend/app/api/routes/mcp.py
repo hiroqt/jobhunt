@@ -10,6 +10,7 @@ Exposes:
 
 from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, Request, status
+from starlette.responses import Response
 from starlette.types import Scope, Receive, Send
 
 from backend.app.core.config import settings
@@ -95,16 +96,45 @@ async def get_mcp_info() -> Dict[str, Any]:
     }
 
 
+class AsgiResponse(Response):
+    """
+    ASGI-compatible response that delegates execution directly to a mounted ASGI application.
+    Prevents duplicate response start events in FastAPI route handlers.
+    """
+
+    def __init__(
+        self,
+        asgi_app: Any,
+        path_override: Optional[str] = None,
+        root_path_override: Optional[str] = None,
+    ):
+        super().__init__(content=b"")
+        self.asgi_app = asgi_app
+        self.path_override = path_override
+        self.root_path_override = root_path_override
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        s = dict(scope)
+        if self.path_override is not None:
+            s["path"] = self.path_override
+            s["raw_path"] = self.path_override.encode()
+        if self.root_path_override is not None:
+            s["root_path"] = self.root_path_override
+        await self.asgi_app(s, receive, send)
+
+
 @router.api_route("/sse", methods=["GET", "HEAD"], summary="MCP Server-Sent Events (SSE) Stream")
 async def mcp_sse_endpoint(request: Request):
     """
     SSE stream endpoint for Model Context Protocol clients.
     Bridges incoming GET/HEAD requests to the FastMCP ASGI SSE transport.
     """
-    scope = dict(request.scope)
-    scope["path"] = "/sse"
-    scope["raw_path"] = b"/sse"
-    return await sse_app(scope, request.receive, request._send)
+    path = request.url.path
+    if "/sse" in path:
+        base_prefix = path.rsplit("/sse", 1)[0].rstrip("/")
+    else:
+        base_prefix = ""
+    return AsgiResponse(sse_app, path_override="/sse", root_path_override=base_prefix)
 
 
 @router.api_route(
@@ -121,10 +151,7 @@ async def mcp_messages_endpoint(request: Request, path: str = ""):
     """
     JSON-RPC POST endpoint for client messages paired with an active SSE session.
     """
-    scope = dict(request.scope)
     msg_path = f"/messages/{path}" if path else "/messages/"
     if not msg_path.endswith("/") and not path:
         msg_path += "/"
-    scope["path"] = msg_path
-    scope["raw_path"] = msg_path.encode()
-    return await sse_app(scope, request.receive, request._send)
+    return AsgiResponse(sse_app, path_override=msg_path)

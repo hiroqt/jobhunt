@@ -11,7 +11,7 @@ for _p in [str(_project_root), str(_backend_dir)]:
         sys.path.insert(0, _p)
 
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
@@ -33,7 +33,11 @@ from backend.app.api.routes.interviews import router as interviews_router
 from backend.app.api.routes.follow_ups import router as follow_ups_router
 from backend.app.api.routes.ai import router as ai_router
 from backend.app.api.routes.analytics import router as analytics_router
-from backend.app.api.routes.mcp import router as mcp_router
+from backend.app.api.routes.mcp import (
+    router as mcp_router,
+    mcp_messages_endpoint,
+    mcp_sse_endpoint,
+)
 
 
 async def _periodic_session_cleanup():
@@ -99,6 +103,29 @@ app.include_router(ai_router, prefix=settings.API_V1_STR)
 app.include_router(analytics_router, prefix=settings.API_V1_STR)
 app.include_router(mcp_router, prefix=settings.API_V1_STR)
 app.include_router(mcp_router)
+
+# Root-level endpoints for MCP clients that resolve relative to server root (/messages, /sse)
+@app.api_route(
+    "/messages",
+    methods=["GET", "POST", "OPTIONS"],
+    include_in_schema=False,
+)
+@app.api_route(
+    "/messages/{path:path}",
+    methods=["GET", "POST", "OPTIONS"],
+    include_in_schema=False,
+)
+async def root_mcp_messages(request: Request, path: str = ""):
+    return await mcp_messages_endpoint(request, path=path)
+
+
+@app.api_route(
+    "/sse",
+    methods=["GET", "HEAD"],
+    include_in_schema=False,
+)
+async def root_mcp_sse(request: Request):
+    return await mcp_sse_endpoint(request)
 
 
 @app.get("/health", tags=["Health"])

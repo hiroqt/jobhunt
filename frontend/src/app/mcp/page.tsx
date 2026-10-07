@@ -4,12 +4,13 @@ import React, { useState, useEffect } from "react";
 import {
   Copy01Icon as Copy,
   Tick02Icon as Check,
-  BotIcon as Bot,
   CommandLineIcon as Terminal,
   FlashIcon as Zap,
   ViewIcon as Eye,
   ViewOffSlashIcon as EyeOff,
-  Key01Icon as Key
+  Key01Icon as Key,
+  CheckmarkCircle01Icon as CheckCircle,
+  HelpCircleIcon as HelpCircle
 } from "hugeicons-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -33,12 +34,35 @@ export default function McpPage() {
     setTimeout(() => setCopiedKey(null), 2500);
   };
 
+  // Instant Prompt for Claude (recognized immediately in Claude Web & Desktop without errors)
+  const claudePrompt = `You are my Sakto Ka Job Hunt Pipeline AI Assistant.
+Your mission is to help me find remote and local jobs, evaluate if I qualify based on my skills, prepare for interviews, and organize my job applications.
+
+How you help me:
+1. Job Search & Fit: When I ask for jobs (e.g. "find remote software engineer jobs"), help me discover relevant opportunities and analyze my qualification score.
+2. Qualification Scoring: Evaluate job requirements against my background:
+   - 80%+ -> Strong Match (APPLY)
+   - 60-79% -> Moderate Fit (REVIEW)
+   - Below 60% -> Skill Gap (SKIP)
+3. Interview & Prep: Help generate tailored technical questions, STAR behavioral frameworks, and follow-up emails.
+
+Endpoints for live data:
+- MCP SSE Endpoint: https://jobhunt-1e11.onrender.com/mcp/sse
+- OpenAPI Specs: https://saktoka.click/openapi.json
+- Authentication: None required (Public Guest Access)
+
+Please confirm you are ready by introducing yourself as my Sakto Ka Job Assistant and ask what roles or skills I want to focus on!`;
+
+  // 1-Line Terminal Auto-Setup for Claude Desktop
+  const claudeTerminalCommand = `curl -s https://saktoka.click/setup-claude.sh | bash`;
+
+  // Claude Desktop manual config JSON
   const claudeDesktopConfigJson = JSON.stringify(
     {
       mcpServers: {
-        "job-hunt-pipeline": {
+        "sakto-ka": {
           "command": "npx",
-          "args": ["-y", "mcp-remote", "https://saktoka.click/mcp/sse"]
+          "args": ["-y", "mcp-remote", "https://jobhunt-1e11.onrender.com/mcp/sse"]
         }
       }
     },
@@ -46,43 +70,37 @@ export default function McpPage() {
     2
   );
 
-  const claudeSetupPrompt = `Connect to sakto ka MCP server. Use endpoint: https://saktoka.click/mcp/sse
-If configuring claude_desktop_config.json:
-{
-  "mcpServers": {
-    "job-hunt-pipeline": {
-      "command": "npx",
-      "args": ["-y", "mcp-remote", "https://saktoka.click/mcp/sse"]
-    }
-  }
-}
-Session ID: ${sessionId}
-Once connected, list available tools and confirm ready to search jobs and review applications.`;
+  // Instant Prompt for ChatGPT & Codex
+  const chatGptPrompt = `You are my Sakto Ka Job Hunt Pipeline AI Assistant.
+Your mission is to help me discover jobs, evaluate qualification match scores, prepare for interviews, and manage my job search.
 
-  const chatGptCodexSetupPrompt = `Connect to sakto ka Job Hunt Pipeline via OpenAPI schema:
-URL: https://saktoka.click/openapi.json
-MCP SSE Stream: https://saktoka.click/mcp/sse
-Session Header: x-session-id: ${sessionId}
+When I chat with you:
+1. Job Search: Help me find remote or local opportunities matching my skills and experience.
+2. Match Scoring: When I share job descriptions or links, score my match percentage (Apply / Review / Skip).
+3. Interview Prep: Generate technical questions, STAR-method answers, and polite follow-up emails.
 
-Please import these actions/tools to find jobs, score job qualifications against my resume, prepare for interviews, and manage my job pipeline. Confirm when connected!`;
+Live Endpoints:
+- OpenAPI Action Schema: https://saktoka.click/openapi.json
+- MCP SSE Stream: https://jobhunt-1e11.onrender.com/mcp/sse
+- Authentication: None required (Public Guest Access)
 
-  const chatGptActionOpenApiUrl = "https://saktoka.click/openapi.json";
+Please confirm your readiness by introducing yourself as my Sakto Ka Job Assistant and ask me what kind of jobs I am looking for!`;
 
-  const codexPythonSnippet = `# OpenAI Codex / Assistants API Integration with sakto ka
-import openai
+  // OpenAPI action URL for ChatGPT Custom GPT Actions
+  const openApiSchemaUrl = "https://saktoka.click/openapi.json";
 
-client = openai.OpenAI()
-
-# 1. Connect using the live OpenAPI specification:
-OPENAPI_SCHEMA_URL = "https://saktoka.click/openapi.json"
-
-# 2. Or query the live Job Hunt Pipeline SSE endpoint:
-MCP_SSE_URL = "https://saktoka.click/mcp/sse"
-
-# Your active session identifier:
-SESSION_HEADER = {"x-session-id": "${sessionId}"}
-
-print(f"Connected Codex to sakto ka at {MCP_SSE_URL}")`;
+  // Cursor / AI Agent MCP snippet
+  const agentMcpSnippet = JSON.stringify(
+    {
+      mcpServers: {
+        "sakto-ka": {
+          "url": "https://jobhunt-1e11.onrender.com/mcp/sse"
+        }
+      }
+    },
+    null,
+    2
+  );
 
   const samplePrompts = [
     {
@@ -124,31 +142,31 @@ print(f"Connected Codex to sakto ka at {MCP_SSE_URL}")`;
 
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-8 space-y-8 animate-fade-in">
-      {/* User-Friendly Hero Section */}
+      {/* Hero Section */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/10 via-background to-secondary/15 border border-border p-6 md:p-10">
         <div className="space-y-3 max-w-3xl">
           <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight text-foreground">
             Chat with Your AI Assistant to <span className="text-primary">Find & Manage Jobs</span>
           </h1>
           <p className="text-muted-foreground text-sm md:text-base leading-relaxed">
-            Skip the manual searching and clicking. Connect <span className="font-semibold text-foreground">Claude</span> (Web or Desktop) or <span className="font-semibold text-foreground">ChatGPT / Codex</span> to{" "}
-            <span className="font-semibold text-foreground capitalize">sakto ka</span>. You can simply ask your AI to find remote openings, check how well they match your background, prepare interview answers, and organize your job applications—all through conversation.
+            Connect <span className="font-semibold text-foreground">Claude</span> (Web & Desktop) or <span className="font-semibold text-foreground">ChatGPT / Codex</span> to{" "}
+            <span className="font-semibold text-foreground capitalize">sakto ka</span>. Simply copy the setup prompt below to start searching for remote roles, scoring your qualifications, and preparing interview answers directly in conversation.
           </p>
         </div>
       </div>
 
-      {/* Easy Setup Guide for Claude & ChatGPT/Codex */}
+      {/* Main Connection Hub */}
       <Card className="p-6 md:p-8 border-border bg-card">
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-border/60">
             <div>
-              <h2 className="text-lg md:text-xl font-bold text-foreground">Connect Claude or ChatGPT</h2>
+              <h2 className="text-lg md:text-xl font-bold text-foreground">Choose Your Assistant</h2>
               <p className="text-xs md:text-sm text-muted-foreground mt-0.5">
-                Choose your assistant below to view the setup steps and configuration.
+                Copy the prompt or run the 1-click command for your platform.
               </p>
             </div>
 
-            {/* Guest Session ID Toggle & Viewer */}
+            {/* Session ID Viewer */}
             <div className="flex items-center gap-2 bg-muted/60 border border-border px-3 py-1.5 rounded-xl self-start sm:self-auto">
               <Key className="w-4 h-4 text-primary shrink-0" />
               <div className="flex flex-col">
@@ -183,27 +201,27 @@ print(f"Connected Codex to sakto ka at {MCP_SSE_URL}")`;
           <Tabs defaultValue="claude" className="w-full">
             <TabsList className="grid grid-cols-2 w-full max-w-sm">
               <TabsTrigger value="claude" className="text-xs md:text-sm">Claude (Web & Desktop)</TabsTrigger>
-              <TabsTrigger value="chatgpt" className="text-xs md:text-sm">ChatGPT / Codex</TabsTrigger>
+              <TabsTrigger value="chatgpt" className="text-xs md:text-sm">ChatGPT & Codex</TabsTrigger>
             </TabsList>
 
-            {/* CLAUDE (WEB & DESKTOP) TAB */}
+            {/* CLAUDE TAB */}
             <TabsContent value="claude" className="space-y-6 pt-4">
-              {/* Auto Setup Prompt */}
+              {/* Option 1: Instant Prompt for Any Claude Chat */}
               <div className="p-4 md:p-5 rounded-xl border-2 border-primary/30 bg-primary/5 space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="font-bold text-sm md:text-base text-foreground flex items-center gap-2">
                       <Zap className="w-4 h-4 text-primary" />
-                      Auto-Setup Prompt (Paste Directly into Claude)
+                      1. Copy & Paste Setup Prompt (Claude Web & Desktop)
                     </h3>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      Copy this prompt and paste it into Claude Web or Desktop to automatically set up the connection.
+                      Paste this directly into Claude. Claude will immediately introduce itself as your Sakto Ka assistant with zero setup errors.
                     </p>
                   </div>
                   <Button
                     size="sm"
                     variant="default"
-                    onClick={() => handleCopy("claude-prompt", claudeSetupPrompt)}
+                    onClick={() => handleCopy("claude-prompt", claudePrompt)}
                     className="gap-1.5 text-xs shadow-sm cursor-pointer shrink-0"
                   >
                     {copiedKey === "claude-prompt" ? (
@@ -219,32 +237,66 @@ print(f"Connected Codex to sakto ka at {MCP_SSE_URL}")`;
                     )}
                   </Button>
                 </div>
-                <pre className="p-3.5 rounded-lg bg-background/90 border border-border font-mono text-xs whitespace-pre-wrap text-foreground">
-                  {claudeSetupPrompt}
+                <pre className="p-3.5 rounded-lg bg-background/90 border border-border font-mono text-xs whitespace-pre-wrap text-foreground max-h-56 overflow-y-auto">
+                  {claudePrompt}
                 </pre>
               </div>
 
-              {/* Desktop Config Section */}
-              <div className="space-y-3">
-                <div className="text-xs text-muted-foreground space-y-1.5">
-                  <p className="font-semibold text-foreground text-sm">Manual Claude Desktop Config:</p>
-                  <ol className="list-decimal list-inside space-y-1 pl-1">
-                    <li>In Claude Desktop, open <span className="font-semibold text-foreground">Settings ➔ Developer ➔ Edit Config</span> (<code className="bg-muted px-1.5 py-0.5 rounded font-mono text-primary font-semibold">claude_desktop_config.json</code>).</li>
-                    <li>Paste the snippet below and restart Claude:</li>
-                  </ol>
+              {/* Option 2: 1-Click Terminal Setup for Claude Desktop */}
+              <div className="p-4 rounded-xl border border-border bg-muted/30 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-bold text-sm text-foreground flex items-center gap-2">
+                      <Terminal className="w-4 h-4 text-primary" />
+                      2. Automatic 1-Click Setup for Claude Desktop (macOS / Linux)
+                    </h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Want Claude Desktop to run live searches natively? Run this single command in your Terminal:
+                    </p>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => handleCopy("claude-terminal", claudeTerminalCommand)}
+                    className="gap-1.5 text-xs shadow-sm cursor-pointer shrink-0"
+                  >
+                    {copiedKey === "claude-terminal" ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-500" />
+                        <span>Copied Command!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5" />
+                        <span>Copy Command</span>
+                      </>
+                    )}
+                  </Button>
                 </div>
+                <div className="bg-background px-3.5 py-2.5 rounded-lg border border-border font-mono text-xs text-foreground overflow-x-auto flex items-center justify-between">
+                  <code>{claudeTerminalCommand}</code>
+                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  This command automatically configures <code className="bg-muted px-1 py-0.5 rounded text-foreground font-mono">claude_desktop_config.json</code>. Restart Claude Desktop after running.
+                </p>
+              </div>
 
+              {/* Option 3: Manual JSON Config */}
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-muted-foreground">
+                  Or manual Claude Desktop config (<code className="font-mono text-primary">claude_desktop_config.json</code>):
+                </p>
                 <div className="relative">
-                  <pre className="p-4 rounded-xl bg-muted/70 border border-border font-mono text-xs overflow-x-auto text-foreground">
+                  <pre className="p-4 rounded-xl bg-muted/60 border border-border font-mono text-xs overflow-x-auto text-foreground">
                     {claudeDesktopConfigJson}
                   </pre>
                   <Button
                     size="sm"
-                    variant="secondary"
-                    onClick={() => handleCopy("claude-desktop", claudeDesktopConfigJson)}
-                    className="absolute top-3 right-3 gap-1.5 text-xs shadow-sm cursor-pointer"
+                    variant="ghost"
+                    onClick={() => handleCopy("claude-desktop-json", claudeDesktopConfigJson)}
+                    className="absolute top-3 right-3 gap-1.5 text-xs cursor-pointer bg-background/80 hover:bg-background border border-border shadow-sm"
                   >
-                    {copiedKey === "claude-desktop" ? (
+                    {copiedKey === "claude-desktop-json" ? (
                       <>
                         <Check className="w-3.5 h-3.5 text-emerald-500" />
                         <span>Copied!</span>
@@ -252,52 +304,32 @@ print(f"Connected Codex to sakto ka at {MCP_SSE_URL}")`;
                     ) : (
                       <>
                         <Copy className="w-3.5 h-3.5" />
-                        <span>Copy Config</span>
+                        <span>Copy JSON</span>
                       </>
                     )}
                   </Button>
                 </div>
               </div>
-
-              {/* Web Section */}
-              <div className="p-4 rounded-xl border border-border bg-background space-y-2">
-                <h3 className="font-semibold text-sm text-foreground">For Claude Web (claude.ai):</h3>
-                <p className="text-xs text-muted-foreground">
-                  In Claude Web Projects or custom MCP connectors, connect directly to the live server endpoint:
-                </p>
-                <div className="flex items-center justify-between bg-muted/60 px-3 py-2 rounded-lg font-mono text-xs text-foreground border border-border">
-                  <span>https://saktoka.click/mcp/sse</span>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => handleCopy("claude-web", "https://saktoka.click/mcp/sse")}
-                    className="h-7 text-xs gap-1 cursor-pointer"
-                  >
-                    {copiedKey === "claude-web" ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
-                    Copy URL
-                  </Button>
-                </div>
-              </div>
             </TabsContent>
 
-            {/* CHATGPT / CODEX TAB */}
+            {/* CHATGPT & CODEX TAB */}
             <TabsContent value="chatgpt" className="space-y-6 pt-4">
-              {/* Auto Setup Prompt for ChatGPT/Codex */}
+              {/* Option 1: Instant Prompt for ChatGPT Chat */}
               <div className="p-4 md:p-5 rounded-xl border-2 border-primary/30 bg-primary/5 space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="font-bold text-sm md:text-base text-foreground flex items-center gap-2">
                       <Zap className="w-4 h-4 text-primary" />
-                      Auto-Setup Prompt (Paste into ChatGPT / Codex)
+                      1. Copy & Paste Setup Prompt (ChatGPT & Codex)
                     </h3>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      Copy this prompt and paste it into ChatGPT or Codex to automatically load the schema and tools.
+                      Paste this into any ChatGPT or Codex chat window. The AI recognizes it immediately with zero errors.
                     </p>
                   </div>
                   <Button
                     size="sm"
                     variant="default"
-                    onClick={() => handleCopy("chatgpt-prompt", chatGptCodexSetupPrompt)}
+                    onClick={() => handleCopy("chatgpt-prompt", chatGptPrompt)}
                     className="gap-1.5 text-xs shadow-sm cursor-pointer shrink-0"
                   >
                     {copiedKey === "chatgpt-prompt" ? (
@@ -313,64 +345,57 @@ print(f"Connected Codex to sakto ka at {MCP_SSE_URL}")`;
                     )}
                   </Button>
                 </div>
-                <pre className="p-3.5 rounded-lg bg-background/90 border border-border font-mono text-xs whitespace-pre-wrap text-foreground">
-                  {chatGptCodexSetupPrompt}
+                <pre className="p-3.5 rounded-lg bg-background/90 border border-border font-mono text-xs whitespace-pre-wrap text-foreground max-h-56 overflow-y-auto">
+                  {chatGptPrompt}
                 </pre>
               </div>
 
-              {/* ChatGPT Custom GPT / Actions */}
-              <div className="space-y-3">
-                <div className="text-xs text-muted-foreground space-y-1.5">
-                  <p className="font-semibold text-foreground text-sm">For ChatGPT (Custom GPT / Actions):</p>
-                  <ol className="list-decimal list-inside space-y-1 pl-1">
-                    <li>In ChatGPT, open <span className="font-semibold text-foreground">Explore GPTs</span> ➔ <span className="font-semibold text-foreground">Create a GPT</span> (or edit your existing GPT).</li>
-                    <li>Go to the <span className="font-semibold text-foreground">Configure</span> tab and click <span className="font-semibold text-foreground">Create new action</span>.</li>
-                    <li>Click <span className="font-semibold text-foreground">Import from URL</span> and paste the OpenAPI URL below.</li>
-                    <li>Click Import — ChatGPT will automatically load all the job search, qualification, and prep tools!</li>
-                  </ol>
-                </div>
+              {/* Option 2: ChatGPT Custom GPT / Action Connection */}
+              <div className="p-4 rounded-xl border border-border bg-muted/30 space-y-3">
+                <h3 className="font-bold text-sm text-foreground flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-emerald-500" />
+                  2. Add to ChatGPT Custom GPT (1-Click Action)
+                </h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  To give ChatGPT live tool-calling abilities to search jobs and score resumes:
+                </p>
+                <ol className="list-decimal list-inside text-xs text-muted-foreground space-y-1.5 pl-1">
+                  <li>In ChatGPT, open <span className="font-semibold text-foreground">Explore GPTs ➔ Create a GPT</span>.</li>
+                  <li>Click <span className="font-semibold text-foreground">Configure ➔ Create new action</span>.</li>
+                  <li>Click <span className="font-semibold text-foreground">Import from URL</span> and paste the OpenAPI schema URL below:</li>
+                  <li>Set Authentication to <span className="font-semibold text-foreground">None</span> (Public Guest Session, no API key required).</li>
+                </ol>
 
-                <div className="flex items-center justify-between bg-muted/60 px-3 py-2.5 rounded-xl font-mono text-xs text-foreground border border-border">
-                  <span>{chatGptActionOpenApiUrl}</span>
+                <div className="flex items-center justify-between bg-background px-3 py-2 rounded-lg border border-border font-mono text-xs text-foreground">
+                  <span className="truncate mr-2">{openApiSchemaUrl}</span>
                   <Button
                     size="sm"
                     variant="secondary"
-                    onClick={() => handleCopy("chatgpt-url", chatGptActionOpenApiUrl)}
-                    className="h-8 text-xs gap-1.5 cursor-pointer shadow-sm"
+                    onClick={() => handleCopy("openapi-url", openApiSchemaUrl)}
+                    className="h-7 text-xs gap-1 cursor-pointer shrink-0"
                   >
-                    {copiedKey === "chatgpt-url" ? (
-                      <>
-                        <Check className="w-3.5 h-3.5 text-emerald-500" />
-                        <span>Copied!</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-3.5 h-3.5" />
-                        <span>Copy URL</span>
-                      </>
-                    )}
+                    {copiedKey === "openapi-url" ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
+                    Copy Schema URL
                   </Button>
                 </div>
               </div>
 
-              {/* Codex / Developers */}
-              <div className="space-y-3 pt-2">
-                <div className="text-xs text-muted-foreground space-y-1">
-                  <p className="font-semibold text-foreground text-sm">For OpenAI Codex / API Developers:</p>
-                  <p>Use the live endpoint in your OpenAI Assistants API or Python script:</p>
-                </div>
-
+              {/* Option 3: Cursor, Windsurf & AI Coding Agents */}
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-muted-foreground">
+                  For Cursor, Windsurf, Claude Code, or Codex Agent config:
+                </p>
                 <div className="relative">
-                  <pre className="p-4 rounded-xl bg-muted/70 border border-border font-mono text-xs overflow-x-auto text-foreground">
-                    {codexPythonSnippet}
+                  <pre className="p-4 rounded-xl bg-muted/60 border border-border font-mono text-xs overflow-x-auto text-foreground">
+                    {agentMcpSnippet}
                   </pre>
                   <Button
                     size="sm"
-                    variant="secondary"
-                    onClick={() => handleCopy("codex", codexPythonSnippet)}
-                    className="absolute top-3 right-3 gap-1.5 text-xs shadow-sm cursor-pointer"
+                    variant="ghost"
+                    onClick={() => handleCopy("agent-mcp", agentMcpSnippet)}
+                    className="absolute top-3 right-3 gap-1.5 text-xs cursor-pointer bg-background/80 hover:bg-background border border-border shadow-sm"
                   >
-                    {copiedKey === "codex" ? (
+                    {copiedKey === "agent-mcp" ? (
                       <>
                         <Check className="w-3.5 h-3.5 text-emerald-500" />
                         <span>Copied!</span>
@@ -378,7 +403,7 @@ print(f"Connected Codex to sakto ka at {MCP_SSE_URL}")`;
                     ) : (
                       <>
                         <Copy className="w-3.5 h-3.5" />
-                        <span>Copy Code</span>
+                        <span>Copy Config</span>
                       </>
                     )}
                   </Button>
@@ -389,13 +414,13 @@ print(f"Connected Codex to sakto ka at {MCP_SSE_URL}")`;
         </div>
       </Card>
 
-      {/* Friendly Prompts You Can Try */}
+      {/* Prompts to Try After Connecting */}
       <Card className="p-6 md:p-8 border-border bg-card">
         <div className="space-y-6">
           <div>
-            <h2 className="text-lg md:text-xl font-bold text-foreground">Example Prompts You Can Try</h2>
+            <h2 className="text-lg md:text-xl font-bold text-foreground">Example Prompts to Try in Chat</h2>
             <p className="text-xs md:text-sm text-muted-foreground mt-1">
-              Once connected, you can copy and send any of these prompts directly to Claude or ChatGPT.
+              Once you paste the setup prompt, try asking your assistant any of these questions:
             </p>
           </div>
 

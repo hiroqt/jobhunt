@@ -1,4 +1,4 @@
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Optional
 from contextlib import asynccontextmanager
 from fastapi import Request
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -39,9 +39,10 @@ async def init_db() -> None:
     logger.info("Ephemeral session engine ready.")
 
 
-# Helper for standalone CLI / test runner access
+# Helper for standalone CLI / test runner / MCP server tool access
 @asynccontextmanager
-async def AsyncSessionLocal() -> AsyncGenerator[AsyncSession, None]:
-    maker, _ = await session_manager.get_or_create_session("guest_default")
+async def AsyncSessionLocal(session_id: Optional[str] = None) -> AsyncGenerator[AsyncSession, None]:
+    target_id = session_id or "guest_default"
+    maker, _ = await session_manager.get_or_create_session(target_id)
     async with maker() as session:
         yield session

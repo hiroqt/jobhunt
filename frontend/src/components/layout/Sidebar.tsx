@@ -15,7 +15,8 @@ import {
   Cancel01Icon as X,
   ArrowRight01Icon as ChevronRight,
   Shield01Icon as Shield,
-  BookOpen01Icon as BookOpen
+  BookOpen01Icon as BookOpen,
+  BotIcon as Bot
 } from "hugeicons-react";
 import { CandidateProfile, DashboardOverview, Job } from "@/types";
 import { getCandidateProfile, getDashboardOverview } from "@/lib/api";
@@ -116,6 +117,12 @@ export const Sidebar: React.FC = () => {
       name: "Candidate Profile",
       href: "/profile",
       icon: UserCheck,
+      badge: null,
+    },
+    {
+      name: "AI Agents (MCP)",
+      href: "/mcp",
+      icon: Bot,
       badge: null,
     },
   ];

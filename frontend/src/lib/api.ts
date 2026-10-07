@@ -479,3 +479,37 @@ export async function saveCoverLetterForJob(
 export async function getDashboardOverview(): Promise<DashboardOverview> {
   return fetchJSON<DashboardOverview>("/analytics/overview");
 }
+
+// MCP (Model Context Protocol) Metadata APIs
+export interface McpServerInfo {
+  status: string;
+  server: string;
+  version: string;
+  transport: {
+    sse: string;
+    messages: string;
+    stdio_script: string;
+  };
+  guardrail_policies: {
+    prompt_injection_defense: boolean;
+    qualification_threshold: {
+      enabled: boolean;
+      min_score: number;
+      blocked_badges: string[];
+    };
+    tiered_permissions: {
+      read_actions: string;
+      mutation_actions: string;
+    };
+  };
+  tools_count: number;
+  tools: string[];
+  tools_details?: Array<{ name: string; description: string }>;
+}
+
+export async function getMcpInfo(): Promise<McpServerInfo> {
+  const root = API_BASE.replace(/\/api$/, "");
+  const res = await fetch(`${root}/mcp/info`);
+  if (!res.ok) throw new Error("Failed to load MCP server information");
+  return res.json();
+}

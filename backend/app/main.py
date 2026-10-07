@@ -33,6 +33,7 @@ from backend.app.api.routes.interviews import router as interviews_router
 from backend.app.api.routes.follow_ups import router as follow_ups_router
 from backend.app.api.routes.ai import router as ai_router
 from backend.app.api.routes.analytics import router as analytics_router
+from backend.app.api.routes.mcp import router as mcp_router
 
 
 async def _periodic_session_cleanup():
@@ -96,6 +97,8 @@ app.include_router(interviews_router, prefix=settings.API_V1_STR)
 app.include_router(follow_ups_router, prefix=settings.API_V1_STR)
 app.include_router(ai_router, prefix=settings.API_V1_STR)
 app.include_router(analytics_router, prefix=settings.API_V1_STR)
+app.include_router(mcp_router, prefix=settings.API_V1_STR)
+app.include_router(mcp_router)
 
 
 @app.get("/health", tags=["Health"])

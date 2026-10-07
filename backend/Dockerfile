@@ -9,7 +9,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY pyproject.toml README.md* ./backend/
 RUN pip install --no-cache-dir uv && \
-    uv pip install --system fastapi "uvicorn[standard]" pydantic pydantic-settings sqlalchemy aiosqlite asyncpg alembic httpx beautifulsoup4 selectolax python-dotenv openai google-genai greenlet pypdf pytest pytest-asyncio python-multipart
+    uv pip install --system ./backend || \
+    uv pip install --system fastapi "uvicorn[standard]" pydantic pydantic-settings sqlalchemy aiosqlite asyncpg alembic httpx beautifulsoup4 selectolax python-dotenv openai google-genai greenlet pypdf pytest pytest-asyncio python-multipart "mcp>=1.0.0" "sse-starlette>=3.0.0"
 
 COPY . ./backend/
 
